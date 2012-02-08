@@ -251,11 +251,12 @@ public class PriorityScheduler extends Scheduler {
 	 */
 	public void acquire(PriorityQueue waitQueue) {
 	    // implement me
-		
+		this.thread = waitQueue.nextThread();
 	}	
 
 	/** The thread with which this object is associated. */	   
 	protected KThread thread;
+	protected int timeInQueue;
 	/** The priority of the associated thread. */
 	protected int priority;
 	protected int effective;
