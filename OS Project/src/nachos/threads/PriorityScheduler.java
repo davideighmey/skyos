@@ -2,6 +2,7 @@ package nachos.threads;
 
 import nachos.machine.*;
 
+import java.util.LinkedList;
 import java.util.TreeSet;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -133,6 +134,7 @@ public class PriorityScheduler extends Scheduler {
 	public void waitForAccess(KThread thread) {
 	    Lib.assertTrue(Machine.interrupt().disabled());
 	    getThreadState(thread).waitForAccess(this);
+	    
 	}
 
 	public void acquire(KThread thread) {
@@ -237,6 +239,14 @@ public class PriorityScheduler extends Scheduler {
 	 */
 	public void waitForAccess(PriorityQueue waitQueue) {
 	    // implement me
+		Lib.assertTrue(Machine.interrupt().disabled());
+		if(waitPQueue.isEmpty())
+		waitPQueue.add(thread);
+		else
+			for(int i = 0; i<waitPQueue.size();i++){
+				if(this.priority < getThreadState(waitPQueue.get(i)).priority) ;
+			}
+			
 	}
 
 	/**
@@ -254,11 +264,15 @@ public class PriorityScheduler extends Scheduler {
 		this.thread = waitQueue.nextThread();
 	}	
 
+	public LinkedList<KThread> waitPQueue = new LinkedList<KThread>();
 	/** The thread with which this object is associated. */	   
 	protected KThread thread;
+	/** The time the thread was in Queue;
 	protected int timeInQueue;
 	/** The priority of the associated thread. */
 	protected int priority;
+	/** The effective priority of the associated thread. */
 	protected int effective;
+	protected int timeINqueue;
     }
 }
