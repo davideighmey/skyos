@@ -1,6 +1,7 @@
 package nachos.threads;
 
 import nachos.machine.*;
+
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
@@ -242,13 +243,7 @@ public class PriorityScheduler extends Scheduler {
 	public void waitForAccess(PriorityQueue waitQueue) {
 	    // implement me
 		Lib.assertTrue(Machine.interrupt().disabled());
-	/*	if(waitPQueue.isEmpty())
-		waitPQueue.add(thread);
-		else
-			for(int i = 0; i<waitPQueue.size();i++){
-				//if(this.priority < getThreadState(waitPQueue.).priority) ;
-			}
-			*/
+	
 	}
 
 	/**
@@ -262,23 +257,11 @@ public class PriorityScheduler extends Scheduler {
 	 * @see	nachos.threads.ThreadQueue#nextThread
 	 */
 	public void acquire(PriorityQueue waitQueue) {
-	    // implement me
-		//this.thread = waitQueue.nextThread();
+	    Lib.assertTrue(Machine.interrupt().disabled());
+	       
+	   // Lib.assertTrue(waitPQueue.isEmpty());
 	}	
 	/** The thread with which this object is associated. */	
-	//private Queue<KThread> waitPQueue = new PriorityQueue<KThread>(1, new PriorityComparator());
-	private Queue<KThread> waitPQueue = new java.util.PriorityQueue<KThread>(1, new PriorityComparator());
-	public class PriorityComparator implements Comparator<KThread>
-	{	@Override
-		//Allow automatic sorting of the Queue
-		public int compare(KThread o1, KThread o2) {
-		if(getThreadState(o1).priority<getThreadState(o2).priority)
-			return -1;
-		if(getThreadState(o1).priority>getThreadState(o2).priority)
-			return 1;
-		return 0;
-		}
-	}
 	protected KThread thread;
 	/** The time the thread was in Queue;
 	protected int timeInQueue;
@@ -288,4 +271,17 @@ public class PriorityScheduler extends Scheduler {
 	protected int effective;
 	protected int timeINqueue;
     }
+  //private Queue<KThread> waitPQueue = new PriorityQueue<KThread>(1, new PriorityComparator());
+  	private Queue<KThread> waitPQueue = new java.util.PriorityQueue<KThread>(1, new PriorityComparator());
+  	public class PriorityComparator implements Comparator<KThread>
+  	{	@Override
+  		//Allow automatic sorting of the Queue
+  		public int compare(KThread o1, KThread o2) {
+  		if(getThreadState(o1).priority<getThreadState(o2).priority)
+  			return -1;
+  		if(getThreadState(o1).priority>getThreadState(o2).priority)
+  			return 1;
+  		return 0;
+  		}
+  	}
 }
