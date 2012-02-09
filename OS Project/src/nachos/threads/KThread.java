@@ -1,5 +1,5 @@
 package nachos.threads;
-//practice! holla 
+
 import nachos.machine.*;
 
 /**
@@ -33,6 +33,7 @@ public class KThread {
      *
      * @return	the current thread.
      */
+	public int joinCounter = 0;
     public static KThread currentThread() {
 	Lib.assertTrue(currentThread != null);
 	return currentThread;
@@ -272,11 +273,29 @@ public class KThread {
      * call is not guaranteed to return. This thread must not be the current
      * thread.
      */
+    
     public void join() {
-	Lib.debug(dbgThread, "Joining to thread: " + toString());
-	Machine.interrupt().disable();
+	Lib.debug(dbgThread, "Joining to thread: " + toString());	
 	Lib.assertTrue(this != currentThread);
-	Machine.interrupt().enable();
+	if (joinCounter == 0){
+		joinCounter =1;
+		
+	}
+
+	/**public void join(){
+		/*Check if the caller has already called this function
+		if( sourcethreadcounter == 1) {
+			end, resume thread. 
+		}
+		else{
+			sourcethreadcounter = 1;
+			pause source thread;
+			wait until child thread finishes. 
+}
+	 * 
+	 */
+	
+	
     }
 
     /**
