@@ -1,14 +1,8 @@
 package nachos.threads;
 
 import nachos.machine.*;
+import java.util.*;
 
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.PriorityQueue;
-import java.util.Queue;
-import java.util.TreeSet;
-import java.util.HashSet;
-import java.util.Iterator;
 
 /**
  * A scheduler that chooses threads based on their priorities.
