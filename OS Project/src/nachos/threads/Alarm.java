@@ -4,6 +4,7 @@ import nachos.machine.*;
 
 import java.util.LinkedList;
 import nachos.threads.ThreadQueue;
+import nachos.machine.Timer;
 /**
  * Uses the hardware timer to provide preemption, and to allow threads to sleep
  * until a certain time.
@@ -16,6 +17,13 @@ public class Alarm {
      * <p><b>Note</b>: Nachos will not function correctly with more than one
      * alarm.
      */
+	protected class threadHold {
+			public threadHold(KThread currentThread, Long sleepTime){
+				KThread Thread = currentThread;
+				Long TimeInList = sleepTime;
+			}
+	}
+	
     public Alarm() {
 	Machine.timer().setInterruptHandler(new Runnable() {
 		public void run() { timerInterrupt(); }
@@ -57,12 +65,19 @@ public class Alarm {
 	 //   KThread.yield();
 	if (x == 0){
 		waitQueue.add(KThread.currentThread());
+		timerInterrupt();
 	}
-	
+	else{
+		sleepTime = Timer.getTime();
+		threadHold Hold = new threadHold(KThread.currentThread(), x);
+		sleepList.add();
+	}
 	Machine.interrupt().enable();
     }
     
-    public LinkedList<KThread> waitQueue = new LinkedList<KThread>();
-    public LinkedList<KThread> sleepList  = new LinkedList<KThread>();
-    private long sleeptime = Machine.timer().getTime();
+    
+    public LinkedList<threadHold> sleepList = new LinkedList<threadHold>();
+    public LinkedList<KThread> waitQueue  = new LinkedList<KThread>();
+    private long sleepTime = 0;
+    private Timer Timer = null;
 }
