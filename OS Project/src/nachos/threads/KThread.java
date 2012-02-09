@@ -33,7 +33,7 @@ public class KThread {
      *
      * @return	the current thread.
      */
-	public int joinCounter = 0;
+	
     public static KThread currentThread() {
 	Lib.assertTrue(currentThread != null);
 	return currentThread;
@@ -273,12 +273,15 @@ public class KThread {
      * call is not guaranteed to return. This thread must not be the current
      * thread.
      */
-    
+    public int joinCounter = 0;
     public void join() {
 	Lib.debug(dbgThread, "Joining to thread: " + toString());	
 	Lib.assertTrue(this != currentThread);
-	if (joinCounter == 0){
-		joinCounter =1;
+	if (joinCounter == 1){ 	//check to see if the caller has aldready called this function
+		return;
+	}
+	else {
+		joinCounter = 1;
 		
 	}
 
