@@ -279,14 +279,14 @@ public class KThread {
 	Lib.debug(dbgThread, "Joining to thread: " + toString()); //link the thread is not for the current thread
 	Lib.assertTrue(this != currentThread);
 	if (joinCounter == 1){ 	//check to see if the caller has already called this function
-		return; 			//
+		return; 			
 	}
 	else {
 		joinCounter = 1; 		// its been called
 		if (this.status == statusFinished) //if the thread has completed return
 			return;
 		else{
-		currentThread.sleep(); 	//put thread current thread to sleep pausing it.
+		currentThread.sleep(); 	//put thread current thread to sleep. link the thread is not for the current thread
 		}
 	}
 }
@@ -295,7 +295,7 @@ public class KThread {
 		/*Check if the caller has already called this function
 		if( sourcethreadcounter == 1) {
 			end, resume thread. 
-		}
+		}  // password Km8Cg8fr4aV6
 		else{
 			sourcethreadcounter = 1;
 			pause source thread;
@@ -305,7 +305,7 @@ public class KThread {
 	 */
 	
 	
-    }
+    
 
     /**
      * Create the idle thread. Whenever there are no threads ready to be run,
