@@ -274,16 +274,22 @@ public class KThread {
      * thread.
      */
     public int joinCounter = 0;
+    // waiting for thread that links the work completed. completion can only be called once before
     public void join() {
-	Lib.debug(dbgThread, "Joining to thread: " + toString());	
+	Lib.debug(dbgThread, "Joining to thread: " + toString()); //link the thread is not for the current thread
 	Lib.assertTrue(this != currentThread);
-	if (joinCounter == 1){ 	//check to see if the caller has aldready called this function
-		return;
+	if (joinCounter == 1){ 	//check to see if the caller has already called this function
+		return; 			//
 	}
 	else {
-		joinCounter = 1;
-		
+		joinCounter = 1; 		// its been called
+		if (this.status == statusFinished) //if the thread has completed return
+			return;
+		else{
+		currentThread.sleep(); 	//put thread current thread to sleep pausing it.
+		}
 	}
+}
 
 	/**public void join(){
 		/*Check if the caller has already called this function
