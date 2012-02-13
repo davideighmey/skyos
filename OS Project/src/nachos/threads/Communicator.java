@@ -17,8 +17,10 @@ public class Communicator {
 	private Lock mutex;
 	Condition listenerArrived;
 	Condition speakArrived;
+	
 	private int toTransfer; // global variable to transfer word from speak to listen
 	Queue<KThread> asleep; // queue to hold the sleeping threads
+	boolean lockSet = false;// has the lock been set by speak?
 	
     public Communicator() {
     	mutex = new Lock();
@@ -41,8 +43,11 @@ public class Communicator {
     	// how to know from which thread to check lock
     	if(!mutex.isHeldByCurrentThread()) // if thread does not already have the lock
     		mutex.acquire(); // get the lock
+    	
+    	this.lockSet = true; // signal that speak has been called
     	this.toTransfer = word; // set global variable = word
-    		// send signal to wake listening thread if it is asleep
+    	
+    	this.speakArrived.notify();// send signal to wake listening thread if it is asleep
     }
 
     /**
@@ -52,14 +57,16 @@ public class Communicator {
      * @return	the integer transferred.
      */    
     public int listen() {
-    	if(mutex.isHeldByCurrentThread()) // thread has lock so speak has been called
+    	if(this.lockSet) // thread has lock so speak has been called
     	{
     		mutex.release(); // release the lock before we return the word
+    		this.lockSet = false; // reset for next threads 
+    		System.out.print("listen called");
     		return (this.toTransfer);    		
     	}
     	else	// lock not set yet, have to wait for speak to be called
     	{
-    			// add thread to asleep queue
+    			this.listenerArrived.sleep();// add thread to asleep queue
     		
     	}
 	return 0;

@@ -73,7 +73,7 @@ public class Lock {
 	return (lockHolder == KThread.currentThread());
     }
 
-    private KThread lockHolder = null;
+    private KThread lockHolder = null; // changed from private to protected
     private ThreadQueue waitQueue =
 	ThreadedKernel.scheduler.newThreadQueue(true);
 }
