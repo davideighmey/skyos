@@ -15,6 +15,50 @@ public class Alarm {
 	 * <p><b>Note</b>: Nachos will not function correctly with more than one
 	 * alarm.
 	 */
+
+	public Alarm() {
+		Machine.timer().setInterruptHandler(new Runnable() {
+			public void run() { timerInterrupt(); }
+		});
+	}
+
+	/**
+	 * The timer interrupt handler. This is called by the machine's timer
+	 * periodically (approximately every 500 clock ticks). Causes the current
+	 * thread to yield, forcing a context switch if there is another thread
+	 * that should be run.
+	 */
+
+	public void timerInterrupt() {
+		//KThread.currentThread().yield();
+		if(Machine.interrupt().disabled()){} //disable interrupt, if already disabled do nothing
+		else{
+			Machine.interrupt().disable(); //disable interrupt
+		}
+		/*Loop that checks the sleepList for any thread that has passed their duration to be asleep
+		*wakes up the thread and puts it onto the ready queue.
+		*/
+		for(int i = 0; i < sleepList.size(); i++){
+			/*
+			 * Compares the time that it went into the sleepList + how long its supposed to be there
+			 * and if it is less than or equal to the current time, than put the thread into the ready 
+			 * queue.
+			 */
+			if((sleepList.get(i).getduration()) <= Machine.timer().getTime()){
+				sleepList.get(i).getThread().ready(); //put the thread into the ready queue
+				//waitQueue.add(sleepList.get(i).getThread()); //Testing purposes
+				sleepList.remove(i); //Removing the object that held the thread and times
+			}
+		}
+		Machine.interrupt().enable();
+	}
+
+	/**
+	 * Creates an Object that will hold both the thread and time that it is in the SleepList
+	 * includes the time that it went into the queue.
+	 * @author jle33
+	 *
+	 */
 	protected class threadHold {
 		KThread Thread = null;
 		long timeInList = 0;
@@ -35,36 +79,6 @@ public class Alarm {
 			return Thread;
 		}
 	}
-
-	public Alarm() {
-		Machine.timer().setInterruptHandler(new Runnable() {
-			public void run() { timerInterrupt(); }
-		});
-	}
-
-	/**
-	 * The timer interrupt handler. This is called by the machine's timer
-	 * periodically (approximately every 500 clock ticks). Causes the current
-	 * thread to yield, forcing a context switch if there is another thread
-	 * that should be run.
-	 */
-
-	public void timerInterrupt() {
-		//KThread.currentThread().yield();
-		if(Machine.interrupt().disabled()){}
-		else{
-			Machine.interrupt().disable();
-		}
-		for(int i = 0; i < sleepList.size(); i++){
-			if((sleepList.get(i).getduration()) <= Machine.timer().getTime()){
-				waitQueue.add(sleepList.get(i).getThread());
-				sleepList.remove(i);
-			}
-		}
-		Machine.interrupt().enable();
-	}
-
-	
 
 	/**
 	 * Put the current thread to sleep for at least <i>x</i> ticks,
@@ -89,15 +103,15 @@ public class Alarm {
 		//while (wakeTime > Machine.timer().getTime())
 		//   KThread.yield();
 		if (x == 0){
-			waitQueue.add(KThread.currentThread()); //For testing purposes
-			//KThread.currentThread().ready(); //Goes to the ready queue
+			//waitQueue.add(KThread.currentThread()); //For testing purposes
+			KThread.currentThread().ready(); //Goes to the ready queue
 			timerInterrupt();
 		}
 		else{
 			sleepTime = Timer.getTime();//Time it goes into the sleep List
-			KThread.currentThread().sleep();
+			KThread.currentThread().sleep(); //Put thread to sleep
 			threadHold hold = new threadHold(KThread.currentThread(), sleepTime, wakeTime);
-			sleepList.add(hold);
+			sleepList.add(hold); //Add the thread and time to the list.
 		}
 		Machine.interrupt().enable();
 	}
