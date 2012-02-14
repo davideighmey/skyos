@@ -18,8 +18,9 @@ public class Communicator {
 	Condition listenerArrived;
 	Condition speakArrived;
 	
+	Queue<Integer> transferWords; //
 	private int toTransfer; // global variable to transfer word from speak to listen
-	Queue<KThread> asleep; // queue to hold the sleeping threads
+	//Queue<KThread> asleep; // queue to hold the sleeping threads
 	boolean lockSet = false;// has the lock been set by speak?
 	
     public Communicator() {
@@ -40,14 +41,16 @@ public class Communicator {
      * @param	word	the integer to transfer.
      */
     public void speak(int word) {
-    	// how to know from which thread to check lock
+    	
     	if(!mutex.isHeldByCurrentThread()) // if thread does not already have the lock
     		mutex.acquire(); // get the lock
     	
     	this.lockSet = true; // signal that speak has been called
-    	this.toTransfer = word; // set global variable = word
+    	this.transferWords.add(word);
+    	//this.toTransfer = word; // set global variable = word
     	
     	this.speakArrived.notify();// send signal to wake listening thread if it is asleep
+    	mutex.release(); //release lock
     }
 
     /**
@@ -57,19 +60,29 @@ public class Communicator {
      * @return	the integer transferred.
      */    
     public int listen() {
+    	//mutex.acquire(); //get lock    	
+    	while(!this.lockSet)
+    	{
+    		this.listenerArrived.sleep(); //put thread to sleep
+    	}
+    	mutex.acquire(); // get lock when thread wakes up
+    	this.lockSet = false; // reset lock for next threads
+    	//return (this.toTransfer);
+    	return (this.transferWords.poll());
+    	/*
     	if(this.lockSet) // thread has lock so speak has been called
     	{
     		mutex.release(); // release the lock before we return the word
     		this.lockSet = false; // reset for next threads 
-    		System.out.print("listen called");
+    		//System.out.print("listen called");
     		return (this.toTransfer);    		
     	}
     	else	// lock not set yet, have to wait for speak to be called
     	{
     			this.listenerArrived.sleep();// add thread to asleep queue
     		
-    	}
-	return 0;
+    	} */
+	//return 0;
     }
 
 }
