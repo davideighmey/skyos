@@ -57,7 +57,7 @@ public class Condition2 {
 	        currentThread.ready(); //ready the thread
 	  
 	        waitQueue.removeFirst(); //Grab the first sleeping thread on the list (FIFO Queue)
-	        Machine.interrupt().restore(intStatus); //enable the interrupt
+	        Machine.interrupt().restore(intStatus); //enable the interrupt & restores
 	    }
     }
 
@@ -67,8 +67,11 @@ public class Condition2 {
      */
     public void wakeAll() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
+	 boolean intStatus = Machine.interrupt().disable(); // disables the interrupts 
 	  while (!waitQueue.isEmpty()){ // loop it 
-		    wake();} // pop each one
+		    wake(); // pop each one
+		    } 
+      Machine.interrupt().restore(intStatus); //enable the interrupt & restores 
       
 
     }
