@@ -109,8 +109,9 @@ public class Alarm {
 		}
 		else{
 			sleepTime = Timer.getTime();//Time it goes into the sleep List
-			KThread.currentThread().sleep(); //Put thread to sleep
-			threadHold hold = new threadHold(KThread.currentThread(), sleepTime, wakeTime);
+			KThread thread = KThread.currentThread();
+			thread.sleep(); //Put thread to sleep
+			threadHold hold = new threadHold(thread, sleepTime, wakeTime);
 			sleepList.add(hold); //Add the thread and time to the list.
 		}
 		Machine.interrupt().enable();
