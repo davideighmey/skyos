@@ -131,7 +131,7 @@ public class PriorityScheduler extends Scheduler {
 	public void waitForAccess(KThread thread) {
 	    Lib.assertTrue(Machine.interrupt().disabled());
 	    getThreadState(thread).waitForAccess(this);
-	    waitQueue.add(thread);
+	    //waitPQueue.add(thread);
 	}
 
 	public void acquire(KThread thread) {
@@ -143,7 +143,7 @@ public class PriorityScheduler extends Scheduler {
 	public KThread nextThread() {
 	    Lib.assertTrue(Machine.interrupt().disabled());
 	    // implement me
-	    return waitQueue.poll();
+	    return waitPQueue.poll();
 	}
 
 	/**
@@ -156,7 +156,7 @@ public class PriorityScheduler extends Scheduler {
 	protected ThreadState pickNextThread() {
 	    // implement me
 		
-	    return getThreadState(waitQueue.peek());
+	    return getThreadState(waitPQueue.peek());
 	}
 	
 	public void print() {
@@ -239,7 +239,8 @@ public class PriorityScheduler extends Scheduler {
 	public void waitForAccess(PriorityQueue waitQueue) {
 	    // implement me
 		Lib.assertTrue(Machine.interrupt().disabled());
-	
+		getThreadState(thread).timeINqueue = Machine.timer().getTime();	//store the time since nachos has started into the thread. This will keep track of how long it has been in the queue.
+		waitPQueue.add(thread);
 	}
 
 	/**
@@ -254,21 +255,22 @@ public class PriorityScheduler extends Scheduler {
 	 */
 	public void acquire(PriorityQueue waitQueue) {
 	    Lib.assertTrue(Machine.interrupt().disabled());
-	       
+	     this.LockHolder = this.thread;
 	   // Lib.assertTrue(waitPQueue.isEmpty());
 	}	
 	/** The thread with which this object is associated. */	
 	protected KThread thread;
-	/** The time the thread was in Queue;
-	protected int timeInQueue;
+	/** The thread with which this lock is associated   */
+	protected KThread LockHolder;
 	/** The priority of the associated thread. */
 	protected int priority;
 	/** The effective priority of the associated thread. */
 	protected int effective;
-	protected int timeINqueue;
+	/** The time the thread was in Queue;  */
+	protected long timeINqueue;
     }
   //private Queue<KThread> waitPQueue = new PriorityQueue<KThread>(1, new PriorityComparator());
-  	private Queue<KThread> waitQueue = new java.util.PriorityQueue<KThread>(1, new PriorityComparator());
+  	private Queue<KThread> waitPQueue = new java.util.PriorityQueue<KThread>(1, new PriorityComparator());
   	public class PriorityComparator implements Comparator<KThread>
   	{	@Override
   		//Allow automatic sorting of the Queue
