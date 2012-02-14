@@ -239,8 +239,8 @@ public class PriorityScheduler extends Scheduler {
 	public void waitForAccess(PriorityQueue waitQueue) {
 	    // implement me
 		Lib.assertTrue(Machine.interrupt().disabled());
-		getThreadState(thread).timeINqueue = Machine.timer().getTime();	//store the time since nachos has started into the thread. This will keep track of how long it has been in the queue.
-		waitPQueue.add(thread);
+		getThreadState(this.thread).timeINqueue = Machine.timer().getTime();	//store the time since nachos has started into the thread. This will keep track of how long it has been in the queue.
+		waitPQueue.add(this.thread);
 	}
 
 	/**
