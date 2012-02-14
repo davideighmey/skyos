@@ -266,7 +266,7 @@ public class PriorityScheduler extends Scheduler {
 	protected int timeINqueue;
     }
   //private Queue<KThread> waitPQueue = new PriorityQueue<KThread>(1, new PriorityComparator());
-  	private Queue<KThread> waitPQueue = new java.util.PriorityQueue<KThread>(1, new PriorityComparator());
+  	private Queue<KThread> waitQueue = new java.util.PriorityQueue<KThread>(1, new PriorityComparator());
   	public class PriorityComparator implements Comparator<KThread>
   	{	@Override
   		//Allow automatic sorting of the Queue
