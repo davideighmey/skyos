@@ -30,7 +30,7 @@ public class Alarm {
 	 */
 
 	public void timerInterrupt() {
-		//KThread.currentThread().yield();
+		
 		if(Machine.interrupt().disabled()){} //disable interrupt, if already disabled do nothing
 		else{
 			Machine.interrupt().disable(); //disable interrupt
@@ -51,6 +51,7 @@ public class Alarm {
 			}
 		}
 		Machine.interrupt().enable();
+		KThread.currentThread().yield(); //Deals with context switching.....
 	}
 
 	/**
@@ -61,16 +62,11 @@ public class Alarm {
 	 */
 	protected class threadHold {
 		KThread Thread = null;
-		long timeInList = 0;
 		long duration = 0;
 
-		public threadHold(KThread currentThread, long sleepTime, long wakeTime){
+		public threadHold(KThread currentThread, long wakeTime){
 			this.Thread = currentThread;
-			this.timeInList = sleepTime;
 			this.duration = wakeTime;
-		}
-		public long getime(){
-			return timeInList;
 		}
 		public long getduration(){
 			return duration;
@@ -102,24 +98,19 @@ public class Alarm {
 		// No more Cheating!
 		//while (wakeTime > Machine.timer().getTime())
 		//   KThread.yield();
-		if (x == 0){
+		if (wakeTime == Machine.timer().getTime()){//x==0, changed from this to what it is now, for debug purposes
 			//waitQueue.add(KThread.currentThread()); //For testing purposes
 			KThread.currentThread().ready(); //Goes to the ready queue
 			timerInterrupt();
 		}
 		else{
-			sleepTime = Timer.getTime();//Time it goes into the sleep List
-			KThread thread = KThread.currentThread();
-			thread.sleep(); //Put thread to sleep
-			threadHold hold = new threadHold(thread, sleepTime, wakeTime);
+			threadHold hold = new threadHold(KThread.currentThread(), wakeTime); //Add both the current thread and time to list
 			sleepList.add(hold); //Add the thread and time to the list.
+			KThread.currentThread().sleep(); //Put thread to sleep
 		}
 		Machine.interrupt().enable();
 	}
 
-
 	public LinkedList<threadHold> sleepList = new LinkedList<threadHold>();
-	public LinkedList<KThread> waitQueue  = new LinkedList<KThread>();
-	private long sleepTime = 0;
-	private Timer Timer = null;
+	//public LinkedList<KThread> waitQueue  = new LinkedList<KThread>();
 }
