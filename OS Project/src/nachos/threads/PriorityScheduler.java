@@ -251,7 +251,7 @@ public class PriorityScheduler extends Scheduler {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			getThreadState(this.thread).timeINqueue = Machine.timer().getTime();	//store the time since nachos has started into the thread. This will keep track of how long it has been in the queue.
 			//waitPQueue.add(this.thread);
-			this.wait = waitQueue;
+			wait = waitQueue;
 			if(waitQueue.transferPriority){}//if this is true we have to transfer priority
 		}
 
@@ -268,7 +268,7 @@ public class PriorityScheduler extends Scheduler {
 		public void acquire(PriorityQueue waitQueue) {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			this.LockHolder = this.thread;
-			// Lib.assertTrue(waitPQueue.isEmpty());
+			Lib.assertTrue(waitPQueue.isEmpty());
 		}	
 		/** The thread with which this object is associated. */	
 		protected KThread thread;
