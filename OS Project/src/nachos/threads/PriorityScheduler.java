@@ -1,6 +1,7 @@
 package nachos.threads;
 
 import nachos.machine.*;
+
 import java.util.*;
 
 
@@ -131,11 +132,16 @@ public class PriorityScheduler extends Scheduler {
 	public void waitForAccess(KThread thread) {
 	    Lib.assertTrue(Machine.interrupt().disabled());
 	    getThreadState(thread).waitForAccess(this);
-	    //waitPQueue.add(thread);
+	    waitPQueue.add(thread);
 	}
-
+	/**
+	 * The specified thread has received exclusive access, without using
+	 * <tt>waitForAccess()</tt> or <tt>nextThread()</tt>. Assert that no
+	 * threads are waiting for access.
+	 */
 	public void acquire(KThread thread) {
 	    Lib.assertTrue(Machine.interrupt().disabled());
+	    Lib.assertTrue(waitPQueue.isEmpty());
 	    getThreadState(thread).acquire(this);
 	    
 	}
@@ -143,7 +149,7 @@ public class PriorityScheduler extends Scheduler {
 	public KThread nextThread() {
 	    Lib.assertTrue(Machine.interrupt().disabled());
 	    // implement me
-	    return waitPQueue.poll();
+	    return waitPQueue.poll();	
 	}
 
 	/**
@@ -240,7 +246,8 @@ public class PriorityScheduler extends Scheduler {
 	    // implement me
 		Lib.assertTrue(Machine.interrupt().disabled());
 		getThreadState(this.thread).timeINqueue = Machine.timer().getTime();	//store the time since nachos has started into the thread. This will keep track of how long it has been in the queue.
-		waitPQueue.add(this.thread);
+		//waitPQueue.add(this.thread);
+		if(waitQueue.transferPriority){}//if this is true we have to transfer priority
 	}
 
 	/**
