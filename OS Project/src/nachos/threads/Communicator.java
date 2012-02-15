@@ -18,15 +18,23 @@ public class Communicator {
 	Condition listenerArrived;
 	Condition speakArrived;
 	
-	Queue<KThread> speakers; // 
-	Queue<Integer> toTransfer; // global variable to transfer word from speak to listen
+	// I created these 
+	//Queue<KThread> speakers; // 
+	//Queue<Integer> toTransfer; // global variable to transfer word from speak to listen
 	//Queue<KThread> asleep; // queue to hold the sleeping threads
+	Condition speaking;	// is there a speaker speaking??
+	Condition listening;// is there a listener to listening??
+	int toTransfer; // to store the word that should be transfered	
 	boolean lockSet = false;// has the lock been set by speak?
+	
 	
     public Communicator() {
     	mutex = new Lock();
     	listenerArrived = new Condition(mutex);
     	speakArrived = new Condition(mutex);
+    	// initialize condition variables that were created
+    	this.speaking = new Condition(this.mutex);
+    	this.listening = new Condition(this.mutex);
     	
     }
 
@@ -40,7 +48,19 @@ public class Communicator {
      *
      * @param	word	the integer to transfer.
      */
-    public void speak(int word) {
+    public void speak(int word)
+    {
+    	this.mutex.acquire(); // have the current thread get the lock
+    	while(lockSet == false)
+    	{
+    		this.speaking.sleep(); // set the current thread to sleep
+    	}
+    	this.toTransfer = word; // store the word to transfer
+    	this.lockSet = false; // 
+    	this.listening.wake(); // wake or wakeAll ?
+    	this.mutex.release(); // release the lock 
+    	
+    	/*
     	//!!!! make a queue that holds multiple speakers
     	speakers.add(mutex.lockHolder); // add the thread to the speakers queue
     	
@@ -52,6 +72,7 @@ public class Communicator {
     	
     	this.speakArrived.notify();// send signal to wake listening thread if it is asleep
     	mutex.release(); //release lock
+    	 */
     }
 
     /**
@@ -60,7 +81,20 @@ public class Communicator {
      *
      * @return	the integer transferred.
      */    
-    public int listen() {
+    public int listen() 
+    {
+    	//int word; // the transfered word that will be returned
+    	this.mutex.acquire(); // have this thread get the lock
+    	while(lockSet == true) // 
+    	{
+    		this.listening.sleep(); // have it wait for a speaker --sleep
+    	}
+    	//word = this.toTransfer; // transfered word
+    	this.lockSet = false;
+    	this.speaking.wake(); // wake or wakeAll??
+    	this.mutex.release(); // release the lock before returning word
+    	return (this.toTransfer);
+    	/*
     	// check the queue that has the speakers and take from the top of the queue
     	
     	mutex.acquire(); //get lock    	
@@ -72,7 +106,7 @@ public class Communicator {
     	this.lockSet = false; // reset lock for next threads
     	speakers.poll();
     	return (this.toTransfer.poll());
-    	
+    	*/
     	//return (this.transferWords.poll());
     	/*
     	if(this.lockSet) // thread has lock so speak has been called
