@@ -18,8 +18,8 @@ public class Communicator {
 	Condition listenerArrived;
 	Condition speakArrived;
 	
-	Queue<Integer> transferWords; //
-	int toTransfer; // global variable to transfer word from speak to listen
+	Queue<KThread> speakers; // 
+	Queue<Integer> toTransfer; // global variable to transfer word from speak to listen
 	//Queue<KThread> asleep; // queue to hold the sleeping threads
 	boolean lockSet = false;// has the lock been set by speak?
 	
@@ -42,12 +42,13 @@ public class Communicator {
      */
     public void speak(int word) {
     	//!!!! make a queue that holds multiple speakers
+    	speakers.add(mutex.lockHolder); // add the thread to the speakers queue
+    	
     	if(!mutex.isHeldByCurrentThread()) // if thread does not already have the lock
     		mutex.acquire(); // get the lock
     	
     	this.lockSet = true; // signal that speak has been called
-    	this.transferWords.add(word); //get an error here
-    	this.toTransfer = word; // set global variable = word
+    	this.toTransfer.add(word); // set global variable = word
     	
     	this.speakArrived.notify();// send signal to wake listening thread if it is asleep
     	mutex.release(); //release lock
@@ -61,6 +62,7 @@ public class Communicator {
      */    
     public int listen() {
     	// check the queue that has the speakers and take from the top of the queue
+    	
     	mutex.acquire(); //get lock    	
     	while(!this.lockSet)
     	{
@@ -68,7 +70,9 @@ public class Communicator {
     	}
     	mutex.acquire(); // get lock when thread wakes up
     	this.lockSet = false; // reset lock for next threads
-    	return (this.toTransfer);
+    	speakers.poll();
+    	return (this.toTransfer.poll());
+    	
     	//return (this.transferWords.poll());
     	/*
     	if(this.lockSet) // thread has lock so speak has been called
