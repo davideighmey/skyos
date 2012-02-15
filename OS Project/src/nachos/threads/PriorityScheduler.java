@@ -135,7 +135,7 @@ public class PriorityScheduler extends Scheduler {
 		public void waitForAccess(KThread thread) {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			getThreadState(thread).waitForAccess(this);
-			waitPQueue.add(thread);
+			//waitPQueue.add(thread);
 		}
 		/**
 		 * The specified thread has received exclusive access, without using
@@ -144,14 +144,14 @@ public class PriorityScheduler extends Scheduler {
 		 */
 		public void acquire(KThread thread) {
 			Lib.assertTrue(Machine.interrupt().disabled());
-			Lib.assertTrue(waitPQueue.isEmpty());
+			//Lib.assertTrue(waitPQueue.isEmpty());
 			getThreadState(thread).acquire(this);
 
 		}
 
 		public KThread nextThread() {
 			Lib.assertTrue(Machine.interrupt().disabled());
-			// implement me
+			// return the highest priority and removes it, else return null
 			return waitPQueue.poll();	
 		}
 
@@ -178,6 +178,23 @@ public class PriorityScheduler extends Scheduler {
 		 * threads to the owning thread.
 		 */
 		public boolean transferPriority;
+		/**
+		 *<tt>LockHolder-</tt> The thread with which this lock is associated   
+		 */
+		protected ThreadState LockHolder;
+		
+		private Queue<KThread> waitPQueue = new java.util.PriorityQueue<KThread>(1, new PriorityComparator());
+		public class PriorityComparator implements Comparator<KThread>
+		{	@Override
+			//Allow automatic sorting of the Queue
+			public int compare(KThread o1, KThread o2) {
+			if(getThreadState(o1).priority<getThreadState(o2).priority)
+				return -1;
+			if(getThreadState(o1).priority>getThreadState(o2).priority)
+				return 1;
+			return 0;
+		}
+		}
 	}
 
 	/**
@@ -251,7 +268,9 @@ public class PriorityScheduler extends Scheduler {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			getThreadState(this.thread).timeINqueue = Machine.timer().getTime();	//store the time since nachos has started into the thread. This will keep track of how long it has been in the queue.
 			//waitPQueue.add(this.thread);
-			wait = waitQueue;
+			ready = waitQueue;
+			waitQueue.waitPQueue.add(thread);
+			//waitPQueue.add(this);
 			if(waitQueue.transferPriority){}//if this is true we have to transfer priority
 		}
 
@@ -267,13 +286,17 @@ public class PriorityScheduler extends Scheduler {
 		 */
 		public void acquire(PriorityQueue waitQueue) {
 			Lib.assertTrue(Machine.interrupt().disabled());
-			this.LockHolder = this.thread;
-			Lib.assertTrue(waitPQueue.isEmpty());
+			assert(waitQueue!=null);
+			//waitPQueue.equals(this);
+			if(waitQueue.waitPQueue.equals(thread)){//check if the thread is remove, if it is not, remove it
+				waitQueue.waitPQueue.remove(thread);
+			}
+			//The thread now has a lock
+			waitQueue.LockHolder = this;
+			//Lib.assertTrue(waitPQueue.isEmpty());
 		}	
 		/** The thread with which this object is associated. */	
 		protected KThread thread;
-		/** The thread with which this lock is associated   */
-		protected KThread LockHolder;
 		/** The priority of the associated thread. */
 		protected int priority;
 		/** The effective priority of the associated thread. */
@@ -282,20 +305,9 @@ public class PriorityScheduler extends Scheduler {
 		protected long timeINqueue;
 	}
 	/** The queue where threads are waiting on  */
-	private PriorityQueue wait;
+	private PriorityQueue ready;
 	//private Queue<KThread> waitPQueue = new PriorityQueue<KThread>(1, new PriorityComparator());
-	private Queue<KThread> waitPQueue = new java.util.PriorityQueue<KThread>(1, new PriorityComparator());
-	public class PriorityComparator implements Comparator<KThread>
-	{	@Override
-		//Allow automatic sorting of the Queue
-		public int compare(KThread o1, KThread o2) {
-		if(getThreadState(o1).priority<getThreadState(o2).priority)
-			return -1;
-		if(getThreadState(o1).priority>getThreadState(o2).priority)
-			return 1;
-		return 0;
-	}
-	}
+
 	private static final char dbgThread = 't';
 	public static void testMe(KThread testThread1, KThread testThread2, int priority1, int priority2){
 
