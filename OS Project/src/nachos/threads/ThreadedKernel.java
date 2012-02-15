@@ -1,5 +1,7 @@
 package nachos.threads;
 
+import java.util.PriorityQueue;
+
 import nachos.machine.*;
 
 /**
@@ -46,6 +48,8 @@ public class ThreadedKernel extends Kernel {
      * tests here.
      */	
     public void selfTest() {
+    	
+    PriorityScheduler.selfTest();
 	KThread.selfTest();
 	Semaphore.selfTest();
 	SynchList.selfTest();
