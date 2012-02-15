@@ -151,8 +151,31 @@ public class PriorityScheduler extends Scheduler {
 
 		public KThread nextThread() {
 			Lib.assertTrue(Machine.interrupt().disabled());
+			PriorityQueue buffer = null;
+			ThreadState peek = pickNextThread();				//peek at the nextThread and return a thread with a highest priority and longest wait time
+			if(peek!=getThreadState(waitPQueue.peek())){		//not the same
+				buffer = new PriorityQueue(this.transferPriority);
+				int count = 0;									//headache saver
+				while(peek!=getThreadState(waitPQueue.peek())){
+					buffer.waitPQueue.add(waitPQueue.poll());
+					count++;
+				}
+				System.out.println("Count(Started): "+count);
+				assert(peek==getThreadState(waitPQueue.peek()));
+				KThread returnThread = waitPQueue.poll();
+				count--;
+				while(buffer.waitPQueue.peek()!=null){
+					waitPQueue.add(buffer.waitPQueue.poll());
+					count--;
+				}
+				System.out.println("Count(Done): "+count);
+				getThreadState(returnThread).timeINqueue = 0;
+				return returnThread;
+			}
 			// return the highest priority and removes it, else return null
-			return waitPQueue.poll();	
+			else{
+				getThreadState(waitPQueue.peek()).timeINqueue = 0;
+				return waitPQueue.poll();}
 		}
 
 		/**
@@ -165,7 +188,16 @@ public class PriorityScheduler extends Scheduler {
 		protected ThreadState pickNextThread() {
 			// implement me
 
-			return getThreadState(waitPQueue.peek());
+			KThread hold = waitPQueue.peek();
+			for(KThread k:waitPQueue){
+				if((getThreadState(hold).effective==getThreadState(k).effective)//Check of there is other same priority thread
+						&&(getThreadState(hold).timeINqueue < getThreadState(k).timeINqueue)){ //If there is one, switch to the longest waiting thread
+					hold = k;
+				}
+			}
+
+
+			return getThreadState(hold);
 		}
 
 		public void print() {
@@ -182,7 +214,7 @@ public class PriorityScheduler extends Scheduler {
 		 *<tt>LockHolder-</tt> The thread with which this lock is associated   
 		 */
 		protected ThreadState LockHolder;
-		
+
 		private Queue<KThread> waitPQueue = new java.util.PriorityQueue<KThread>(1, new PriorityComparator());
 		public class PriorityComparator implements Comparator<KThread>
 		{	@Override
@@ -351,7 +383,7 @@ public class PriorityScheduler extends Scheduler {
 			}
 
 		});
-		testMe(t1,t2,3,4);
+		testMe(t1,t2,3,3);
 
 	}
 
