@@ -48,7 +48,8 @@ public class Alarm {
 		 * a sleeping thread.
 		 * 
 		 */
-		for(int i = sleepList.size()-1; i == 0; i--){ 
+		 for(int i = 0; i < sleepList.size(); i++){
+		//for(int i = sleepList.size()-1; i == 0; i--){ 
 			/*
 			 * Compares the time that it went into the sleepList + how long its supposed to be there
 			 * and if it is less than or equal to the current time, than put the thread into the ready 
