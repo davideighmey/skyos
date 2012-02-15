@@ -35,10 +35,25 @@ public class Alarm {
 		else{
 			Machine.interrupt().disable(); //disable interrupt
 		}
+		KThread.currentThread().yield(); 
+		
+		/*Deals with context switching, you would want to yield the current thread that is running so that it allows you
+		to run timerInterrupt();*/
+		
+		
 		/*Loop that checks the sleepList for any thread that has passed their duration to be asleep
 		*wakes up the thread and puts it onto the ready queue.
 		*/
-		for(int i = 0; i < sleepList.size(); i++){
+		
+		/*
+		 * Need to search from the bottom of the list not the top of the list. If you search from the top of the list
+		 * your only able to actually search through the most recent threads put on the list, which would increase the
+		 * time that the threads from the bottom of the list will be sleeping, as they were put on the list first. So
+		 * what you want to do is start from the bottom of the list, as it would be the most accurate way to wake up
+		 * a sleeping thread.
+		 * 
+		 */
+			for(int i = sleepList.size()-1; i == 0; i--){ 
 			/*
 			 * Compares the time that it went into the sleepList + how long its supposed to be there
 			 * and if it is less than or equal to the current time, than put the thread into the ready 
@@ -51,7 +66,6 @@ public class Alarm {
 			}
 		}
 		Machine.interrupt().enable();
-		KThread.currentThread().yield(); //Deals with context switching.....
 	}
 
 	/**
@@ -106,11 +120,13 @@ public class Alarm {
 		else{
 			threadHold hold = new threadHold(KThread.currentThread(), wakeTime); //Add both the current thread and time to list
 			sleepList.add(hold); //Add the thread and time to the list.
+			/*
+			 * reversed from putting thread to sleep than adding to list, to put thread onto sleepList than put thread to sleep.
+			 */
 			KThread.currentThread().sleep(); //Put thread to sleep
 		}
 		Machine.interrupt().enable();
 	}
 
 	public LinkedList<threadHold> sleepList = new LinkedList<threadHold>();
-	//public LinkedList<KThread> waitQueue  = new LinkedList<KThread>();
 }
