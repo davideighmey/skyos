@@ -226,7 +226,7 @@ public class KThread {
 	currentThread.ready();
 
 	runNextThread();
-	
+
 	Machine.interrupt().restore(intStatus);
     }
 
@@ -282,6 +282,8 @@ public class KThread {
     public int joinCounter = 0; // create join counter 
     // waiting for thread that links the work completed. completion can only be called once before
     public void join() {
+    	boolean intStatus = Machine.interrupt().disable();
+    	
 	Lib.debug(dbgThread, "Joining to thread: " + toString()); //link the thread is not for the current thread
 	Lib.assertTrue(this != currentThread);
 	if (joinCounter == 1){ 	//check to see if the caller has already called this function
@@ -292,10 +294,11 @@ public class KThread {
 		if (this.status == statusFinished) //if the thread has completed return
 			return;
 		else{
-		joinQueue.waitForAccess(this); //waits for access and puts it on queue 
+		readyQueue.waitForAccess(this); //waits for access and puts it on queue 
 		currentThread.sleep(); 	//put the  current thread to sleep and link the thread that is not for the current thread
 		}
 	}
+	Machine.interrupt().restore(intStatus);
 }
 
 	/**public void join(){
