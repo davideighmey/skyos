@@ -30,21 +30,16 @@ public class Alarm {
 	 */
 
 	public void timerInterrupt() {
-		
+
 		if(Machine.interrupt().disabled()){} //disable interrupt, if already disabled do nothing
 		else{
 			Machine.interrupt().disable(); //disable interrupt
 		}
-		KThread.currentThread().yield(); 
-		
-		/*Deals with context switching, you would want to yield the current thread that is running so that it allows you
-		to run timerInterrupt();*/
-		
-		
+
 		/*Loop that checks the sleepList for any thread that has passed their duration to be asleep
-		*wakes up the thread and puts it onto the ready queue.
-		*/
-		
+		 *wakes up the thread and puts it onto the ready queue.
+		 */
+
 		/*
 		 * Need to search from the bottom of the list not the top of the list. If you search from the top of the list
 		 * your only able to actually search through the most recent threads put on the list, which would increase the
@@ -53,7 +48,7 @@ public class Alarm {
 		 * a sleeping thread.
 		 * 
 		 */
-			for(int i = sleepList.size()-1; i == 0; i--){ 
+		for(int i = sleepList.size()-1; i == 0; i--){ 
 			/*
 			 * Compares the time that it went into the sleepList + how long its supposed to be there
 			 * and if it is less than or equal to the current time, than put the thread into the ready 
@@ -66,6 +61,12 @@ public class Alarm {
 			}
 		}
 		Machine.interrupt().enable();
+		KThread.currentThread().yield(); 
+		/*Deals with context switching, you would want to yield the current thread that is running so that it allows you
+		to run timerInterrupt() and check through the list;
+		You want yield the current thread(the one running timerInterrupt()), after the current thread has done what ever it has to do, which in this case
+		has finished checking the sleepList(), so now it will yield for another thread to run.
+		*/
 	}
 
 	/**
