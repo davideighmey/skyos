@@ -33,10 +33,9 @@ public class Condition2 {
 	 */
 	@SuppressWarnings("static-access")//Maybe currentThread.sleep() needs to be modified, not sure if correct //delete later
 	public void sleep() {
-
-		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
+		Lib.assertTrue(conditionLock.isHeldByCurrentThread()); // make sure current thread has lock
+		
 		conditionLock.release(); // releasing the lock
-
 		boolean intStatus = Machine.interrupt().disable();//the interrupt disable(), to deal with thread //Don't need I think...
 
 		waitQueue2.waitForAccess(KThread.currentThread()); //the thread queue inside current thread mention 
@@ -53,15 +52,16 @@ public class Condition2 {
 	public void wake() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 		if (!waitQueue.isEmpty()){ //check and see if the thread queue is not empty 
-			if(Machine.interrupt().disabled() == false){
-				Machine.interrupt().disable();
-			}
+			//if(Machine.interrupt().disabled() == false){
+				//Machine.interrupt().disable();
+			//}
 			boolean intStatus = Machine.interrupt().disable(); // the interrupted disable, to prevent the thread is changed
-			KThread.currentThread().ready(); //ready the thread
-
+			KThread thread = waitQueue2.nextThread();
+			if (thread != null) {
+			    thread.ready();}
 			waitQueue.removeFirst(); //Grab the first sleeping thread on the list (FIFO Queue)
 			Machine.interrupt().restore(intStatus); //enable the interrupt & restores
-
+			
 		}
 	}
 
@@ -71,7 +71,7 @@ public class Condition2 {
 	 */
 	public void wakeAll() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
-		Machine.interrupt().disable();
+		//Machine.interrupt().disable();
 		//boolean intStatus = Machine.interrupt().disable(); // disables the interrupts 
 		while (!waitQueue.isEmpty()){ // loop it 
 			wake(); // pop each one
@@ -80,6 +80,6 @@ public class Condition2 {
 	// private static KThread currentThread = null;
 	private LinkedList<KThread> waitQueue = new LinkedList<KThread>();
 	private ThreadQueue waitQueue2 = ThreadedKernel.scheduler.newThreadQueue(false); // make a new wait queue so the thread doesn't loose all its data
-																					 //used kthread line 50 as a reference for making a new queue.
+																					
 	private Lock conditionLock;
 }
