@@ -301,7 +301,7 @@ public class PriorityScheduler extends Scheduler {
 			//waitPQueue.add(this.thread);
 			ready = waitQueue;
 			getEffectivePriority();
-			waitQueue.waitPQueue.add(thread);
+			waitQueue.waitPQueue.add((KThread) ready.waitPQueue);
 			//waitPQueue.add(this);
 			if(waitQueue.transferPriority){}//if this is true we have to transfer priority
 		}
@@ -371,7 +371,7 @@ public class PriorityScheduler extends Scheduler {
 					System.out.println(KThread.currentThread().getName()+" said: IM RUNNING!");
 					KThread.yield();
 				}//when exited it is finished
-				System.out.println(KThread.currentThread().getName()+"said: hi im finished ");
+				System.out.println(KThread.currentThread().getName()+" said: hi im finished ");
 			}
 
 		});
