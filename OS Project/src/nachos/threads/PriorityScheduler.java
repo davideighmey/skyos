@@ -175,7 +175,11 @@ public class PriorityScheduler extends Scheduler {
 			// return the highest priority and removes it, else return null
 			else{
 				waitPQueue.peek();
-				return waitPQueue.poll().thread;}
+				ThreadState returnThread = waitPQueue.poll();
+				if(returnThread==null)
+					return null;
+				else
+					return returnThread.thread;}
 		}
 
 		/**
@@ -303,7 +307,7 @@ public class PriorityScheduler extends Scheduler {
 			//waitPQueue.add(this.thread);
 			ready = waitQueue;
 			//getThreadState(thread).getEffectivePriority();
-			waitQueue.waitPQueue.add(this);
+			waitQueue.waitPQueue.add(getThreadState(thread));
 			//waitPQueue.add(this);
 			if(waitQueue.transferPriority){}//if this is true we have to transfer priority
 		}
@@ -322,8 +326,8 @@ public class PriorityScheduler extends Scheduler {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			assert(waitQueue!=null);
 			//waitPQueue.equals(this);
-			if(waitQueue.waitPQueue.equals(ready)){//check if the thread is removed, if it is not, remove it
-				waitQueue.waitPQueue.remove(ready);
+			if(waitQueue.waitPQueue.equals(waitQueue)){//check if the thread is removed, if not remove it
+				waitQueue.waitPQueue.remove(waitQueue);
 			}
 			//The thread now has a lock
 			waitQueue.LockHolder = this;
@@ -342,7 +346,7 @@ public class PriorityScheduler extends Scheduler {
 	}
 	/** The queue where threads are waiting on  */
 	private PriorityQueue ready;
-	
+
 	//private Queue<KThread> waitPQueue = new PriorityQueue<KThread>(1, new PriorityComparator());
 
 	private static final char dbgThread = 't';
