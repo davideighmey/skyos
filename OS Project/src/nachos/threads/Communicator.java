@@ -20,8 +20,8 @@ public class Communicator {
 	
 	int toTransfer; // holds the word that needs to be transfered
 	//boolean toGet; // is there something to get?
-	boolean speaker;
-	boolean listener;
+	boolean speaker; // is there a speaker?
+	boolean listener;// is there a listener?
 	
 	
     public Communicator() {
@@ -31,8 +31,8 @@ public class Communicator {
     	
     	//this.toGet = false; // initially there is nothing to get
     	//this.toTransfer = 0;// 
-    	this.speaker = false; 
-    	this.listener = false;
+    	this.speaker = false; // start off with no speaker
+    	this.listener = false;// start off with no listener
     }
 
     /**
@@ -56,6 +56,7 @@ public class Communicator {
     	this.toTransfer = word; // store the word to a global variable
     	//toGet = false; // reset from true back to false
     	this.listenerArrived.wakeAll(); // wake all before releasing
+    	this.speaker = false; // reset to no speaker
     	this.mutex.release(); // now release the lock
     }
 
@@ -75,6 +76,7 @@ public class Communicator {
     	}
     	//this.toGet = false;
     	this.speakArrived.wakeAll(); // wake all or just one ?
+    	this.listener = false; // reset to no listener
     	this.mutex.release(); // release lock before returning the word
     	
     	return (this.toTransfer);    	
