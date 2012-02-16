@@ -1,5 +1,5 @@
 package nachos.threads;
-import java.util.LinkedList;
+//import java.util.LinkedList; no use for link list see if this works
 import nachos.machine.*;
 
 /**
@@ -31,19 +31,19 @@ public class Condition2 {
 	 * current thread must hold the associated lock. The thread will
 	 * automatically reacquire the lock before <tt>sleep()</tt> returns.
 	 */
-	@SuppressWarnings("static-access")//Maybe currentThread.sleep() needs to be modified, not sure if correct //delete later
 	public void sleep() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread()); // make sure current thread has lock
-		
-		conditionLock.release(); // releasing the lock
+
 		boolean intStatus = Machine.interrupt().disable();//the interrupt disable(), to deal with thread //Don't need I think...
 
+		conditionLock.release(); // releasing the lock
+
 		waitQueue2.waitForAccess(KThread.currentThread()); //the thread queue inside current thread 
-		currentThread.sleep();//puts current thread to sleep
-		
+		KThread.sleep();//puts current thread to sleep
+		conditionLock.acquire(); //gets the lock when it wakes up
+
 		Machine.interrupt().restore(intStatus); //Interrupt enabled & restore to last status //Don't need I think...
 
-		conditionLock.acquire(); //Acquire lock when it wakes up
 	}
 	/**
 	 * Wake up at most one thread sleeping on this condition variable. The
@@ -51,19 +51,20 @@ public class Condition2 {
 	 */
 	public void wake() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
-		if (!waitQueue.isEmpty()){ //check and see if the thread queue is not empty 
-			//if(Machine.interrupt().disabled() == false){
-				//Machine.interrupt().disable();
-			//}
-			boolean intStatus = Machine.interrupt().disable(); // the interrupted disable, to prevent the thread is changed
-	        waitQueue2.waitForAccess(KThread.currentThread()); //the thread queue inside current thread m
-			if (waitQueue != null) {
-			    currentThread.ready();}
-			waitQueue.removeFirst(); //Grab the first sleeping thread on the list (FIFO Queue)
+		boolean intStatus = Machine.interrupt().disable(); // the interrupted disable, to prevent the thread is changed
+		//if (!waitQueue2.isEmpty()){ //check and see if the thread queue is not empty 
+			
+			KThread thread = waitQueue2.nextThread(); // use the semaphore implementation readying the first thread on queue
+													  // see semaphore.java v class
+			if (thread != null) {  // make sure there is a thread
+			    thread.ready(); // get it ready
+			}
+			
+			//waitQueue.removeFirst(); //Grab the first sleeping thread on the list (FIFO Queue).. already woke it up with the ready()
 			Machine.interrupt().restore(intStatus); //enable the interrupt & restores
 			
 		}
-	}
+	
 
 	/**
 	 * Wake up all threads sleeping on this condition variable. The current
@@ -71,15 +72,18 @@ public class Condition2 {
 	 */
 	public void wakeAll() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
-		//Machine.interrupt().disable();
-		//boolean intStatus = Machine.interrupt().disable(); // disables the interrupts 
-		while (!waitQueue.isEmpty()){ // loop it 
-			wake(); // pop each one
-		} 
+		boolean intStatus = Machine.interrupt().disable(); // disables the interrupts 
+		//while (!waitQueue2.isEmpty()){ // loop it 
+			//wake(); // pop each one}
+		for (KThread Thread = waitQueue2.nextThread(); Thread!= null; waitQueue2.nextThread()){
+			Thread.ready(); // use a for loop to go to each thread and wake it up.. instead of a while.. see if this works
+		}
+		Machine.interrupt().restore(intStatus);
 	}
-	private static KThread currentThread = null;
-	private LinkedList<KThread> waitQueue = new LinkedList<KThread>();
+	//private static KThread currentThread = null;
+	//private LinkedList<KThread> waitQueue = new LinkedList<KThread>(); // only use one queue see if this works
 	private ThreadQueue waitQueue2 = ThreadedKernel.scheduler.newThreadQueue(false); // make a new wait queue so the thread doesn't loose all its data
-																					
+	  //private ThreadQueue waitQueue = ThreadedKernel.scheduler.newThreadQueue(false);
+																				
 	private Lock conditionLock;
 }
