@@ -279,7 +279,20 @@ public class KThread {
 	 * thread.
 	 */
 
-	public int joinCounter = 0; //Uses this counter to show if current thread has already called join
+	public void join() {
+		Lib.debug(dbgThread, "Joining to thread: " + toString()); //link the thread is not for the current thread
+		Lib.assertTrue(this != currentThread);
+		boolean joinCounter = false;
+		if(joinCounter == true){
+			return;
+		}
+		if(this.status == statusFinished){
+			return;
+		}
+		yield();
+		joinCounter = true;
+	}
+	/*public int joinCounter = 0; //Uses this counter to show if current thread has already called join
 	public void join() {
 		Lib.debug(dbgThread, "Joining to thread: " + toString()); //link the thread is not for the current thread
 		boolean intStatus = Machine.interrupt().disable();
@@ -299,7 +312,7 @@ public class KThread {
 		//currentThread.sleep(); //put the current thread to sleep
 		yield();	//Now you yield the current thread running for the thread that called join.
 		Machine.interrupt().restore(intStatus);
-	}
+	}*/
 
 	/**public void join(){
 		/*Check if the caller has already called this function
