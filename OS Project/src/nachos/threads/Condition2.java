@@ -82,7 +82,6 @@ public class Condition2 {
 	//private static KThread currentThread = null;
 	//private LinkedList<KThread> waitQueue = new LinkedList<KThread>(); // only going to use one queue see if this works
 	private ThreadQueue waitQueue2 = ThreadedKernel.scheduler.newThreadQueue(false); // make a new wait queue so the thread doesn't loose all its data
-	//private ThreadQueue waitQueue = ThreadedKernel.scheduler.newThreadQueue(false);
 																				
 	private Lock conditionLock;
 }
