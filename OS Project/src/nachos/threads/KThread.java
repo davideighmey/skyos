@@ -270,8 +270,6 @@ public class KThread {
 	}
 
 
-
-
 	/**
 	 * Waits for this thread to finish. If this thread is already finished,
 	 * return immediately. This method must only be called once; the second
@@ -281,51 +279,23 @@ public class KThread {
 
 	public void join() {
 		Lib.debug(dbgThread, "Joining to thread: " + toString()); //link the thread is not for the current thread
-		Lib.assertTrue(this != currentThread);
-		boolean joinCounter = false;
+		Lib.assertTrue(this != currentThread); //Making sure that the two threads are different
+		boolean joinCounter = false; //Our counter for determining if the thread that called join() before.
 		if(joinCounter == true){
 			return;
 		}
-		if(this.status == statusFinished){
+		if(this.status == statusFinished){ //Check if the thread that called join() has finished
 			return;
 		}
-		yield();
+		Machine.interrupt().disable();
+		/*yield() will allow the currentThread to be put onto the priority scheduler's ready queue
+		 * which than it will than run the next thread determined by the priority scheduler.
+		 * The thread that called join() will be ran which was determined by the priority scheduler.  
+		 */
+		yield(); //Now you yield(stop) the current thread than run the thread that called join.
 		joinCounter = true;
+		Machine.interrupt().enable();
 	}
-	/*public int joinCounter = 0; //Uses this counter to show if current thread has already called join
-	public void join() {
-		Lib.debug(dbgThread, "Joining to thread: " + toString()); //link the thread is not for the current thread
-		boolean intStatus = Machine.interrupt().disable();
-		Lib.assertTrue(this != currentThread);
-		if (joinCounter == 1) { 	//check to see if the caller has already called this function
-			return; 			
-		}
-		if((this.status == statusFinished) || (this.status == statusBlocked) || (this.status == statusNew)){ //Must have the thread calling join, to be running.
-			return;
-		}
-		if(currentThread.status != statusRunning){
-			//readyQueue.waitForAccess(this);
-			return;
-		}
-		joinCounter = 1; //set counter = 1 to show that join has already been called
-		readyQueue.waitForAccess(this); //"this" holds the current thread that called join, so you want to put that on the ready queue, so that it may be run
-		//currentThread.sleep(); //put the current thread to sleep
-		yield();	//Now you yield the current thread running for the thread that called join.
-		Machine.interrupt().restore(intStatus);
-	}*/
-
-	/**public void join(){
-		/*Check if the caller has already called this function
-		if( sourcethreadcounter == 1) {
-			end, resume thread. 
-		}  // password Km8Cg8fr4aV6
-		else{
-			sourcethreadcounter = 1;
-			pause source thread;
-			wait until child thread finishes. 
-}
-	 * 
-	 */
 
 	/**
 	 * Create the idle thread. Whenever there are no threads ready to be run,
