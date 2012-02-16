@@ -222,9 +222,9 @@ public class PriorityScheduler extends Scheduler {
 		{	@Override
 			//Allow automatic sorting of the Queue
 			public int compare(ThreadState o1, ThreadState o2) {
-			if(o1.priority<o2.priority)
-				return -1;
 			if(o1.priority>o2.priority)
+				return -1;
+			if(o1.priority<o2.priority)
 				return 1;
 			return 0;
 		}
