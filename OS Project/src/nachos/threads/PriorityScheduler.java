@@ -160,14 +160,14 @@ public class PriorityScheduler extends Scheduler {
 					buffer.waitPQueue.offer(waitPQueue.poll());
 					count++;
 				}
-				System.out.println("Count(Started): "+count);
+				//System.out.println("Count(Started): "+count);
 				assert(peek==waitPQueue.peek());
 				KThread returnThread = waitPQueue.poll().thread;
 				while(buffer.waitPQueue.peek()!=null){
 					waitPQueue.offer(buffer.waitPQueue.poll());
 					count--;
 				}
-				System.out.println("Count(Done): "+count);
+				//System.out.println("Count(Done): "+count);
 				getThreadState(returnThread).timeINqueue = 0;
 				return returnThread;
 			}
