@@ -157,15 +157,14 @@ public class PriorityScheduler extends Scheduler {
 				buffer = new PriorityQueue(this.transferPriority);
 				int count = 0;									//headache saver
 				while(peek!=waitPQueue.peek()){
-					buffer.waitPQueue.add(waitPQueue.poll());
+					buffer.waitPQueue.offer(waitPQueue.poll());
 					count++;
 				}
 				System.out.println("Count(Started): "+count);
 				assert(peek==waitPQueue.peek());
 				KThread returnThread = waitPQueue.poll().thread;
-				count--;
 				while(buffer.waitPQueue.peek()!=null){
-					waitPQueue.add(buffer.waitPQueue.poll());
+					waitPQueue.offer(buffer.waitPQueue.poll());
 					count--;
 				}
 				System.out.println("Count(Done): "+count);
@@ -307,7 +306,7 @@ public class PriorityScheduler extends Scheduler {
 			//waitPQueue.add(this.thread);
 			ready = waitQueue;
 			//getThreadState(thread).getEffectivePriority();
-			waitQueue.waitPQueue.add(getThreadState(thread));
+			waitQueue.waitPQueue.offer(getThreadState(thread));
 			//waitPQueue.add(this);
 			if(waitQueue.transferPriority){}//if this is true we have to transfer priority
 		}
