@@ -175,11 +175,10 @@ public class PriorityScheduler extends Scheduler {
 			else{													//nothing special happen so, just remove the highest priority
 				waitPQueue.peek();
 				ThreadState returnThread = waitPQueue.poll();		
-				returnThread.timeINqueue = Machine.timer().getTime();	//time in queue has been reseted
 				if(returnThread==null)
 					return null;
-				else
-					return returnThread.thread;}
+				returnThread.timeINqueue = Machine.timer().getTime();	//time in queue has been reseted
+				return returnThread.thread;}
 		}
 
 		/**
@@ -224,9 +223,9 @@ public class PriorityScheduler extends Scheduler {
 		{	@Override
 			//Allow automatic sorting of the Queue
 			public int compare(ThreadState o1, ThreadState o2) {
-			if(o1.priority>o2.priority)						
+			if(o1.effective>o2.effective)						
 				return -1;
-			if(o1.priority<o2.priority)
+			if(o1.effective<o2.effective)
 				return 1;
 			return 0;
 		}
@@ -288,7 +287,7 @@ public class PriorityScheduler extends Scheduler {
 				return;
 
 			this.priority = priority;
-			this.effective = getEffectivePriority();
+			this.effective = priority;
 			// implement me
 		}
 
@@ -320,7 +319,8 @@ public class PriorityScheduler extends Scheduler {
 			}
 		}
 		public void compute_donation(PriorityQueue waitQueue){
-
+			Donation donor = new Donation(waitQueue,this, getThreadState(KThread.currentThread()));
+			listDonate.add(donor);
 
 		}
 		/**
@@ -407,12 +407,20 @@ public class PriorityScheduler extends Scheduler {
 	public class Donation{
 		public int effective;
 		public ThreadState donateTo;
+		public ThreadState donateFrom;
 		public int orginalPriority;
 		public ThreadState threadInQuestion;
-		public void Donation(ThreadState k){
-			this.effective = k.priority;
-
-
+		public Donation(PriorityQueue waitQueue, ThreadState donor, ThreadState donee){
+			if(KThread.currentThread()==donee.thread){	//this donee have a lock
+				this.orginalPriority = donee.priority;	//just in case keep the orginal
+				this.donateTo = donee;					//keep track of who is the donee
+				this.donateFrom = donor;				//keep track of who is the donor
+				donee.effective = donor.effective;		//set the priority of the donee 
+				threadInQuestion = donee;				//too lazy to change different parts of my code(same as donee)
+			}
 		}
+		public void removeDonation(){
+			threadInQuestion.effective = orginalPriority;	//set the priority to its orginal
+		}	
 	}
 }
