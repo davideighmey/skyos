@@ -187,11 +187,10 @@ public class PriorityScheduler extends Scheduler {
 		 */
 		protected ThreadState pickNextThread() {
 			// implement me
-
 			KThread hold = waitPQueue.peek();
 			for(KThread k:waitPQueue){
 				if((getThreadState(hold).priority==getThreadState(k).priority)//Check of there is other same priority thread
-						&&(getThreadState(hold).timeINqueue < getThreadState(k).timeINqueue)){ //If there is one, switch to the longest waiting thread
+						&&((Machine.timer().getTime()-getThreadState(hold).timeINqueue) >(Machine.timer().getTime() - getThreadState(k).timeINqueue))){ //If there is one, switch to the longest waiting thread
 					hold = k;
 				}
 			}
@@ -326,6 +325,8 @@ public class PriorityScheduler extends Scheduler {
 			}
 			//The thread now has a lock
 			waitQueue.LockHolder = this;
+			if(waitQueue==ready)
+				ready=null;
 			//Lib.assertTrue(waitPQueue.isEmpty());
 		}	
 		/** The thread with which this object is associated. */	
@@ -385,7 +386,7 @@ public class PriorityScheduler extends Scheduler {
 			}
 
 		});
-		testMe(t1,t2,3,3);
+		testMe(t1,t2,2,8);
 
 	}
 
