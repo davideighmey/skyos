@@ -296,7 +296,8 @@ public class KThread {
 		}
 		joinCounter = 1; //set counter = 1 to show that join has already been called
 		readyQueue.waitForAccess(this); //"this" holds the current thread that called join, so you want to put that on the ready queue, so that it may be run
-		currentThread.sleep(); 	//put the current thread to sleep
+		//currentThread.sleep(); //put the current thread to sleep
+		yield();	//Now you yield the current thread running for the thread that called join.
 		Machine.interrupt().restore(intStatus);
 	}
 
