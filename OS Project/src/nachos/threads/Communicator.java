@@ -19,6 +19,7 @@ public class Communicator {
 	Condition speakArrived;
 	
 	int toTransfer; // holds the word that needs to be transfered
+	//Queue<Integer>words;
 	//boolean toGet; // is there something to get?
 	boolean speaker; // is there a speaker?
 	boolean listener;// is there a listener?
@@ -48,15 +49,17 @@ public class Communicator {
     public void speak(int word)
     {
     	this.mutex.acquire(); // get the lock
-    	this.speaker = true;
-    	while(listener == false) // while there is nothing to get
+    	this.speaker = true; // there is now a speaker
+    	while(this.listener == false) // while there is nothing to get
     	{
     		this.speakArrived.sleep(); // put the thread to sleep
     	}
     	this.toTransfer = word; // store the word to a global variable
+    	//this.words.add(word); // add word to transfer to the queue
     	//toGet = false; // reset from true back to false
     	this.listenerArrived.wakeAll(); // wake all before releasing
-    	//this.speaker = false; // reset to no speaker
+    	//this.speaker = false; // reset to no speaker -- broke
+    	this.listener = false;
     	this.mutex.release(); // now release the lock
     }
 
@@ -69,17 +72,19 @@ public class Communicator {
     public int listen() 
     {
     	this.mutex.acquire(); // get the lock
-    	this.listener = true;
-    	while(speaker == false)
+    	this.listener = true; // there is now a listener
+    	while(this.speaker == false) // if no speaker wait for the speaker
     	{
     		this.listenerArrived.sleep(); // put to sleep while waiting
     	}
     	//this.toGet = false;
     	this.speakArrived.wakeAll(); // wake all or just one ?
-    	//this.listener = false; // reset to no listener
+    	//this.listener = false; // reset to no listener -- this broke it
+    	this.speaker = false;
     	this.mutex.release(); // release lock before returning the word
     	
-    	return (this.toTransfer);    	
+    	return (this.toTransfer);
+    	//return (this.words.poll());
     }
 
 }
