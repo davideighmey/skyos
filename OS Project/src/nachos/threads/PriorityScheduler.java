@@ -335,7 +335,7 @@ public class PriorityScheduler extends Scheduler {
 		public void compute_donation(PriorityQueue waitQueue){
 			Donation donor = new Donation(waitQueue,this, getThreadState(KThread.currentThread()));
 			if(!listDonate.contains(donor))
-			listDonate.add(donor);
+				listDonate.add(donor);
 			else{
 				Donation holder =listDonate.get(listDonate.indexOf(donor));
 				holder.setDonation();
@@ -378,50 +378,82 @@ public class PriorityScheduler extends Scheduler {
 	//private Queue<KThread> waitPQueue = new PriorityQueue<KThread>(1, new PriorityComparator());
 
 	private static final char dbgThread = 't';
-	public static void testMe(KThread testThread1, KThread testThread2, int priority1, int priority2){
+	public static void testMe(LinkedList<KThread> list,int priority1, int priority2,int priority3){
 
 		boolean int_state = Machine.interrupt().disable();
-		ThreadedKernel.scheduler.setPriority(testThread1, priority1);
-		ThreadedKernel.scheduler.setPriority(testThread2, priority2);
+		ThreadedKernel.scheduler.setPriority(list.get(0), priority1);
+		ThreadedKernel.scheduler.setPriority(list.get(1), priority2);
+		if(priority3!=0)
+			ThreadedKernel.scheduler.setPriority(list.get(2), priority3);	
 		Machine.interrupt().restore(int_state);
 
-		testThread1.setName("test1").fork();
-		testThread2.setName("test2").fork();
-		testThread1.join();
-		testThread2.join();
+		list.get(0).setName("test1").fork();
+		list.get(1).setName("test2").fork();
+		if(priority3 != 0)
+			list.get(2).setName("test3").fork();
+		list.get(0).join();
+		list.get(1).join();
+		if(priority3 != 0)
+			list.get(2).join();
 	}
 
 	/**
 	 * Test if this module is working.
 	 */
+	public static LinkedList<KThread> createThread(int number, int special){
+		final Lock lock = new Lock();
+		LinkedList<KThread> list = new LinkedList<KThread>();
+		for(int i = 0; i<number;i++){				//creates a specific number of test thread
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					System.out.println(KThread.currentThread().getName()+" has started");
+					for(int i = 0; i<5; i++){
+						System.out.println(KThread.currentThread().getName()+" said: IM RUNNING!");
+						KThread.yield();
+					}//when exited it is finished
+					System.out.println(KThread.currentThread().getName()+" said: hi im finished ");
+				}
 
+			}));
+		}
+		if(special!=0){
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					lock.acquire();
+					System.out.println( KThread.currentThread().getName() + " active" );
+					lock.release();
+				}
+			}));
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					lock.acquire();
+					boolean int_state = Machine.interrupt().disable();
+					ThreadedKernel.scheduler.setPriority( 2 );
+					Machine.interrupt().restore( int_state );
+					KThread.yield();
+					// t1.acquire() will now have to realise that t3 owns the lock it wants to obtain
+					// so program execution will continue here.
+					System.out.println( KThread.currentThread().getName() + " active ('a' wants its lock back so we are here)" );
+					lock.release();
+					KThread.yield();
+					lock.acquire();
+					System.out.println( KThread.currentThread().getName() + " active-again (should be after 'a' and 'b' done)" );
+					lock.release();
+				}
+			}));
+
+
+		}
+
+		return list;
+	}
 	public static void selfTest(){
 		Lib.debug(dbgThread, "Enter PriorityQueue.selfTest");
 		//Created two threads with its runnable being printing things.
-		KThread t1 = new KThread(new Runnable() {
-			public void run() {
-				System.out.println(KThread.currentThread().getName()+" has started");
-				for(int i = 0; i<5; i++){
-					System.out.println(KThread.currentThread().getName()+" said: IM RUNNING!");
-					KThread.yield();
-				}//when exited it is finished
-				System.out.println(KThread.currentThread().getName()+" said: hi im finished ");
-			}
-
-		});
-		KThread  t2 = new KThread(new Runnable() {
-			public void run() {
-				System.out.println(KThread.currentThread().getName()+" has started");
-				for(int i = 0; i<5; i++){
-					System.out.println(KThread.currentThread().getName()+" said: IM RUNNING!");
-					KThread.yield();
-				}//when exited it is finished
-				System.out.println(KThread.currentThread().getName()+"said: hi im finished ");
-			}
-
-		});
-		testMe(t1,t2,2,7);
-
+		LinkedList<KThread> threadList= createThread(2,0); 	//creates two regular thread and run it
+		testMe(threadList,2,7,0);
+		threadList= createThread(1,1);						//creates three thread-1 regular and 2 special
+		testMe(threadList,6,4,7);
 	}
 	public class Donation{
 		public int effective;
