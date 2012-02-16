@@ -25,8 +25,8 @@ public class Communicator {
 	Condition speaking;	// is there a speaker speaking??
 	Condition listening;// is there a listener to listening??
 	int toTransfer; // to store the word that should be transfered	
-	boolean lockSet = false;// has the lock been set by speak?
-	
+	boolean lockSet = false;// has the lock been set by speak? Is there something to get from.
+	boolean something; // is there something to get?
 	
     public Communicator() {
     	mutex = new Lock();
@@ -35,6 +35,7 @@ public class Communicator {
     	// initialize condition variables that were created
     	this.speaking = new Condition(this.mutex);
     	this.listening = new Condition(this.mutex);
+    	this.something = false;
     	
     }
 
@@ -51,13 +52,14 @@ public class Communicator {
     public void speak(int word)
     {
     	this.mutex.acquire(); // have the current thread get the lock
-    	while(lockSet == false)
+    	//while(lockSet == false)
+    	while(something == false)
     	{
     		this.speaking.sleep(); // set the current thread to sleep
     	}
     	this.toTransfer = word; // store the word to transfer
     	this.lockSet = false; // 
-    	this.listening.wake(); // wake or wakeAll ?
+    	this.listening.wakeAll(); // wake or wakeAll ?
     	this.mutex.release(); // release the lock 
     	
     	/*
@@ -85,13 +87,16 @@ public class Communicator {
     {
     	//int word; // the transfered word that will be returned
     	this.mutex.acquire(); // have this thread get the lock
-    	while(lockSet == true) // 
+    	//while(lockSet == true) // 
+    	while(something == true)
     	{
     		this.listening.sleep(); // have it wait for a speaker --sleep
     	}
     	//word = this.toTransfer; // transfered word
-    	this.lockSet = false;
-    	this.speaking.wake(); // wake or wakeAll??
+    	//this.lockSet = false;
+    	
+    	this.something = false;
+    	this.speaking.wakeAll(); // wake or wakeAll??
     	this.mutex.release(); // release the lock before returning word
     	return (this.toTransfer);
     	/*
