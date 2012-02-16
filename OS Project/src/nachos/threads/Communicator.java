@@ -56,7 +56,7 @@ public class Communicator {
     	this.toTransfer = word; // store the word to a global variable
     	//toGet = false; // reset from true back to false
     	this.listenerArrived.wakeAll(); // wake all before releasing
-    	this.speaker = false; // reset to no speaker
+    	//this.speaker = false; // reset to no speaker
     	this.mutex.release(); // now release the lock
     }
 
@@ -76,7 +76,7 @@ public class Communicator {
     	}
     	//this.toGet = false;
     	this.speakArrived.wakeAll(); // wake all or just one ?
-    	this.listener = false; // reset to no listener
+    	//this.listener = false; // reset to no listener
     	this.mutex.release(); // release lock before returning the word
     	
     	return (this.toTransfer);    	
