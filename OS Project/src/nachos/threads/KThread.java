@@ -280,20 +280,19 @@ public class KThread {
 	 */
 
 	public int joinCounter = 0; //Uses this counter to show if current thread has already called join
-	// waiting for thread that links the work completed. completion can only be called once before
 	public void join() {
 		Lib.debug(dbgThread, "Joining to thread: " + toString()); //link the thread is not for the current thread
 		boolean intStatus = Machine.interrupt().disable();
 		Lib.assertTrue(this != currentThread);
-		if (joinCounter == 1){ 	//check to see if the caller has already called this function
+		if (joinCounter == 1) { 	//check to see if the caller has already called this function
 			return; 			
 		}
-		if(this.status == statusFinished || this.status == statusBlocked){ //Must have the thread calling join, to be running.
+		if((this.status == statusFinished) || (this.status == statusBlocked) || (this.status == statusNew)){ //Must have the thread calling join, to be running.
 			return;
 		}
-		joinCounter = 1; 		// its been called
+		joinCounter = 1; //set counter = 1 to show that join has already been called
 		readyQueue.waitForAccess(this); //"this" holds the current thread that called join, so you want to put that on the ready queue, so that it may be run
-		currentThread.sleep(); 	//put the  current thread to sleep
+		currentThread.sleep(); 	//put the current thread to sleep
 		Machine.interrupt().restore(intStatus);
 	}
 
@@ -475,6 +474,4 @@ public class KThread {
 	private static KThread currentThread = null;
 	private static KThread toBeDestroyed = null;
 	private static KThread idleThread = null;
-	// private static ThreadQueue joinQueue = null;  // creates join queue11
-
 }
