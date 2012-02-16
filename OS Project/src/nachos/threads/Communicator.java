@@ -68,7 +68,7 @@ public class Communicator {
     		this.listenerArrived.sleep(); // put to sleep while waiting
     	}
     	this.toGet = false;
-    	this.speakArrived.wake(); // wake all or just one ?
+    	this.speakArrived.wakeAll(); // wake all or just one ?
     	this.mutex.release(); // release lock before returning the word
     	
     	return (this.toTransfer);    	
