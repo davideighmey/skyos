@@ -290,8 +290,8 @@ public class KThread {
 		if((this.status == statusFinished) || (this.status == statusBlocked) || (this.status == statusNew)){ //Must have the thread calling join, to be running.
 			return;
 		}
-		if(this.status == statusReady){
-			readyQueue.waitForAccess(this);
+		if(currentThread.status != statusRunning){
+			//readyQueue.waitForAccess(this);
 			return;
 		}
 		joinCounter = 1; //set counter = 1 to show that join has already been called
