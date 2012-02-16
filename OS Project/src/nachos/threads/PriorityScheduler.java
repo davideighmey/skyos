@@ -153,16 +153,16 @@ public class PriorityScheduler extends Scheduler {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			PriorityQueue buffer = null;
 			ThreadState peek = pickNextThread();				//peek at the nextThread and return a thread with a highest priority and longest wait time
-			if(peek!=getThreadState(waitPQueue.peek())){		//not the same
+			if(peek!=waitPQueue.peek()){		//not the same
 				buffer = new PriorityQueue(this.transferPriority);
 				int count = 0;									//headache saver
-				while(peek!=getThreadState(waitPQueue.peek())){
+				while(peek!=waitPQueue.peek()){
 					buffer.waitPQueue.add(waitPQueue.poll());
 					count++;
 				}
 				System.out.println("Count(Started): "+count);
-				assert(peek==getThreadState(waitPQueue.peek()));
-				KThread returnThread = waitPQueue.poll();
+				assert(peek==waitPQueue.peek());
+				KThread returnThread = waitPQueue.poll().thread;
 				count--;
 				while(buffer.waitPQueue.peek()!=null){
 					waitPQueue.add(buffer.waitPQueue.poll());
@@ -174,8 +174,8 @@ public class PriorityScheduler extends Scheduler {
 			}
 			// return the highest priority and removes it, else return null
 			else{
-				getThreadState(waitPQueue.peek()).timeINqueue = 0;
-				return waitPQueue.poll();}
+				waitPQueue.peek();
+				return waitPQueue.poll().thread;}
 		}
 
 		/**
@@ -187,16 +187,16 @@ public class PriorityScheduler extends Scheduler {
 		 */
 		protected ThreadState pickNextThread() {
 			// implement me
-			KThread hold = waitPQueue.peek();
-			for(KThread k:waitPQueue){
-				if((getThreadState(hold).priority==getThreadState(k).priority)//Check of there is other same priority thread
-						&&((Machine.timer().getTime()-getThreadState(hold).timeINqueue) >(Machine.timer().getTime() - getThreadState(k).timeINqueue))){ //If there is one, switch to the longest waiting thread
+			ThreadState hold = waitPQueue.peek();
+			for(ThreadState k:waitPQueue){
+				if((hold.priority==k.priority)//Check of there is other same priority thread
+						&&((Machine.timer().getTime()-hold.timeINqueue) >(Machine.timer().getTime() - k.timeINqueue))){ //If there is one, switch to the longest waiting thread
 					hold = k;
 				}
 			}
 
 
-			return getThreadState(hold);
+			return hold;
 		}
 
 		public void print() {
@@ -214,14 +214,14 @@ public class PriorityScheduler extends Scheduler {
 		 */
 		protected ThreadState LockHolder;
 
-		private Queue<KThread> waitPQueue = new java.util.PriorityQueue<KThread>(1, new PriorityComparator());
-		public class PriorityComparator implements Comparator<KThread>
+		private Queue<ThreadState> waitPQueue = new java.util.PriorityQueue<ThreadState>(1, new PriorityComparator());
+		public class PriorityComparator implements Comparator<ThreadState>
 		{	@Override
 			//Allow automatic sorting of the Queue
-			public int compare(KThread o1, KThread o2) {
-			if(getThreadState(o1).priority<getThreadState(o2).priority)
+			public int compare(ThreadState o1, ThreadState o2) {
+			if(o1.priority<o2.priority)
 				return -1;
-			if(getThreadState(o1).priority>getThreadState(o2).priority)
+			if(o1.priority>o2.priority)
 				return 1;
 			return 0;
 		}
@@ -297,11 +297,13 @@ public class PriorityScheduler extends Scheduler {
 		public void waitForAccess(PriorityQueue waitQueue) {
 			// implement me
 			Lib.assertTrue(Machine.interrupt().disabled());
-			getThreadState(this.thread).timeINqueue = Machine.timer().getTime();	//store the time since nachos has started into the thread. This will keep track of how long it has been in the queue.
+			if(waitQueue==null)
+				return;
+			getThreadState(thread).timeINqueue = Machine.timer().getTime();	//store the time since nachos has started into the thread. This will keep track of how long it has been in the queue.
 			//waitPQueue.add(this.thread);
 			ready = waitQueue;
-			getEffectivePriority();
-			waitQueue.waitPQueue.add((KThread) ready.waitPQueue);
+			//getThreadState(thread).getEffectivePriority();
+			waitQueue.waitPQueue.add(this);
 			//waitPQueue.add(this);
 			if(waitQueue.transferPriority){}//if this is true we have to transfer priority
 		}
@@ -320,8 +322,8 @@ public class PriorityScheduler extends Scheduler {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			assert(waitQueue!=null);
 			//waitPQueue.equals(this);
-			if(waitQueue.waitPQueue.equals(thread)){//check if the thread is remove, if it is not, remove it
-				waitQueue.waitPQueue.remove(thread);
+			if(waitQueue.waitPQueue.equals(ready)){//check if the thread is removed, if it is not, remove it
+				waitQueue.waitPQueue.remove(ready);
 			}
 			//The thread now has a lock
 			waitQueue.LockHolder = this;
@@ -386,7 +388,7 @@ public class PriorityScheduler extends Scheduler {
 			}
 
 		});
-		testMe(t1,t2,2,8);
+		testMe(t1,t2,2,7);
 
 	}
 
