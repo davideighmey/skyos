@@ -54,7 +54,7 @@ public class Condition2 {
 		//if (!waitQueue.isEmpty()){ //check and see if the thread queue is not empty 
 			
 			KThread thread = waitQueue2.nextThread(); // use the semaphore implementation readying the first thread on queue
-													  // see semaphore.java v class
+													  // see semaphore.java v function
 			if (thread != null) {  // make sure there is a thread
 			    thread.ready(); // get it ready
 			}
