@@ -38,9 +38,9 @@ public class Condition2 {
 		conditionLock.release(); // releasing the lock
 		boolean intStatus = Machine.interrupt().disable();//the interrupt disable(), to deal with thread //Don't need I think...
 
-		waitQueue2.waitForAccess(KThread.currentThread()); //the thread queue inside current thread mention 
-		KThread.currentThread().sleep();//puts current thread to sleep
-
+		waitQueue2.waitForAccess(KThread.currentThread()); //the thread queue inside current thread 
+		currentThread.sleep();//puts current thread to sleep
+		
 		Machine.interrupt().restore(intStatus); //Interrupt enabled & restore to last status //Don't need I think...
 
 		conditionLock.acquire(); //Acquire lock when it wakes up
@@ -56,9 +56,9 @@ public class Condition2 {
 				//Machine.interrupt().disable();
 			//}
 			boolean intStatus = Machine.interrupt().disable(); // the interrupted disable, to prevent the thread is changed
-			KThread thread = waitQueue2.nextThread();
-			if (thread != null) {
-			    thread.ready();}
+	        waitQueue2.waitForAccess(KThread.currentThread()); //the thread queue inside current thread m
+			if (waitQueue != null) {
+			    currentThread.ready();}
 			waitQueue.removeFirst(); //Grab the first sleeping thread on the list (FIFO Queue)
 			Machine.interrupt().restore(intStatus); //enable the interrupt & restores
 			
@@ -77,7 +77,7 @@ public class Condition2 {
 			wake(); // pop each one
 		} 
 	}
-	// private static KThread currentThread = null;
+	private static KThread currentThread = null;
 	private LinkedList<KThread> waitQueue = new LinkedList<KThread>();
 	private ThreadQueue waitQueue2 = ThreadedKernel.scheduler.newThreadQueue(false); // make a new wait queue so the thread doesn't loose all its data
 																					
