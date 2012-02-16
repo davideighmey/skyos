@@ -318,18 +318,15 @@ public class PriorityScheduler extends Scheduler {
 		 * @see	nachos.threads.ThreadQueue#waitForAccess
 		 */
 		public void waitForAccess(PriorityQueue waitQueue) {
-			// implement me
 			Lib.assertTrue(Machine.interrupt().disabled());
-			if(waitQueue==null)											//incase that it is null, do nothing
+			if(waitQueue==null)											//in the case that it is null, do nothing
 				return;
 			this.timeINqueue = Machine.timer().getTime();				//this will keep track on how long it has been in the queue.
-			//waitPQueue.add(this.thread);
-			waitingResource = waitQueue;											//this is ready to run
-			//getThreadState(thread).getEffectivePriority();
+			//waitingResource = waitQueue;								//this is queue is using a resource
 			waitQueue.waitPQueue.offer(this);							//add this to queue
-			//waitPQueue.add(this);
 			if(waitQueue.transferPriority){								//if this is true we have to transfer priority
 				compute_donation(waitQueue,this);
+			
 			}
 		}
 		public void compute_donation(PriorityQueue waitQueue, ThreadState threadDonor){
@@ -359,9 +356,9 @@ public class PriorityScheduler extends Scheduler {
 			//waitPQueue.equals(this);
 			if(waitQueue.waitPQueue.equals(waitQueue))					//check if the thread is removed, if not remove it
 				waitQueue.waitPQueue.remove(waitQueue);															
-			waitQueue.LockHolder = this;								//The thread now has a lock
-			if(waitQueue==waitingResource)										//reset the ready variable
-				waitingResource=null;
+			waitQueue.LockHolder = this;								//The thread now has a lock on a resource 
+			if(waitQueue==waitingResource)								//if the current queue is waiting on a resource
+				waitingResource=null;									//Stop
 			//Lib.assertTrue(waitPQueue.isEmpty());
 		}	
 		/** The thread with which this object is associated. */	
