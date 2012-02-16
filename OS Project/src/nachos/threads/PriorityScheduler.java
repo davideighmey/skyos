@@ -324,15 +324,16 @@ public class PriorityScheduler extends Scheduler {
 				return;
 			this.timeINqueue = Machine.timer().getTime();				//this will keep track on how long it has been in the queue.
 			//waitPQueue.add(this.thread);
-			ready = waitQueue;											//this is ready to run
+			waitingResource = waitQueue;											//this is ready to run
 			//getThreadState(thread).getEffectivePriority();
 			waitQueue.waitPQueue.offer(this);							//add this to queue
 			//waitPQueue.add(this);
 			if(waitQueue.transferPriority){								//if this is true we have to transfer priority
-				compute_donation(waitQueue);
+				compute_donation(waitQueue,this);
 			}
 		}
-		public void compute_donation(PriorityQueue waitQueue){
+		public void compute_donation(PriorityQueue waitQueue, ThreadState threadDonor){
+			if(waitQueue.LockHolder!=null){}
 			Donation donor = new Donation(waitQueue,this, getThreadState(KThread.currentThread()));
 			if(!listDonate.contains(donor))
 				listDonate.add(donor);
@@ -359,8 +360,8 @@ public class PriorityScheduler extends Scheduler {
 			if(waitQueue.waitPQueue.equals(waitQueue))					//check if the thread is removed, if not remove it
 				waitQueue.waitPQueue.remove(waitQueue);															
 			waitQueue.LockHolder = this;								//The thread now has a lock
-			if(waitQueue==ready)										//since the current thread is ready, reset the ready variable
-				ready=null;
+			if(waitQueue==waitingResource)										//reset the ready variable
+				waitingResource=null;
 			//Lib.assertTrue(waitPQueue.isEmpty());
 		}	
 		/** The thread with which this object is associated. */	
@@ -373,7 +374,7 @@ public class PriorityScheduler extends Scheduler {
 		protected long timeINqueue;
 	}
 	/** The queue where threads are waiting on  */
-	private PriorityQueue ready;
+	private PriorityQueue waitingResource;
 	public LinkedList<Donation> listDonate = new LinkedList<Donation>();
 	//private Queue<KThread> waitPQueue = new PriorityQueue<KThread>(1, new PriorityComparator());
 
@@ -387,10 +388,10 @@ public class PriorityScheduler extends Scheduler {
 			ThreadedKernel.scheduler.setPriority(list.get(2), priority3);	
 		Machine.interrupt().restore(int_state);
 
-		list.get(0).setName("test1").fork();
-		list.get(1).setName("test2").fork();
+		list.get(0).setName("Thread A").fork();
+		list.get(1).setName("Thread B").fork();
 		if(priority3 != 0)
-			list.get(2).setName("test3").fork();
+			list.get(2).setName("Thread C").fork();
 		list.get(0).join();
 		list.get(1).join();
 		if(priority3 != 0)
@@ -450,8 +451,9 @@ public class PriorityScheduler extends Scheduler {
 	public static void selfTest(){
 		Lib.debug(dbgThread, "Enter PriorityQueue.selfTest");
 		//Created two threads with its runnable being printing things.
-		LinkedList<KThread> threadList= createThread(2,0); 	//creates two regular thread and run it
-		testMe(threadList,2,7,0);
+		LinkedList<KThread> threadList;
+		//threadList = createThread(2,0); 	//creates two regular thread and run it
+		//testMe(threadList,2,7,0);
 		threadList= createThread(1,1);						//creates three thread-1 regular and 2 special
 		testMe(threadList,6,4,7);
 	}
