@@ -190,7 +190,7 @@ public class PriorityScheduler extends Scheduler {
 
 			KThread hold = waitPQueue.peek();
 			for(KThread k:waitPQueue){
-				if((getThreadState(hold).effective==getThreadState(k).effective)//Check of there is other same priority thread
+				if((getThreadState(hold).priority==getThreadState(k).priority)//Check of there is other same priority thread
 						&&(getThreadState(hold).timeINqueue < getThreadState(k).timeINqueue)){ //If there is one, switch to the longest waiting thread
 					hold = k;
 				}
@@ -301,6 +301,7 @@ public class PriorityScheduler extends Scheduler {
 			getThreadState(this.thread).timeINqueue = Machine.timer().getTime();	//store the time since nachos has started into the thread. This will keep track of how long it has been in the queue.
 			//waitPQueue.add(this.thread);
 			ready = waitQueue;
+			getEffectivePriority();
 			waitQueue.waitPQueue.add(thread);
 			//waitPQueue.add(this);
 			if(waitQueue.transferPriority){}//if this is true we have to transfer priority
@@ -338,6 +339,7 @@ public class PriorityScheduler extends Scheduler {
 	}
 	/** The queue where threads are waiting on  */
 	private PriorityQueue ready;
+	
 	//private Queue<KThread> waitPQueue = new PriorityQueue<KThread>(1, new PriorityComparator());
 
 	private static final char dbgThread = 't';
