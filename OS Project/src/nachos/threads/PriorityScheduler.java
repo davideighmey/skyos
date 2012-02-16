@@ -170,6 +170,20 @@ public class PriorityScheduler extends Scheduler {
 				}
 				//System.out.println("Count(Done): "+count);
 				getThreadState(returnThread).timeINqueue = Machine.timer().getTime();		//time in queue has been reseted
+				if(!listDonate.isEmpty()){
+					for(Donation k: listDonate){
+						if(k.donateFrom.thread==returnThread){
+							k.removeDonation();
+						} 
+					}
+				}
+				if(!listDonate.isEmpty()){
+					for(Donation k: listDonate){
+						if(k.donateFrom.thread==returnThread){
+							k.removeDonation();
+						} 
+					}
+				}
 				return returnThread;
 			}
 			else{													//nothing special happen so, just remove the highest priority
@@ -320,7 +334,12 @@ public class PriorityScheduler extends Scheduler {
 		}
 		public void compute_donation(PriorityQueue waitQueue){
 			Donation donor = new Donation(waitQueue,this, getThreadState(KThread.currentThread()));
+			if(!listDonate.contains(donor))
 			listDonate.add(donor);
+			else{
+				Donation holder =listDonate.get(listDonate.indexOf(donor));
+				holder.setDonation();
+			}
 
 		}
 		/**
@@ -406,21 +425,25 @@ public class PriorityScheduler extends Scheduler {
 	}
 	public class Donation{
 		public int effective;
-		public ThreadState donateTo;
 		public ThreadState donateFrom;
 		public int orginalPriority;
 		public ThreadState threadInQuestion;
+		PriorityQueue queueHolder;
 		public Donation(PriorityQueue waitQueue, ThreadState donor, ThreadState donee){
 			if(KThread.currentThread()==donee.thread){	//this donee have a lock
+				this.queueHolder = waitQueue;
 				this.orginalPriority = donee.priority;	//just in case keep the orginal
-				this.donateTo = donee;					//keep track of who is the donee
+				this.threadInQuestion = donee;			//keep track of who is the donee
 				this.donateFrom = donor;				//keep track of who is the donor
 				donee.effective = donor.effective;		//set the priority of the donee 
-				threadInQuestion = donee;				//too lazy to change different parts of my code(same as donee)
 			}
 		}
+		public void setDonation(){
+			this.orginalPriority = threadInQuestion.priority;	//save the original for whatever reason
+			threadInQuestion.effective = donateFrom.effective;	//set the donation
+		}
 		public void removeDonation(){
-			threadInQuestion.effective = orginalPriority;	//set the priority to its orginal
+			threadInQuestion.effective = orginalPriority;	//set the priority to its original
 		}	
 	}
 }
