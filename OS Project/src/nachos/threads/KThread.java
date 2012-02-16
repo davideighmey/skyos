@@ -282,8 +282,8 @@ public class KThread {
     public int joinCounter = 0; // create join counter 
     // waiting for thread that links the work completed. completion can only be called once before
     public void join() {
-    	boolean intStatus = Machine.interrupt().disable();
-    	
+    
+   // boolean intStatus = Machine.interrupt().disable(); // disable interrupts	
 	Lib.debug(dbgThread, "Joining to thread: " + toString()); //link the thread is not for the current thread
 	Lib.assertTrue(this != currentThread);
 	if (joinCounter == 1){ 	//check to see if the caller has already called this function
@@ -294,25 +294,15 @@ public class KThread {
 		if (this.status == statusFinished) //if the thread has completed return
 			return;
 		else{
-		readyQueue.waitForAccess(this); //waits for access and puts it on queue 
+		joinQueue = ThreadedKernel.scheduler.newThreadQueue(false); 
+		joinQueue.waitForAccess(this); //waits for access and puts it on queue might be readyQueue.
 		currentThread.sleep(); 	//put the  current thread to sleep and link the thread that is not for the current thread
 		}
 	}
-	Machine.interrupt().restore(intStatus);
+	//Machine.interrupt().restore(intStatus); // restore and enable interrupts
 }
 
-	/**public void join(){
-		/*Check if the caller has already called this function
-		if( sourcethreadcounter == 1) {
-			end, resume thread. 
-		}  // password Km8Cg8fr4aV6
-		else{
-			sourcethreadcounter = 1;
-			pause source thread;
-			wait until child thread finishes. 
-}
-	 * 
-	 */
+	
 	
 	
     
@@ -482,6 +472,6 @@ public class KThread {
     private static KThread currentThread = null;
     private static KThread toBeDestroyed = null;
     private static KThread idleThread = null;
-    private static ThreadQueue joinQueue = null;  // creates join queue11
+    private static ThreadQueue joinQueue = null;  // creates join queue
 
 }
