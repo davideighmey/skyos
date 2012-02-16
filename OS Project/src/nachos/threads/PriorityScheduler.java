@@ -250,7 +250,7 @@ public class PriorityScheduler extends Scheduler {
 		public ThreadState(KThread thread) {
 			this.thread = thread;
 			setPriority(priorityDefault);
-			
+
 		}
 
 		/**
@@ -270,10 +270,12 @@ public class PriorityScheduler extends Scheduler {
 		public int getEffectivePriority() {
 			int found = 0;
 			for(int i = 0; i< listDonate.size();i++){
-				
+				if(this == listDonate.get(i).threadInQuestion){
+					found = i;
+				}
 			}
-			listDonate.get(found);
-			return effective;
+
+			return listDonate.get(found).effective;
 		}
 
 		/**
@@ -286,7 +288,7 @@ public class PriorityScheduler extends Scheduler {
 				return;
 
 			this.priority = priority;
-
+			this.effective = getEffectivePriority();
 			// implement me
 		}
 
@@ -305,17 +307,19 @@ public class PriorityScheduler extends Scheduler {
 		public void waitForAccess(PriorityQueue waitQueue) {
 			// implement me
 			Lib.assertTrue(Machine.interrupt().disabled());
-			if(waitQueue==null)
+			if(waitQueue==null)											//incase that it is null, do nothing
 				return;
-			getThreadState(thread).timeINqueue = Machine.timer().getTime();	//store the time since nachos has started into the thread. This will keep track of how long it has been in the queue.
+			this.timeINqueue = Machine.timer().getTime();				//this will keep track on how long it has been in the queue.
 			//waitPQueue.add(this.thread);
-			ready = waitQueue;
+			ready = waitQueue;											//this is ready to run
 			//getThreadState(thread).getEffectivePriority();
-			waitQueue.waitPQueue.offer(getThreadState(thread));
+			waitQueue.waitPQueue.offer(this);							//add this to queue
 			//waitPQueue.add(this);
-			if(waitQueue.transferPriority){}//if this is true we have to transfer priority
+			if(waitQueue.transferPriority){								//if this is true we have to transfer priority
+				compute_donation(waitQueue);
+			}
 		}
-		public void compute_donation(){
+		public void compute_donation(PriorityQueue waitQueue){
 
 
 		}
@@ -331,14 +335,12 @@ public class PriorityScheduler extends Scheduler {
 		 */
 		public void acquire(PriorityQueue waitQueue) {
 			Lib.assertTrue(Machine.interrupt().disabled());
-			assert(waitQueue!=null);
+			assert(waitQueue!=null);								
 			//waitPQueue.equals(this);
-			if(waitQueue.waitPQueue.equals(waitQueue)){//check if the thread is removed, if not remove it
-				waitQueue.waitPQueue.remove(waitQueue);
-			}
-			//The thread now has a lock
-			waitQueue.LockHolder = this;
-			if(waitQueue==ready)
+			if(waitQueue.waitPQueue.equals(waitQueue))					//check if the thread is removed, if not remove it
+				waitQueue.waitPQueue.remove(waitQueue);															
+			waitQueue.LockHolder = this;								//The thread now has a lock
+			if(waitQueue==ready)										//since the current thread is ready, reset the ready variable
 				ready=null;
 			//Lib.assertTrue(waitPQueue.isEmpty());
 		}	
@@ -404,8 +406,9 @@ public class PriorityScheduler extends Scheduler {
 	}
 	public class Donation{
 		public int effective;
+		public ThreadState donateTo;
 		public int orginalPriority;
-		public ThreadState threadState;
+		public ThreadState threadInQuestion;
 		public void Donation(ThreadState k){
 			this.effective = k.priority;
 
