@@ -27,8 +27,8 @@ public class Communicator {
     	listenerArrived = new Condition(mutex);
     	speakArrived = new Condition(mutex);
     	
-    	this.toGet = false; //initially there is nothing to get
-    	
+    	this.toGet = false; // initially there is nothing to get
+    	this.toTransfer = 0;// 
     }
 
     /**
