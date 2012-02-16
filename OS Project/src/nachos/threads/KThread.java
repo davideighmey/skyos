@@ -290,6 +290,10 @@ public class KThread {
 		if((this.status == statusFinished) || (this.status == statusBlocked) || (this.status == statusNew)){ //Must have the thread calling join, to be running.
 			return;
 		}
+		if(this.status == statusReady){
+			readyQueue.waitForAccess(this);
+			return;
+		}
 		joinCounter = 1; //set counter = 1 to show that join has already been called
 		readyQueue.waitForAccess(this); //"this" holds the current thread that called join, so you want to put that on the ready queue, so that it may be run
 		currentThread.sleep(); 	//put the current thread to sleep
