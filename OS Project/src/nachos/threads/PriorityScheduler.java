@@ -1,6 +1,7 @@
 package nachos.threads;
 
 import nachos.machine.*;
+import nachos.threads.PriorityScheduler.Donation;
 import nachos.threads.PriorityScheduler.PriorityQueue;
 
 
@@ -310,7 +311,10 @@ public class PriorityScheduler extends Scheduler {
 			//waitPQueue.add(this);
 			if(waitQueue.transferPriority){}//if this is true we have to transfer priority
 		}
-
+		public void compute_donation(){
+			
+			
+		}
 		/**
 		 * Called when the associated thread has acquired access to whatever is
 		 * guarded by <tt>waitQueue</tt>. This can occur either as a result of
@@ -345,7 +349,7 @@ public class PriorityScheduler extends Scheduler {
 	}
 	/** The queue where threads are waiting on  */
 	private PriorityQueue ready;
-
+	public LinkedList<Donation> listDonate = new LinkedList<Donation>();
 	//private Queue<KThread> waitPQueue = new PriorityQueue<KThread>(1, new PriorityComparator());
 
 	private static final char dbgThread = 't';
@@ -394,5 +398,14 @@ public class PriorityScheduler extends Scheduler {
 		testMe(t1,t2,2,7);
 
 	}
-
+	public class Donation{
+		public int effective;
+		public int orginalPriority;
+		public ThreadState threadState;
+		public void Donation(ThreadState k){
+			this.effective = k.priority;
+			
+			
+		}
+	}
 }
