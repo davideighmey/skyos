@@ -47,20 +47,34 @@ public class Boat
 	lock.acquire();		//get the lock
 	KThread childrenRide = new KThread(new Runnable() {
 		public void run() {
+			lock.acquire();
+			bg.ChildRowToMolokai();
 			bg.ChildRideToMolokai();
-			bg.ChildRideToMolokai();
+			lock.release();//releasing the lock
 		}
 	});
 	KThread childRide = new KThread(new Runnable() {
 		public void run() {
-			bg.ChildRideToMolokai();
+			lock.acquire();
+			bg.ChildRowToMolokai();
+			lock.release();//releasing the lock
 		}
 	});
 	KThread adultRow = new KThread(new Runnable() {
 		public void run() {
+			lock.acquire();
 			bg.AdultRowToMolokai();
+			lock.release();//releasing the lock
 		}
 	});
+	ThreadedKernel.scheduler.setPriority(childrenRide, 7);
+	ThreadedKernel.scheduler.setPriority(childRide, 6);
+	ThreadedKernel.scheduler.setPriority(adultRow, 1);
+	childrenRide.setName("A Child rowing and a Child Riding to Molokai").fork();
+	childRide.setName("Child Rowing to Molokai").fork();
+	adultRow.setName("Adult Rowing to Molokai").fork();
+
+    }
 	/*
 	Runnable r = new Runnable() {
 	    public void run() {
@@ -71,12 +85,7 @@ public class Boat
         t.setName("Sample Boat Thread");
         t.fork();
         */
-	childrenRide.setName("Children Riding to Molokai").fork();
-	childRide.setName("Child Riding to Molokai").fork();
-	adultRow.setName("Adult rowing to Molokai").fork();
-
-    }
-
+/*
     static void AdultItinerary()
     {
 	/* This is where you should put your solutions. Make calls
@@ -84,36 +93,19 @@ public class Boat
 	   example:
 	       bg.AdultRowToMolokai();
 	   indicates that an adult has rowed the boat across to Molokai
-	*/
+	
     	lock.acquire(); //get the lock 
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
+
     	lock.release();//releasing the lock
     }
 
     static void ChildItinerary()
     {
     	lock.acquire(); // get the lock 
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
     	lock.release(); // release the lock
     }
-
+    */
+/*
     static void SampleItinerary()
     {
 	// Please note that this isn't a valid solution (you can't fit
@@ -126,5 +118,5 @@ public class Boat
 	bg.AdultRideToMolokai();
 	bg.ChildRideToMolokai();
     }
-    
+  */  
 }
