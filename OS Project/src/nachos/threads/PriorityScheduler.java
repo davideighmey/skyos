@@ -171,10 +171,13 @@ public class PriorityScheduler extends Scheduler {
 				}
 			}
 			else{													//nothing special happen so, just remove the highest priority
-				returnThread = waitPQueue.poll().thread;	
+				ThreadState re = waitPQueue.poll();
+				if(re==null)
+					return null;
+				else
+				returnThread = re.thread;
+				
 			}
-			if(returnThread==null)
-				return null;
 			getThreadState(returnThread).timeINqueue = Machine.timer().getTime();		//time in queue has been reseted	
 			this.resourceOwner = getThreadState(returnThread);
 			return returnThread;
@@ -218,9 +221,9 @@ public class PriorityScheduler extends Scheduler {
 		{	@Override
 			//Allow automatic sorting of the Queue
 			public int compare(ThreadState o1, ThreadState o2) {
-			if(o1.effective>o2.effective)						
+			if(o1.getEffectivePriority()>o2.getEffectivePriority())						
 				return -1;
-			if(o1.effective<o2.effective)
+			if(o1.getEffectivePriority()<o2.getEffectivePriority())
 				return 1;
 			return 0;
 		}
@@ -305,19 +308,24 @@ public class PriorityScheduler extends Scheduler {
 			if(waitQueue==null)													//in the case that it is null, do nothing
 				return;
 			this.timeINqueue = Machine.timer().getTime();						//this will keep track on how long it has been in the queue.
-			if(waitQueue.transferPriority&&waitQueue.resourceOwner!=null&&KThread.currentThread().getName()!="main"){		//if this is true we have to transfer priority
+			if(waitQueue.transferPriority&&waitQueue.resourceOwner!=null){		//if this is true we have to transfer priority
+
 				for(ThreadState k : waitQueue.waitPQueue)
 					if(this.effective<k.effective)								//look at queue of there is a lower priority on the list
-						compute_donation(waitQueue,this);						//if there is one, priority inversion might be in play, so donate!
+						compute_donation(this);						//if there is one, priority inversion might be in play, so donate!
 			}
-			waitingResource = waitQueue;
+			this.waitingResource = waitQueue;
 			waitQueue.waitPQueue.offer(this);									//add this to queue
 		}
-		
-		public void compute_donation(PriorityQueue waitQueue, ThreadState threadDonor){
-			if(!listDonate.contains(threadDonor) && waitingResource!=null){							//checks if there is a same Donor on the list			
-				Donation donor = new Donation(threadDonor, getThreadState(KThread.currentThread()));
-				listDonate.add(donor);
+
+		public void compute_donation(ThreadState threadDonor){
+			if(!listDonate.contains(threadDonor) && waitingResource!=null){							//checks if there is a same Donor on the list		
+				if(threadDonor.thread.joinThread!=null){											//case where join is called
+					if(getThreadState(threadDonor.thread.joinThread) != threadDonor){
+						Donation donor = new Donation(threadDonor, getThreadState(KThread.currentThread()));
+						listDonate.add(donor);
+					}
+				}
 				//Donation holder =listDonate.get(listDonate.indexOf(donor));
 				//holder.setDonation();
 			}
@@ -349,9 +357,10 @@ public class PriorityScheduler extends Scheduler {
 		protected int effective;
 		/** The time the thread was in Queue;  */
 		protected long timeINqueue;
+		public PriorityQueue waitingResource;
 	}
 	/** The queue where threads are waiting on  */
-	public PriorityQueue waitingResource;
+
 	public LinkedList<Donation> listDonate = new LinkedList<Donation>();
 	//private Queue<KThread> waitPQueue = new PriorityQueue<KThread>(1, new PriorityComparator());
 
@@ -381,26 +390,38 @@ public class PriorityScheduler extends Scheduler {
 	public static LinkedList<KThread> createThread(int number, int special){
 		final Lock lock = new Lock();
 		LinkedList<KThread> list = new LinkedList<KThread>();
-		for(int i = 0; i<number;i++){				//creates a specific number of test thread
+		/*for(int i = 0; i<number;i++){				//creates a specific number of test thread
 			list.add(new KThread(new Runnable() {
 				public void run() {
-					System.out.println(KThread.currentThread().getName()+" has started");
+					System.out.println(KThread.currentThread().getName()+" IS NOT SUPPOSE TO RUN YET UNTIL A IS DONE");
 					for(int i = 0; i<5; i++){
 						System.out.println(KThread.currentThread().getName()+" said: IM RUNNING!");
 						KThread.yield();
 					}//when exited it is finished
-					System.out.println(KThread.currentThread().getName()+" said: hi im finished ");
+					System.out.println(KThread.currentThread().getName()+" said: I AM DONE. B RESUMES HERE ");
 				}
 
 			}));
-		}
+		}*/
 		if(special!=0){
 			list.add(new KThread(new Runnable() {
 				public void run() {
+					System.out.println(KThread.currentThread().getName() + " HAS to run after C! C has to finish before A RUNS");
 					lock.acquire();
-					System.out.println( KThread.currentThread().getName() + " active" );
+					System.out.println( KThread.currentThread().getName() + " IS RUNNING" );
 					lock.release();
 				}
+			}));
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					System.out.println(KThread.currentThread().getName()+" IS NOT SUPPOSE TO RUN YET UNTIL A IS DONE");
+					for(int i = 0; i<5; i++){
+						System.out.println(KThread.currentThread().getName()+" said: IM RUNNING!");
+						KThread.yield();
+					}//when exited it is finished
+					System.out.println(KThread.currentThread().getName()+" said: I AM DONE. B RESUMES HERE ");
+				}
+
 			}));
 			list.add(new KThread(new Runnable() {
 				public void run() {
@@ -453,7 +474,8 @@ public class PriorityScheduler extends Scheduler {
 		}
 		public void setDonation(){
 			this.orginalPriority = threadInQuestion.priority;	//save the original for whatever reason
-			threadInQuestion.effective = donateFrom.effective;	//set the donation
+			if(threadInQuestion.effective <= donateFrom.effective)//only change if the donor has a higher priority than the donee
+				threadInQuestion.effective = donateFrom.effective;	//set the donation
 		}
 		public void removeDonation(){
 			threadInQuestion.effective = orginalPriority;	//set the priority to its original
