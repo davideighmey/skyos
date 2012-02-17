@@ -175,11 +175,11 @@ public class PriorityScheduler extends Scheduler {
 				if(re==null)
 					return null;
 				else
-				returnThread = re.thread;
-				
+					returnThread = re.thread;
+
 			}
 			getThreadState(returnThread).timeINqueue = Machine.timer().getTime();		//time in queue has been reseted	
-			this.resourceOwner = getThreadState(returnThread);
+			//this.resourceOwner = getThreadState(returnThread);
 			return returnThread;
 		}
 
@@ -308,21 +308,22 @@ public class PriorityScheduler extends Scheduler {
 			if(waitQueue==null)													//in the case that it is null, do nothing
 				return;
 			this.timeINqueue = Machine.timer().getTime();						//this will keep track on how long it has been in the queue.
-			if(waitQueue.transferPriority&&waitQueue.resourceOwner!=null){		//if this is true we have to transfer priority
+			if(waitQueue.transferPriority&&waitQueue.resourceOwner!=null&&waitQueue.resourceOwner!=this){		//if this is true we have to transfer priority and there is a lock in play
 
-				for(ThreadState k : waitQueue.waitPQueue)
-					if(this.effective<k.effective)								//look at queue of there is a lower priority on the list
-						compute_donation(this);						//if there is one, priority inversion might be in play, so donate!
+				//for(ThreadState k : waitQueue.waitPQueue)
+				//if(this.effective<k.effective)								//look at queue of there is a lower priority on the list
+				compute_donation(waitQueue,this);						//if there is one, priority inversion might be in play, so donate!
 			}
 			this.waitingResource = waitQueue;
 			waitQueue.waitPQueue.offer(this);									//add this to queue
 		}
 
-		public void compute_donation(ThreadState threadDonor){
+		public void compute_donation(PriorityQueue waitQueue, ThreadState threadDonor){
+			System.out.println("It went to donation");
 			if(!listDonate.contains(threadDonor) && waitingResource!=null){							//checks if there is a same Donor on the list		
 				if(threadDonor.thread.joinThread!=null){											//case where join is called
 					if(getThreadState(threadDonor.thread.joinThread) != threadDonor){
-						Donation donor = new Donation(threadDonor, getThreadState(KThread.currentThread()));
+						Donation donor = new Donation(waitQueue, threadDonor, waitQueue.resourceOwner);
 						listDonate.add(donor);
 					}
 				}
@@ -344,7 +345,8 @@ public class PriorityScheduler extends Scheduler {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			assert(waitQueue!=null);								
 			if(waitQueue.waitPQueue.equals(waitQueue))					//check if the thread is removed, if not remove it
-				waitQueue.waitPQueue.remove(waitQueue);															
+				waitQueue.waitPQueue.remove(waitQueue);				
+			
 			waitQueue.resourceOwner = this;								//This thread is now the owner of the resource 
 			//if(waitQueue==waitingResource)							//if the current queue is waiting on a resource
 			//	waitingResource=null;									//Stop
@@ -419,7 +421,7 @@ public class PriorityScheduler extends Scheduler {
 						System.out.println(KThread.currentThread().getName()+" said: IM RUNNING!");
 						KThread.yield();
 					}//when exited it is finished
-					System.out.println(KThread.currentThread().getName()+" said: I AM DONE. B RESUMES HERE ");
+					System.out.println(KThread.currentThread().getName()+" said: I AM DONE.");
 				}
 
 			}));
@@ -461,16 +463,24 @@ public class PriorityScheduler extends Scheduler {
 		public int effective;
 		public ThreadState donateFrom;
 		public int orginalPriority;
+		public KThread test;
 		public ThreadState threadInQuestion;
 		PriorityQueue queueHolder;
-		public Donation(/*PriorityQueue waitQueue,*/ ThreadState donor, ThreadState donee){
-			if(KThread.currentThread()==donee.thread){	//this donee have a lock
+		public Donation(PriorityQueue waitQueue, ThreadState donor, ThreadState donee){
 				//this.queueHolder = waitQueue;
 				this.orginalPriority = donee.priority;	//just in case keep the orginal
 				this.threadInQuestion = donee;			//keep track of who is the donee
 				this.donateFrom = donor;				//keep track of who is the donor
-				donee.effective = donor.effective;		//set the priority of the donee 
-			}
+				this.effective = donor.effective;		//set the priority of the donee 
+				this.test = donee.thread;
+				getThreadState(test).effective = donor.effective;
+				//priority has been change force resort
+				
+				waitQueue.resourceOwner.waitingResource.waitPQueue.remove(getThreadState(test));
+				waitQueue.resourceOwner.waitingResource.waitPQueue.add(getThreadState(test));
+				//waitQueue.waitPQueue.remove(getThreadState(test));
+				//waitQueue.waitPQueue.add(getThreadState(test));
+				
 		}
 		public void setDonation(){
 			this.orginalPriority = threadInQuestion.priority;	//save the original for whatever reason
