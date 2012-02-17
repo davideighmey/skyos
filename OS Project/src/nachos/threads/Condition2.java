@@ -66,7 +66,7 @@ public class Condition2 {
 	public void wake() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 		boolean intStatus = Machine.interrupt().disable(); // the interrupted disable, to prevent the thread being changed
-		//if (!waitQueue.isEmpty()){ //check and see if the thread queue is not empty 
+		//if (!waitQueue.isEmpty()){ //check and see if the thread queue is not empty.. dont need
 			
 			KThread thread = waitQueue2.nextThread(); // use the semaphore implementation readying the first thread on queue
 													  // see semaphore.java v function
@@ -90,15 +90,15 @@ public class Condition2 {
 	public void wakeAll() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 		boolean intStatus = Machine.interrupt().disable(); // disables the interrupts 
-		//while (!waitQueue.isEmpty()){ // loop it 
+		//while (!waitQueue.isEmpty()){ // loop it .. didnt work
 			//wake(); // pop each one}
 		for (KThread Thread = waitQueue2.nextThread(); Thread!= null; waitQueue2.nextThread()){ //use for loop instead of while.. see if it works
 			Thread.ready(); // use a for loop to go to each thread and wake it up.. instead of a while.. see if this works
 		}
 		Machine.interrupt().restore(intStatus);
 	}
-	//private static KThread currentThread = null;
-	//private LinkedList<KThread> waitQueue = new LinkedList<KThread>(); // only going to use one queue see if this works
+	//private static KThread currentThread = null; .. no need for this
+	//private LinkedList<KThread> waitQueue = new LinkedList<KThread>(); // only going to use one queue... see if this works
 	private ThreadQueue waitQueue2 = ThreadedKernel.scheduler.newThreadQueue(false); // make a new wait queue so the thread doesn't loose all its data
 																				
 	private Lock conditionLock;
