@@ -285,7 +285,6 @@ public class PriorityScheduler extends Scheduler {
 						found = i;
 					}
 				}
-
 				return listDonate.get(found).effective;}
 			else
 				return this.effective;
@@ -335,10 +334,12 @@ public class PriorityScheduler extends Scheduler {
 				return;
 			this.timeINqueue = Machine.timer().getTime();						//this will keep track on how long it has been in the queue.
 			if(waitQueue.transferPriority&&waitQueue.resourceOwner!=null){		//if this is true we have to transfer priority
-				compute_donation(waitQueue,this);
+				for(ThreadState k : waitQueue.waitPQueue)
+					if(this.effective<k.effective)								//look at queue of there is a lower priority on the list
+						compute_donation(waitQueue,this);						//if there is one, priority inversion might be in play, so donate!
 			}
 			waitingResource = waitQueue;
-			waitQueue.waitPQueue.offer(this);							//add this to queue
+			waitQueue.waitPQueue.offer(this);									//add this to queue
 
 
 		}
