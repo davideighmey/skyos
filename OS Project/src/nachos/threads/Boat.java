@@ -99,21 +99,26 @@ public class Boat
 		childRide.join();
 		children++;
 		System.out.println("Amount of children left: "+children+" We purposely left a child on an island by himself with a bunch of pedobears!~");
-		while(adults!=0&&children!=0){
-			adultRow.join();
-			adults--;
-			childRide.join();
-			children++;
-			childrenRide.join();
-			children=children-2;
-			childRide.join();
-			children++;
-			if(adults==0&&children==1){
-				childRide0.join();
-				children--;
-			}
+		if(adults==0){
+			childRide0.join();
+			children--;
 		}
-		
+		else
+			while(adults!=0&&children!=0){
+				adultRow.join();
+				adults--;
+				childRide.join();
+				children++;
+				childrenRide.join();
+				children=children-2;
+				childRide.join();
+				children++;
+				if(adults==0&&children==1){
+					childRide0.join();
+					children--;
+				}
+			}
+
 	}
 	/*
 	Runnable r = new Runnable() {
