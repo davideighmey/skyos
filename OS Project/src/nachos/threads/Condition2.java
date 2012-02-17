@@ -1,5 +1,7 @@
 package nachos.threads;
 //import java.util.LinkedList; no use for link list see if this works
+import java.util.LinkedList;
+
 import nachos.machine.*;
 
 /**
@@ -97,9 +99,100 @@ public class Condition2 {
 		}
 		Machine.interrupt().restore(intStatus);
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	private static final char dbgThread = 't';
+	public static void testMe(LinkedList<KThread> list,int priority1, int priority2,int priority3){
+
+		boolean int_state = Machine.interrupt().disable();
+		ThreadedKernel.scheduler.setPriority(list.get(0), priority1);
+		ThreadedKernel.scheduler.setPriority(list.get(1), priority2);
+		if(priority3!=0)
+			ThreadedKernel.scheduler.setPriority(list.get(2), priority3);	
+		Machine.interrupt().restore(int_state);
+
+		list.get(0).setName("Thread A").fork();
+		list.get(1).setName("Thread B").fork();
+		if(priority3 != 0)
+			list.get(2).setName("Thread C").fork();
+		list.get(0).join();
+		list.get(1).join();
+		if(priority3 != 0)
+			list.get(2).join();
+	}
+	
+	public static LinkedList<KThread> createThread(int number, int special){
+		final Lock lock = new Lock();
+		final Condition2 condition = new Condition2(lock);
+		LinkedList<KThread> list = new LinkedList<KThread>();
+	
+		if(special!=0){
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					lock.acquire();
+					for(int i = 0; i<2; i++){
+					System.out.println( KThread.currentThread().getName() + " IS GOING TO SLEEP" );
+					condition.wake();}
+					
+				}
+			}));
+			list.add(new KThread(new Runnable() {
+				public void run() {	
+					lock.acquire();
+					//System.out.println(KThread.currentThread().getName()+" IS NOT SUPPOSE TO RUN YET UNTIL A IS DONE");
+					for(int i = 0; i<2; i++){
+
+						System.out.println(KThread.currentThread().getName()+" said: waking up!");
+						condition.sleep();
+					}//when exited it is finished
+					//System.out.println(KThread.currentThread().getName()+" said: I AM DONE. B RESUMES HERE ");
+				}
+
+			}));
+			list.add(new KThread(new Runnable() {	 //when checking if thread c wakes all isnt called.. stuck =/
+				public void run() {
+					lock.acquire();
+					System.out.println( KThread.currentThread().getName() + " waking all!!!" );
+					condition.wakeAll();
+					
+				}
+			}));
+
+
+		}
+
+		return list;
+	}
+	
+	
+
+	public static void condSelfTest(){
+		Lib.debug(dbgThread, "Enter PriorityQueue.selfTest");
+		//Created two threads with its runnable being printing things.
+		LinkedList<KThread> threadList;
+		//threadList = createThread(2,0); 	//creates two regular thread and run it
+		//testMe(threadList,2,7,0);
+		threadList= createThread(1,1);						//creates three thread-1 regular and 2 special
+		testMe(threadList,7,3,2);
+	}
+	
+	
+	
+
+
+
+
 	//private static KThread currentThread = null; .. no need for this
 	//private LinkedList<KThread> waitQueue = new LinkedList<KThread>(); // only going to use one queue... see if this works
-	private ThreadQueue waitQueue2 = ThreadedKernel.scheduler.newThreadQueue(false); // make a new wait queue so the thread doesn't loose all its data
-																				
+	private ThreadQueue waitQueue2 = ThreadedKernel.scheduler.newThreadQueue(false); // make a new wait queue so the thread doesn't loose all its data															
 	private Lock conditionLock;
+	
+	
+	
 }
