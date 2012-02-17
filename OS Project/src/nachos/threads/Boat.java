@@ -4,6 +4,10 @@ import nachos.ag.BoatGrader;
 public class Boat
 {
     static BoatGrader bg;
+ 
+    private static Lock lock; 	//declare lock
+    
+    
     
     public static void selfTest()
     {
@@ -26,9 +30,13 @@ public class Boat
 	bg = b;
 
 	// Instantiate global variables here
+	lock = new Lock();
+	
+	
 	
 	// Create threads here. See section 3.4 of the Nachos for Java
 	// Walkthrough linked from the projects page.
+	lock.acquire();
 
 	Runnable r = new Runnable() {
 	    public void run() {
@@ -49,10 +57,33 @@ public class Boat
 	       bg.AdultRowToMolokai();
 	   indicates that an adult has rowed the boat across to Molokai
 	*/
+    	lock.acquire(); //get the lock 
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	lock.release();//releasing the lock
     }
 
     static void ChildItinerary()
     {
+    	lock.acquire(); // get the lock 
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	lock.release(); // release the lock
     }
 
     static void SampleItinerary()
