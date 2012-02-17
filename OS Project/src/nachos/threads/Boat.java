@@ -44,16 +44,14 @@ public class Boat
 	bg = b;
 
 	// Instantiate global variables here
-	lock = new Lock();
+	lock = new Lock();		//make new lock
 	childrenOnOahu = 0; 	//starts everything off at 0
 	childrenOnMolokai = 0;
 	adultsOnOahu = 0;
 	childrenOnBoat = 0;
 	adultsOnBoat = 0;
-	finished = false;
-    start = false;
-	
-	
+	finished = false;	// hasnt finshed yet 
+    start = false;		// has not started either
 	
 	
 	// Create threads here. See section 3.4 of the Nachos for Java
