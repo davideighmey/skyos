@@ -90,7 +90,7 @@ public class Boat
 		childRide.fork();
 		childRide0.fork();
 		adultRow.fork();
-		while(children!=0){
+		/*while(children!=0){
 			childrenRide.join();
 			children=children-2;
 			childRide.join();
@@ -118,7 +118,8 @@ public class Boat
 					children--;
 				}
 			}
-
+		*/
+		childrenRide.join();
 	}
 	/*
 	Runnable r = new Runnable() {
