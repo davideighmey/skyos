@@ -34,7 +34,7 @@ public class Boat
 	bg = b;
 	
 	// Instantiate global variables here
-	lock = new Lock();
+	lock = new Lock(); //This is the boat of passings.
 	//starts everything off at 0
 	childrenOnOahu = 0; 	
 	childrenOnMolokai = 0;
