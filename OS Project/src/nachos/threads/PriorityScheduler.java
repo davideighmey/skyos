@@ -343,17 +343,11 @@ public class PriorityScheduler extends Scheduler {
 
 		}
 		public void compute_donation(PriorityQueue waitQueue, ThreadState threadDonor){
-			LinkedList<ThreadState> haveSeen = new LinkedList<ThreadState>();
-			if(!haveSeen.contains(threadDonor)){
-				haveSeen.add(threadDonor);
-				if(!listDonate.contains(threadDonor) && waitingResource!=null && waitQueue.resourceOwner!=null&&KThread.currentThread().getName()!="main"){							//checks if there is a same Donor on the list			
-					if(waitingResource.resourceOwner==threadDonor)
-						return;
-					Donation donor = new Donation(threadDonor, getThreadState(KThread.currentThread()));
-					listDonate.add(donor);
-					//Donation holder =listDonate.get(listDonate.indexOf(donor));
-					//holder.setDonation();
-				}
+			if(!listDonate.contains(threadDonor) && waitingResource!=null){							//checks if there is a same Donor on the list			
+				Donation donor = new Donation(threadDonor, getThreadState(KThread.currentThread()));
+				listDonate.add(donor);
+				//Donation holder =listDonate.get(listDonate.indexOf(donor));
+				//holder.setDonation();
 			}
 		}
 		/**
@@ -393,18 +387,18 @@ public class PriorityScheduler extends Scheduler {
 	public static void testMe(LinkedList<KThread> list,int priority1, int priority2,int priority3){
 
 		boolean int_state = Machine.interrupt().disable();
-		ThreadedKernel.scheduler.setPriority(list.get(1), priority1);
-		ThreadedKernel.scheduler.setPriority(list.get(0), priority2);
+		ThreadedKernel.scheduler.setPriority(list.get(0), priority1);
+		ThreadedKernel.scheduler.setPriority(list.get(1), priority2);
 		if(priority3!=0)
 			ThreadedKernel.scheduler.setPriority(list.get(2), priority3);	
 		Machine.interrupt().restore(int_state);
 
-		list.get(1).setName("Thread A").fork();
-		list.get(0).setName("Thread B").fork();
+		list.get(0).setName("Thread A").fork();
+		list.get(1).setName("Thread B").fork();
 		if(priority3 != 0)
 			list.get(2).setName("Thread C").fork();
-		list.get(1).join();
 		list.get(0).join();
+		list.get(1).join();
 		if(priority3 != 0)
 			list.get(2).join();
 	}
@@ -419,7 +413,7 @@ public class PriorityScheduler extends Scheduler {
 			list.add(new KThread(new Runnable() {
 				public void run() {
 					System.out.println(KThread.currentThread().getName()+" has started");
-					for(int i = 0; i<3; i++){
+					for(int i = 0; i<5; i++){
 						System.out.println(KThread.currentThread().getName()+" said: IM RUNNING!");
 						KThread.yield();
 					}//when exited it is finished
@@ -439,26 +433,20 @@ public class PriorityScheduler extends Scheduler {
 			list.add(new KThread(new Runnable() {
 				public void run() {
 					lock.acquire();
-
 					boolean int_state = Machine.interrupt().disable();
 					ThreadedKernel.scheduler.setPriority( 2 );
 					Machine.interrupt().restore( int_state );
-
 					KThread.yield();
-
 					// t1.acquire() will now have to realise that t3 owns the lock it wants to obtain
 					// so program execution will continue here.
-
 					System.out.println( KThread.currentThread().getName() + " active ('a' wants its lock back so we are here)" );
 					lock.release();
 					KThread.yield();
 					lock.acquire();
 					System.out.println( KThread.currentThread().getName() + " active-again (should be after 'a' and 'b' done)" );
 					lock.release();
-
 				}
 			}));
-			;
 
 
 		}
