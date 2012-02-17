@@ -47,38 +47,58 @@ public class Boat
 		lock.acquire();		//get the lock
 		KThread childrenRide = new KThread(new Runnable() {
 			public void run() {
+				System.out.println(KThread.currentThread().getName()+" has started their long journey!");
 				lock.acquire();
 				bg.ChildRowToMolokai();
 				bg.ChildRideToMolokai();
+				System.out.println(KThread.currentThread().getName()+" has finished their long journey!");
+				lock.release();//releasing the lock
+			}
+		});
+		KThread childRide0 = new KThread(new Runnable() {
+			public void run() {
+				System.out.println(KThread.currentThread().getName()+" has started his long journey!");
+				lock.acquire();
+				bg.ChildRowToMolokai();
+				System.out.println(KThread.currentThread().getName()+" has finished his long journey!");
 				lock.release();//releasing the lock
 			}
 		});
 		KThread childRide = new KThread(new Runnable() {
 			public void run() {
+				System.out.println(KThread.currentThread().getName()+" has started his long journey!");
 				lock.acquire();
-				bg.ChildRowToMolokai();
+				bg.ChildRowToOahu();
+				System.out.println(KThread.currentThread().getName()+" has finished his long journey!");
 				lock.release();//releasing the lock
 			}
 		});
 		KThread adultRow = new KThread(new Runnable() {
 			public void run() {
+				System.out.println(KThread.currentThread().getName()+" has started his long journey!");
 				lock.acquire();
 				bg.AdultRowToMolokai();
+				System.out.println(KThread.currentThread().getName()+" has finished his long journey!");
 				lock.release();//releasing the lock
 			}
 		});
-		//ThreadedKernel.scheduler.setPriority(childrenRide, 7);
-		//ThreadedKernel.scheduler.setPriority(childRide, 6);
-		//ThreadedKernel.scheduler.setPriority(adultRow, 1);
 		childrenRide.setName("A Child rowing and a Child Riding to Molokai");
-		childRide.setName("Child Rowing to Molokai");
+		childRide0.setName("Child Rowing to Molokai");
+		childRide.setName("Child Rowing to Oahu");
 		adultRow.setName("Adult Rowing to Molokai");
 		childrenRide.fork();
 		childRide.fork();
+		childRide0.fork();
 		adultRow.fork();
+		while(children!=0){
+			childrenRide.join();
+			childRide.join();
+		}
 		childrenRide.join();
 		childRide.join();
 		adultRow.join();
+		childRide.join();
+		childrenRide.join();
 	}
 	/*
 	Runnable r = new Runnable() {
