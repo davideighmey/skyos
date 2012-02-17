@@ -96,6 +96,8 @@ public class Boat
 			childRide.join();
 			children++;
 		}
+		childRide.join();
+		children++;
 		System.out.println("Amount of children left: "+children+" We purposely left a child on an island by himself with a bunch of pedobears!~");
 		while(adults!=0&&children!=0){
 			adultRow.join();
@@ -111,11 +113,6 @@ public class Boat
 			childrenRide.join();
 			children=children+2;
 		}
-		childrenRide.join();
-		childRide.join();
-		adultRow.join();
-		childRide.join();
-		childrenRide.join();
 	}
 	/*
 	Runnable r = new Runnable() {
