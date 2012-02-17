@@ -67,9 +67,9 @@ public class Boat
 			lock.release();//releasing the lock
 		}
 	});
-	ThreadedKernel.scheduler.setPriority(childrenRide, 7);
-	ThreadedKernel.scheduler.setPriority(childRide, 6);
-	ThreadedKernel.scheduler.setPriority(adultRow, 1);
+	//ThreadedKernel.scheduler.setPriority(childrenRide, 7);
+	//ThreadedKernel.scheduler.setPriority(childRide, 6);
+	//ThreadedKernel.scheduler.setPriority(adultRow, 1);
 	childrenRide.setName("A Child rowing and a Child Riding to Molokai").fork();
 	childRide.setName("Child Rowing to Molokai").fork();
 	adultRow.setName("Adult Rowing to Molokai").fork();
