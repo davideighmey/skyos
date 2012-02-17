@@ -79,7 +79,6 @@ public class Condition2 {
 			
 		}
 	
-e
 	/**
 	 * Wake up all threads sleeping on this condition variable. The current
 	 * thread must hold the associated lock.
