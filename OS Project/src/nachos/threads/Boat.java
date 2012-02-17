@@ -108,7 +108,12 @@ public class Boat
 			children=children-2;
 			childRide.join();
 			children++;
+			if(adults==0&&children==1){
+				childRide0.join();
+				children--;
+			}
 		}
+		
 	}
 	/*
 	Runnable r = new Runnable() {
