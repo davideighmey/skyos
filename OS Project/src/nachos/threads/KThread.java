@@ -1,5 +1,7 @@
 package nachos.threads;
 
+import java.util.LinkedList;
+
 import nachos.machine.*;
 /**
  * A KThread is a thread that can be used to execute Nachos kernel code. Nachos
@@ -277,13 +279,16 @@ public class KThread {
 	 * thread.
 	 */
 
+	
+	LinkedList<KThread> joinList = new LinkedList<KThread>(); //For helping Donation in Priority, not actually needed.
+	@SuppressWarnings("static-access")
 	public void join() {
 		Lib.debug(dbgThread, "Joining to thread: " + toString()); //link the thread is not for the current thread
 		Lib.assertTrue(this != currentThread); //Making sure that the two threads are different
-		boolean joinCounter = false; //Our counter for determining if the thread that called join() before.
+		/*boolean joinCounter = false; //Our counter for determining if the thread that called join() before.
 		if(joinCounter == true){
 			return;
-		}
+		} */ //Commented out for the lack of usage, but maybe needed later on.
 		if(this.status == statusFinished){ //Check if the thread that called join() has finished
 			return;
 		}
@@ -292,10 +297,13 @@ public class KThread {
 		 * which than it will than run the next thread determined by the priority scheduler.
 		 * The thread that called join() will be ran which was determined by the priority scheduler.  
 		 */
-		yield(); //Now you yield(stop) the current thread than run the thread that called join.
-		joinCounter = true;
+		joinList.add(currentThread);
+		currentThread.yield(); 
+		//yield(); //Now you yield(stop) the current thread than run the thread that called join.
+		//joinCounter = true;
 		Machine.interrupt().enable();
 	}
+
 
 	/**
 	 * Create the idle thread. Whenever there are no threads ready to be run,
@@ -462,4 +470,5 @@ public class KThread {
 	private static KThread currentThread = null;
 	private static KThread toBeDestroyed = null;
 	private static KThread idleThread = null;
+	
 }
