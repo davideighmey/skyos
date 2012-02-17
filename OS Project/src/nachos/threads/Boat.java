@@ -5,7 +5,18 @@ public class Boat
 {
     static BoatGrader bg;
  
+    	
+    
     private static Lock lock; 	//declare lock
+    private static int childrenOnOahu; //total children on Oahu
+    private static int childrenOnMolokai; // total children on Mookai
+    
+    private static int adultsOnOahu; // total adults on Oahu
+    
+    private static int childrenOnBoat;
+    private static int adultsOnBoat;
+    
+    
     
     
     
