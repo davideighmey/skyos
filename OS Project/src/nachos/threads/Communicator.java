@@ -54,12 +54,7 @@ public class Communicator {
 			this.speakArrived.sleep(); // put the thread to sleep
 		}
 		this.listenerArrived.wakeAll(); // wake all before releasing
-		if(counter == 1){
-			this.speakArrived.sleep();
-		}
 		this.toTransfer = word; // store the word to a global variable
-		counter = 1;
-		//this.listenerArrived.notifyAll();
 		//this.speaker = false; // reset to no speaker -- broke
 		//this.speaker = true;
 		//this.listener = false; 
@@ -74,24 +69,24 @@ public class Communicator {
 	 */    
 	public int listen() 
 	{	
-		//Can't take more than one word.
-		this.mutex.acquire(); // get the lock
-		this.listener = true; // there is now a listener
-		while(speaker == false) // if no speaker wait for the speaker
-		{
-			this.listenerArrived.sleep();// put to sleep while waiting
+		
+		if(this.counter >= 1){
+			//Can't take more than one word.
+			this.mutex.acquire(); // get the lock
+			this.listener = true; // there is now a listener
+			while(speaker == false) // if no speaker wait for the speaker
+			{
+				this.listenerArrived.sleep();// put to sleep while waiting
+			}
+			this.speakArrived.wakeAll(); // wake all or just one ?
+			this.counter = 1;
+			int word = this.toTransfer;
+			//this.speakArrived.notifyAll();
+			//this.listener = false; // reset to no listener -- this broke it
+			//this.speaker = false; 
+			this.mutex.release(); // release lock before returning the word
+			return word;
 		}
-		this.speakArrived.wakeAll(); // wake all or just one ?
-
-		if(counter > 0){
-			speaker = false;
-			speakArrived.sleep();
-		}
-		int word = this.toTransfer;
-		//this.speakArrived.notifyAll();
-		//this.listener = false; // reset to no listener -- this broke it
-		//this.speaker = false; 
-		this.mutex.release(); // release lock before returning the word
-		return word;
+		return 0;
 	}
 }
