@@ -184,6 +184,7 @@ public class PriorityScheduler extends Scheduler {
 						} 
 					}
 				}
+				this.resourceHolder = getThreadState(returnThread);
 				return returnThread;
 			}
 			else{													//nothing special happen so, just remove the highest priority
@@ -192,6 +193,7 @@ public class PriorityScheduler extends Scheduler {
 				if(returnThread==null)
 					return null;
 				returnThread.timeINqueue = Machine.timer().getTime();	//time in queue has been reseted
+				this.resourceHolder = returnThread;
 				return returnThread.thread;}
 		}
 
@@ -230,7 +232,7 @@ public class PriorityScheduler extends Scheduler {
 		/**
 		 *<tt>LockHolder-</tt> The thread with which this lock is associated   
 		 */
-		protected ThreadState LockHolder; 
+		protected ThreadState resourceHolder; 
 
 		private Queue<ThreadState> waitPQueue = new java.util.PriorityQueue<ThreadState>(1, new PriorityComparator());
 		public class PriorityComparator implements Comparator<ThreadState>
@@ -281,14 +283,17 @@ public class PriorityScheduler extends Scheduler {
 		 * @return	the effective priority of the associated thread.
 		 */
 		public int getEffectivePriority() {
-			int found = 0;
-			for(int i = 0; i< listDonate.size();i++){
-				if(this == listDonate.get(i).threadInQuestion){
-					found = i;
+			if(!listDonate.isEmpty()){
+				int found = 0;
+				for(int i = 0; i< listDonate.size();i++){
+					if(this == listDonate.get(i).threadInQuestion){
+						found = i;
+					}
 				}
-			}
 
-			return listDonate.get(found).effective;
+				return listDonate.get(found).effective;}
+			else
+				return this.effective;
 		}
 
 		/**
@@ -317,20 +322,33 @@ public class PriorityScheduler extends Scheduler {
 		 *
 		 * @see	nachos.threads.ThreadQueue#waitForAccess
 		 */
+		/*public void addToQueue(){
+			addToQueue(waitingResource);
+		}
+		public void addToQueue(PriorityQueue waitQueue){
+			if(waitQueue==null) return;
+			waitQueue.waitPQueue.offer(this);
+			if(waitQueue.LockHolder != null && waitQueue.transferPriority){
+				ThreadState currentHolder = waitQueue
+			}
+		}
+
+		 */
 		public void waitForAccess(PriorityQueue waitQueue) {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			if(waitQueue==null)											//in the case that it is null, do nothing
 				return;
 			this.timeINqueue = Machine.timer().getTime();				//this will keep track on how long it has been in the queue.
 			//waitingResource = waitQueue;								//this is queue is using a resource
-			waitQueue.waitPQueue.offer(this);							//add this to queue
-			if(waitQueue.transferPriority){								//if this is true we have to transfer priority
+			if(waitQueue.transferPriority&&waitQueue.resourceHolder!=null){								//if this is true we have to transfer priority
 				compute_donation(waitQueue,this);
-			
 			}
+			waitQueue.waitPQueue.offer(this);							//add this to queue
+			//addToQueue(waitingResource);
+
 		}
 		public void compute_donation(PriorityQueue waitQueue, ThreadState threadDonor){
-			if(waitQueue.LockHolder!=null){}
+			if(waitQueue.resourceHolder!=null){}
 			Donation donor = new Donation(waitQueue,this, getThreadState(KThread.currentThread()));
 			if(!listDonate.contains(donor))
 				listDonate.add(donor);
@@ -356,9 +374,9 @@ public class PriorityScheduler extends Scheduler {
 			//waitPQueue.equals(this);
 			if(waitQueue.waitPQueue.equals(waitQueue))					//check if the thread is removed, if not remove it
 				waitQueue.waitPQueue.remove(waitQueue);															
-			waitQueue.LockHolder = this;								//The thread now has a lock on a resource 
-			if(waitQueue==waitingResource)								//if the current queue is waiting on a resource
-				waitingResource=null;									//Stop
+			waitQueue.resourceHolder = this;								//The thread now has a lock on a resource 
+			//if(waitQueue==waitingResource)								//if the current queue is waiting on a resource
+			//	waitingResource=null;									//Stop
 			//Lib.assertTrue(waitPQueue.isEmpty());
 		}	
 		/** The thread with which this object is associated. */	
