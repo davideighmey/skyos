@@ -4,24 +4,14 @@ import nachos.ag.BoatGrader;
 public class Boat
 {
     static BoatGrader bg;
- 
-    	
     
     private static Lock lock; 	//declare lock
     private static int childrenOnOahu; //total children on Oahu
     private static int childrenOnMolokai; // total children on Mookai
-    
-    private static int adultsOnOahu; // total adults on Oahu
-    
+    private static int adultsOnOahu; //total adults on Oahu
     private static int childrenOnBoat; 	//total children on the boat 
     private static int adultsOnBoat;	//total adults on the boat
-    
-    private static boolean start; 		// start either true or false
-    private static boolean finished;	// finished true or false
-    
-    
-    
-    
+
     
     public static void selfTest()
     {
@@ -42,17 +32,15 @@ public class Boat
 	// Store the externally generated autograder in a class
 	// variable to be accessible by children.
 	bg = b;
-
+	
 	// Instantiate global variables here
-	lock = new Lock();		//make new lock
-	childrenOnOahu = 0; 	//starts everything off at 0
+	lock = new Lock();
+	//starts everything off at 0
+	childrenOnOahu = 0; 	
 	childrenOnMolokai = 0;
 	adultsOnOahu = 0;
 	childrenOnBoat = 0;
 	adultsOnBoat = 0;
-	finished = false;	// hasnt finshed yet 
-    start = false;		// has not started either
-	
 	
 	// Create threads here. See section 3.4 of the Nachos for Java
 	// Walkthrough linked from the projects page.
