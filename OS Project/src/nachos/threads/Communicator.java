@@ -18,20 +18,28 @@ public class Communicator {
 	Condition listenerArrived;
 	Condition speakArrived;
 
+	Condition wordReady;
+	Condition noWord;
+	Condition noListener;
+	Condition noSpeaker;
 	private int toTransfer; // holds the word that needs to be transfered
-	//Queue<Integer>words; used condition variables instead
-
 	boolean speaker; // is there a speaker?
 	boolean listener;// is there a listener?
-
+	boolean wordThere; // is there a word there?
 
 	public Communicator() {
 		mutex = new Lock();
 		listenerArrived = new Condition(mutex);
 		speakArrived = new Condition(mutex);
-
+		
+		
+		this.wordReady = new Condition(mutex);
+		this.noWord = new Condition(mutex);
+		this.noListener = new Condition(mutex);
+		this.noSpeaker = new Condition(mutex);
 		this.speaker = false; // start off with no speaker
 		this.listener = false;// start off with no listener
+		this.wordThere = false;// start off with no word there 
 	}
 	
 	/**
@@ -47,39 +55,93 @@ public class Communicator {
 	public void speak(int word)
 	{
 		this.mutex.acquire(); // get the lock
+		
+		while(speaker == false) // while there is no speaker
+			this.speakArrived.sleep(); // set condition to sleep until there is a speaker
+		
 		this.speaker = true; // there is now a speaker
+		
+		while(listener == true) // while there is no listener
+			this.listenerArrived.sleep(); // sleep on this condition
+		
+		this.toTransfer = word; // save the word to a global variable
+		this.wordThere = true; // there is now a word available
+		
+		this.wordReady.wake(); // wake the listeners
+		
+		while(wordThere == false)
+			this.noWord.sleep(); // 
+		
+		this.speaker = false;
+		this.noSpeaker.wake();
+		
+		this.mutex.release(); // release the lock before return ending
+	}
+	/*public void speak(int word)
+	{
+		this.mutex.acquire(); // get the lock
+		this.speaker = true; // there is now a speaker
+		
 		while(listener == false) // while there is nothing to get
 		{
 			this.speakArrived.sleep(); // put the thread to sleep
 		}
-		this.listenerArrived.wake(); // wake all before releasing
+		this.listener = false; //
 		this.toTransfer = word; // store the word to a global variable
-		//this.speaker = false; // reset to no speaker -- broke
-		//this.speaker = true;
-		//this.listener = true; //
+		this.wordThere = true;
+		this.listenerArrived.wake(); // wake all before releasing
 		this.mutex.release(); // now release the lock before returning
 	}
-
+	*/
 	/**
 	 * Wait for a thread to speak through this communicator, and then return
 	 * the <i>word</i> that thread passed to <tt>speak()</tt>.
 	 *
 	 * @return	the integer transferred.
-	 */    
+	 */
+	public int listen()
+	{
+		this.mutex.acquire(); // get the lock for this critical section
+		
+		while(listener == false)
+			this.noListener.sleep();
+		
+		this.listener = true; // 
+		this.listenerArrived.wake();//
+		
+		while(wordThere == false)
+			this.wordReady.sleep();
+		
+		int toReturn = this.toTransfer; // word to return from global variable
+		this.wordThere = false; // the word there is no longer valid
+		
+		this.noWord.wake();
+		this.listener = false; // there will not be a listener
+		this.noListener.wake();
+		
+		this.mutex.release(); // let go of the lock before returning
+		
+		return (toReturn);		
+	}
+	
+	/*
 	public int listen() 
 	{
 			this.mutex.acquire(); // get the lock
 			this.listener = true; // there is now a listener
+			
 			while(speaker == false) // if no speaker wait for the speaker
 			{
 				this.listenerArrived.sleep();// put to sleep while waiting
 			}
-			this.speakArrived.wake(); // wake all or just one ?
+			
+			this.speaker = false;
 			int word = this.toTransfer;
-			//this.listener = false; // reset to no listener -- this broke it
-			//this.speaker = false; 
+			this.wordThere = false;
+			this.speakArrived.wake(); // wake all or just one ?			
 			this.mutex.release(); // release lock before returning the word
 			
-			return word;
+			return (word);
 		}
+	*/
 }
