@@ -279,8 +279,8 @@ public class KThread {
 	 * thread.
 	 */
 
-	
-	LinkedList<KThread> joinList = new LinkedList<KThread>(); //For helping Donation in Priority, not actually needed.
+	KThread joinThread = null;
+	//LinkedList<KThread> joinList = new LinkedList<KThread>(); //For helping Donation in Priority, not actually needed.
 	@SuppressWarnings("static-access")
 	public void join() {
 		Lib.debug(dbgThread, "Joining to thread: " + toString()); //link the thread is not for the current thread
@@ -297,7 +297,8 @@ public class KThread {
 		 * which than it will than run the next thread determined by the priority scheduler.
 		 * The thread that called join() will be ran which was determined by the priority scheduler.  
 		 */
-		joinList.add(currentThread);
+		//joinList.add(currentThread);
+		joinThread = currentThread;
 		currentThread.yield(); 
 		//yield(); //Now you yield(stop) the current thread than run the thread that called join.
 		//joinCounter = true;
