@@ -13,7 +13,7 @@ import nachos.machine.*;
  */
 
 /*
- * nstead of using semaphores that was the foundation for condition variable,  
+ * instead of using semaphores that was the foundation for condition variable,  
  * we have to use condition variable directly. In other words, we have to provide the same 
  * implementation as the original Condition class but without the use of semaphores. 
  */
