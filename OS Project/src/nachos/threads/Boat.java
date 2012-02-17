@@ -42,6 +42,11 @@ public class Boat
 
 	// Instantiate global variables here
 	lock = new Lock();
+	childrenOnOahu = 0; 	//starts everything off at 0
+	childrenOnMolokai = 0;
+	adultsOnOahu = 0;
+	childrenOnBoat = 0;
+	adultsOnBoat = 0;
 	
 	
 	
