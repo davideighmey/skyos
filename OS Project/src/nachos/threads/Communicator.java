@@ -56,12 +56,12 @@ public class Communicator {
 	{
 		this.mutex.acquire(); // get the lock
 		
-		while(speaker == false) // while there is no speaker
-			this.speakArrived.sleep(); // set condition to sleep until there is a speaker
+		while(speaker == true) // while there is no speaker
+			this.noSpeaker.sleep(); // set condition to sleep until there is a speaker
 		
 		this.speaker = true; // there is now a speaker
 		
-		while(listener == true) // while there is no listener
+		while(listener == false) // while there is no listener
 			this.listenerArrived.sleep(); // sleep on this condition
 		
 		this.toTransfer = word; // save the word to a global variable
@@ -69,7 +69,7 @@ public class Communicator {
 		
 		this.wordReady.wake(); // wake the listeners
 		
-		while(wordThere == false)
+		while(wordThere == true)
 			this.noWord.sleep(); // 
 		
 		this.speaker = false;
@@ -103,7 +103,7 @@ public class Communicator {
 	{
 		this.mutex.acquire(); // get the lock for this critical section
 		
-		while(listener == false)
+		while(listener == true)
 			this.noListener.sleep();
 		
 		this.listener = true; // 
