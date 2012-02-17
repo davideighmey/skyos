@@ -62,7 +62,7 @@ public class Communicator {
 		//this.listenerArrived.notifyAll();
 		//this.speaker = false; // reset to no speaker -- broke
 		//this.speaker = true;
-		this.listener = false; 
+		//this.listener = false; 
 		this.mutex.release(); // now release the lock
 	}
 
@@ -90,7 +90,7 @@ public class Communicator {
 		int word = this.toTransfer;
 		//this.speakArrived.notifyAll();
 		//this.listener = false; // reset to no listener -- this broke it
-		this.speaker = false; 
+		//this.speaker = false; 
 		this.mutex.release(); // release lock before returning the word
 		return word;
 	}
