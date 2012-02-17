@@ -13,8 +13,11 @@ public class Boat
     
     private static int adultsOnOahu; // total adults on Oahu
     
-    private static int childrenOnBoat;
-    private static int adultsOnBoat;
+    private static int childrenOnBoat; 	//total children on the boat 
+    private static int adultsOnBoat;	//total adults on the boat
+    
+    private static boolean start; 		// start either true or false
+    private static boolean finished;	// finished true or false
     
     
     
@@ -47,6 +50,9 @@ public class Boat
 	adultsOnOahu = 0;
 	childrenOnBoat = 0;
 	adultsOnBoat = 0;
+	finished = false;
+    start = false;
+	
 	
 	
 	
