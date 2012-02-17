@@ -92,7 +92,24 @@ public class Boat
 		adultRow.fork();
 		while(children!=0){
 			childrenRide.join();
+			children=children-2;
 			childRide.join();
+			children++;
+		}
+		System.out.println("Amount of children left: "+children+" We purposely left a child on an island by himself with a bunch of pedobears!~");
+		while(adults!=0&&children!=0){
+			adultRow.join();
+			adults--;
+			childRide.join();
+			children++;
+			adultRow.join();
+			adults--;
+			childRide.join();
+			children++;
+			adultRow.join();
+			adults--;
+			childrenRide.join();
+			children=children+2;
 		}
 		childrenRide.join();
 		childRide.join();
