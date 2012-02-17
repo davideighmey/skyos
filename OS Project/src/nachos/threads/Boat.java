@@ -104,14 +104,10 @@ public class Boat
 			adults--;
 			childRide.join();
 			children++;
-			adultRow.join();
-			adults--;
+			childrenRide.join();
+			children=children-2;
 			childRide.join();
 			children++;
-			adultRow.join();
-			adults--;
-			childrenRide.join();
-			children=children+2;
 		}
 	}
 	/*
