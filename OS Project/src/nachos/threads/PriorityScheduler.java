@@ -333,7 +333,7 @@ public class PriorityScheduler extends Scheduler {
 			if(waitQueue==null)													//in the case that it is null, do nothing
 				return;
 			this.timeINqueue = Machine.timer().getTime();						//this will keep track on how long it has been in the queue.
-			if(waitQueue.transferPriority&&waitQueue.resourceOwner!=null){		//if this is true we have to transfer priority
+			if(waitQueue.transferPriority&&waitQueue.resourceOwner!=null&&KThread.currentThread().getName()!="main"){		//if this is true we have to transfer priority
 				for(ThreadState k : waitQueue.waitPQueue)
 					if(this.effective<k.effective)								//look at queue of there is a lower priority on the list
 						compute_donation(waitQueue,this);						//if there is one, priority inversion might be in play, so donate!
