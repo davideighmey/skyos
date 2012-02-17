@@ -56,7 +56,7 @@ public class Boat
 	
 	// Create threads here. See section 3.4 of the Nachos for Java
 	// Walkthrough linked from the projects page.
-	lock.acquire();
+	lock.acquire();		//get the lock
 
 	Runnable r = new Runnable() {
 	    public void run() {
