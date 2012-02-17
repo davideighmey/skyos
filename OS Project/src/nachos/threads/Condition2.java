@@ -11,6 +11,12 @@ import nachos.machine.*;
  *
  * @see	nachos.threads.Condition
  */
+
+/*
+ * nstead of using semaphores that was the foundation for condition variable,  
+ * we have to use condition variable directly. In other words, we have to provide the same 
+ * implementation as the original Condition class but without the use of semaphores. 
+ */
 public class Condition2 {
 	/**
 	 * Allocate a new condition variable.
@@ -31,6 +37,11 @@ public class Condition2 {
 	 * current thread must hold the associated lock. The thread will
 	 * automatically reacquire the lock before <tt>sleep()</tt> returns.
 	 */
+	/* sleep(). first sleep must make sure the current thread has the lock. then we disable the interrupts
+	 *  then we release the lock put the thread on waiting queue that is inside the current thread.
+	 * the thread is then put to sleep. when it wakes up it acquires the lock, then we restore the status 
+	 * and enable the interrupts.
+	 */
 	public void sleep() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread()); // make sure current thread has lock
 
@@ -48,6 +59,10 @@ public class Condition2 {
 	 * Wake up at most one thread sleeping on this condition variable. The
 	 * current thread must hold the associated lock.
 	 */
+	/* we make sure the current thread has the lock. we then disable all the interrupts. we then make the kthread from the 
+	 * queue we make sure there is a thread.. then we ready it. this causes it to wake up. then we enable intrupts and restores
+	 * the status of the thread
+	 */
 	public void wake() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 		boolean intStatus = Machine.interrupt().disable(); // the interrupted disable, to prevent the thread being changed
@@ -64,10 +79,14 @@ public class Condition2 {
 			
 		}
 	
-
+e
 	/**
 	 * Wake up all threads sleeping on this condition variable. The current
 	 * thread must hold the associated lock.
+	 */
+	/* make sure the thread has the lock. then we disable all the interrupts. we then use a for loop to
+	 * go through the queue and ready the threads to wake it up. we then restore the status and enable the
+	 * interrupts
 	 */
 	public void wakeAll() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
