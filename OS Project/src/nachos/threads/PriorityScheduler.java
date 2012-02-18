@@ -353,6 +353,7 @@ public class PriorityScheduler extends Scheduler {
 						break;
 					if(waitQueue.resourceOwner != threadDonor){
 						Donation donor = new Donation(waitQueue, threadDonor, waitQueue.resourceOwner);
+						if(threadDonor.effective>=waitQueue.resourceOwner.effective)
 						listDonate.add(donor);
 					}
 				
@@ -361,8 +362,8 @@ public class PriorityScheduler extends Scheduler {
 						break;
 					else if(threadDonor.effective>threadDonor.waitingResource.resourceOwner.effective){ //if(threadDonor.waitingResource.resourceOwner!=threadDonor&&threadDonor.waitingResource.resourceOwner.thread.getName()!="main"){
 						Donation donor = new Donation(waitQueue, threadDonor, threadDonor.waitingResource.resourceOwner);
+						if(threadDonor.effective>=threadDonor.waitingResource.resourceOwner.effective)
 						listDonate.add(donor);
-						return;
 					}	
 
 				
