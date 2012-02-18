@@ -302,7 +302,19 @@ public class PriorityScheduler extends Scheduler {
 		 *
 		 * @see	nachos.threads.ThreadQueue#waitForAccess
 		 */
-
+		public void addtoQueue(){
+			addToQueue(this.waitingResource);
+		}
+		public void addToQueue(PriorityQueue waitQueue){
+			if(waitQueue==null) return;
+			if(this.needReorded){
+				waitQueue.waitPQueue.remove(this);
+				waitQueue.waitPQueue.add(this);
+			}
+			waitQueue.waitPQueue.add(this);
+			
+			
+		}
 		public void waitForAccess(PriorityQueue waitQueue) {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			if(waitQueue==null)													//in the case that it is null, do nothing
@@ -315,7 +327,8 @@ public class PriorityScheduler extends Scheduler {
 				compute_donation(waitQueue,this);						//if there is one, priority inversion might be in play, so donate!
 			}
 			this.waitingResource = waitQueue;
-			waitQueue.waitPQueue.offer(this);									//add this to queue
+			//waitQueue.waitPQueue.offer(this);									//add this to queue
+			addToQueue(waitQueue);
 		}
 
 		public void compute_donation(PriorityQueue waitQueue, ThreadState threadDonor){
@@ -360,6 +373,7 @@ public class PriorityScheduler extends Scheduler {
 		/** The time the thread was in Queue;  */
 		protected long timeINqueue;
 		public PriorityQueue waitingResource;
+		protected boolean needReorded = false;
 	}
 	/** The queue where threads are waiting on  */
 
