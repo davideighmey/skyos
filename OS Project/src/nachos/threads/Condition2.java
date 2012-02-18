@@ -51,6 +51,7 @@ public class Condition2 {
 		conditionLock.release(); // releasing the lock
 
 		waitQueue2.waitForAccess(KThread.currentThread()); //the thread queue inside current thread 
+															// see semaphore p function
 		KThread.sleep();//puts the thread to sleep
 		conditionLock.acquire(); //gets the lock when it wakes up
 
