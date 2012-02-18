@@ -166,6 +166,7 @@ public class Communicator {
 		
 		return (toReturn);		
 	}
+	
 	// This part words with the test cases 2a and 2b but not with 2c (multiple words)
 	/*
 	public int listen() 
@@ -186,5 +187,37 @@ public class Communicator {
 			
 			return (word);
 		}
+	*/
+
+	/** to test communicator */
+	/**
+	static Runnable runSpk = new Runnable()
+	{
+		public void run()
+		{
+			System.out.println("Spk Thread created and about to call speak() with 4x4");
+			speak(4444);
+			System.out.println("Speak done");
+		}
+	};
+	
+	static Runnable runLst = new Runnable()
+	{
+		public void run()
+		{
+			System.out.println("lst thread created and going to call listen should return 4x4");
+			int word1 = listen();
+			System.out.println("listened returned: " + word1);
+		}
+	};
+	
+	public static void comTest()
+	{
+		//Lib.debug('t',"Entered Communicator Test");
+		KThread spk = new KThread(runSpk);
+		KThread lst = new KThread(runLst);
+		//Lib.debug('t',"spk thread and lst thread created");
+		
+	}
 	*/
 }
