@@ -6,12 +6,10 @@ public class Boat
 	static BoatGrader bg;
 
 	private static Lock lock; 	//declare lock
-	private static int childrenOnOahu; //total children on Oahu
-	private static int childrenOnMolokai; // total children on Mookai
-	private static int adultsOnOahu; //total adults on Oahu
-	private static int childrenOnBoat; 	//total children on the boat 
-	private static int adultsOnBoat;	//total adults on the boat
-
+	private static int COnOahu; //total children on Oahu
+	private static int AOnOahu; //total adults on Oahu
+	private static int COnMolokai; //total children on Molokai
+	private static int AOnMolokai; //total adults on Molokai
 
 	public static void selfTest()
 	{
@@ -32,19 +30,61 @@ public class Boat
 		// Store the externally generated autograder in a class
 		// variable to be accessible by children.
 		bg = b;
-
 		// Instantiate global variables here
 		lock = new Lock(); //This is the boat of passings.
 		//starts everything off at 0
-		childrenOnOahu = 0; 	
-		childrenOnMolokai = 0;
-		adultsOnOahu = 0;
-		childrenOnBoat = 0;
-		adultsOnBoat = 0;
-
 		// Create threads here. See section 3.4 of the Nachos for Java
 		// Walkthrough linked from the projects page.
 		lock.acquire();		//get the lock
+		
+		COnOahu = children;
+		AOnOahu = adults;
+		COnMolokai = 0;
+		AOnMolokai = 0;
+
+		KThread child[] = new KThread[children];
+		KThread adult[] = new KThread[adults];
+
+		Runnable runChild = new Runnable(){
+			public void run(){
+				ChildItinerary();
+			}
+		};
+		Runnable runAdult = new Runnable(){
+			public void run(){
+				AdultItinerary();
+			}
+		};
+		
+		for(int i = 0; i < adults; i++){
+			adult[i] = new KThread(runAdult);
+		}
+
+		for(int i = 0; i < children; i++){
+			child[i] = new KThread(runChild);
+		}
+		
+		while(COnOahu != 0){
+			child[COnOahu].fork();
+			child[COnOahu].fork();
+			child[COnOahu].join();
+			child[COnOahu].join();
+			COnOahu = COnOahu - 2;
+			COnMolokai = COnMolokai + 2;
+			child[COnMolokai].fork();
+			child[COnMolokai].join();
+			COnOahu = COnOahu + 1;
+			COnMolokai = COnMolokai - 1;
+		}
+		while(AOnOahu !=0){
+			adult[AOnOahu].fork();
+			adult[AOnOahu].join();
+			AOnOahu = AOnOahu - 1;
+			
+		}
+
+		/*
+		 * 
 		KThread childrenRide = new KThread(new Runnable() {
 			public void run() {
 				System.out.println(KThread.currentThread().getName()+" has started their long journey!");
@@ -53,6 +93,7 @@ public class Boat
 				bg.ChildRideToMolokai();
 				System.out.println(KThread.currentThread().getName()+" has finished their long journey!");
 				lock.release();//releasing the lock
+				KThread.yield();
 			}
 		});
 		KThread childRide0 = new KThread(new Runnable() {
@@ -62,6 +103,7 @@ public class Boat
 				bg.ChildRowToMolokai();
 				System.out.println(KThread.currentThread().getName()+" has finished his long journey!");
 				lock.release();//releasing the lock
+				KThread.yield();
 			}
 		});
 		KThread childRide = new KThread(new Runnable() {
@@ -71,6 +113,7 @@ public class Boat
 				bg.ChildRowToOahu();
 				System.out.println(KThread.currentThread().getName()+" has finished his long journey!");
 				lock.release();//releasing the lock
+				KThread.yield();
 			}
 		});
 		KThread adultRow = new KThread(new Runnable() {
@@ -80,46 +123,25 @@ public class Boat
 				bg.AdultRowToMolokai();
 				System.out.println(KThread.currentThread().getName()+" has finished his long journey!");
 				lock.release();//releasing the lock
+				KThread.yield();
 			}
 		});
 		childrenRide.setName("A Child rowing and a Child Riding to Molokai");
 		childRide0.setName("Child Rowing to Molokai");
 		childRide.setName("Child Rowing to Oahu");
 		adultRow.setName("Adult Rowing to Molokai");
+		 */
+
+		//All of these are put onto the readyQueue running first come first serve.
+		/*childRide0.fork();
 		childrenRide.fork();
 		childRide.fork();
-		childRide0.fork();
-		adultRow.fork();
-		/*while(children!=0){
-			childrenRide.join();
-			children=children-2;
-			childRide.join();
-			children++;
-		}
-		childRide.join();
-		children++;
-		System.out.println("Amount of children left: "+children+" We purposely left a child on an island by himself with a bunch of pedobears!~");
-		if(adults==0){
-			childRide0.join();
-			children--;
-		}
-		else
-			while(adults!=0&&children!=0){
-				adultRow.join();
-				adults--;
-				childRide.join();
-				children++;
-				childrenRide.join();
-				children=children-2;
-				childRide.join();
-				children++;
-				if(adults==0&&children==1){
-					childRide0.join();
-					children--;
-				}
-			}
-		*/
-		childrenRide.join();
+		adultRow.fork();*/
+
+		//childRide.fork();
+		//childRide.join();
+		//children++;
+		//System.out.println("Amount of children left: "+children+" We purposely left a child on an island by himself with a bunch of pedobears!~");
 	}
 	/*
 	Runnable r = new Runnable() {
@@ -131,38 +153,49 @@ public class Boat
         t.setName("Sample Boat Thread");
         t.fork();
 	 */
-	/*
-    static void AdultItinerary()
-    {
-	/* This is where you should put your solutions. Make calls
+
+	static void AdultItinerary()
+	{
+		/* This is where you should put your solutions. Make calls
 	   to the BoatGrader to show that it is synchronized. For
 	   example:
 	       bg.AdultRowToMolokai();
 	   indicates that an adult has rowed the boat across to Molokai
+		 */
+		lock.acquire(); //get the lock 
+		bg.AdultRowToMolokai();
+		lock.release();//releasing the lock
+	}
 
-    	lock.acquire(); //get the lock 
+	static void ChildItinerary()
+	{
+		lock.acquire(); // get the lock 
 
-    	lock.release();//releasing the lock
-    }
+		if(COnOahu > 1){
+			bg.ChildRowToMolokai();
+			bg.ChildRideToMolokai();
+			COnOahu = COnOahu - 2;
+			bg.ChildRowToOahu();
+			COnOahu = COnOahu - 1;
+		}
+		else{
+			bg.ChildRideToMolokai();
+			COnOahu = COnOahu - 1;
+		}
+		lock.release(); // release the lock
+	}
 
-    static void ChildItinerary()
-    {
-    	lock.acquire(); // get the lock 
-    	lock.release(); // release the lock
-    }
-	 */
-	/*
-    static void SampleItinerary()
-    {
-	// Please note that this isn't a valid solution (you can't fit
-	// all of them on the boat). Please also note that you may not
-	// have a single thread calculate a solution and then just play
-	// it back at the autograder -- you will be caught.
-	System.out.println("\n ***Everyone piles on the boat and goes to Molokai***");
-	bg.AdultRowToMolokai();
-	bg.ChildRideToMolokai();
-	bg.AdultRideToMolokai();
-	bg.ChildRideToMolokai();
-    }
-	 */  
+	static void SampleItinerary()
+	{
+		// Please note that this isn't a valid solution (you can't fit
+		// all of them on the boat). Please also note that you may not
+		// have a single thread calculate a solution and then just play
+		// it back at the autograder -- you will be caught.
+		System.out.println("\n ***Everyone piles on the boat and goes to Molokai***");
+		bg.AdultRowToMolokai();
+		bg.ChildRideToMolokai();
+		bg.AdultRideToMolokai();
+		bg.ChildRideToMolokai();
+	}
+
 }
