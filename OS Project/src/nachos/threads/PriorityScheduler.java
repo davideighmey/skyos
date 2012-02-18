@@ -196,8 +196,8 @@ public class PriorityScheduler extends Scheduler {
 			ThreadState hold = waitPQueue.peek();								//original peek
 			for(ThreadState k:waitPQueue){										//for each element in the queue, check if there is a same priority
 				if((hold.effective<=k.effective)						
-						&&((Machine.timer().getTime()-hold.timeINqueue) 
-								>(Machine.timer().getTime() - k.timeINqueue))){ //If there is one, compare the time in queue
+						/*&&((Machine.timer().getTime()-hold.timeINqueue) 
+								>(Machine.timer().getTime() - k.timeINqueue))*/){ //If there is one, compare the time in queue
 					hold = k;													//the longest time in queue have higher priority
 				}	
 			}
@@ -346,17 +346,20 @@ public class PriorityScheduler extends Scheduler {
 
 		public void compute_donation(PriorityQueue waitQueue, ThreadState threadDonor){
 			LinkedList<ThreadState> seenThreadState = new LinkedList<ThreadState>();
-			if(!seenThreadState.contains(threadDonor) && waitingResource!=null){					//checks if there is a same Donor on the list					
+			while(!seenThreadState.contains(threadDonor)){					//checks if there is a same Donor on the list					
 				seenThreadState.add(threadDonor);						
 				if(threadDonor.thread.joinThread!=null){											//case where join is called
+					if(threadDonor.thread.joinThread==threadDonor.thread)
+						break;
 					if(waitQueue.resourceOwner != threadDonor){
 						Donation donor = new Donation(waitQueue, threadDonor, waitQueue.resourceOwner);
 						listDonate.add(donor);
-						return;
 					}
 				}
-				if(threadDonor.waitingResource!=null&&threadDonor.waitingResource.resourceOwner!=null){
-					if(threadDonor.waitingResource.resourceOwner!=threadDonor&&threadDonor.waitingResource.resourceOwner.thread.getName()!="main"){
+				else if(this.waitingResource!=null&&this.waitingResource.transferPriority&&threadDonor.waitingResource.resourceOwner!=null){
+					if(threadDonor.waitingResource.resourceOwner==threadDonor)
+						break;
+					else if(threadDonor.effective>threadDonor.waitingResource.resourceOwner.effective){ //if(threadDonor.waitingResource.resourceOwner!=threadDonor&&threadDonor.waitingResource.resourceOwner.thread.getName()!="main"){
 						Donation donor = new Donation(waitQueue, threadDonor, threadDonor.waitingResource.resourceOwner);
 						listDonate.add(donor);
 						return;
