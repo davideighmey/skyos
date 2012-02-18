@@ -9,7 +9,7 @@ public class Boat
 	static BoatGrader bg;
 
 	private static Lock lock = new Lock(); 	//declare lock
-	private static boolean Loner = true;	//There will always be a loner, during school years. Kids...
+	private static boolean Loner = false;	//There will always be a loner, during school years. Kids...
 	//private static Lock boatLock = new Lock(); //Boat Lock
 
 	//private static Condition2 boat = new Condition2(boatLock); //The boat, will I need?
@@ -68,104 +68,18 @@ public class Boat
 			KThread child = new KThread(runChild);
 			child.setName("Child " + i); 
 			ChildrenOnOahu.add(child);
+			System.out.println("Created " + ChildrenOnOahu.get(i).getName());
 			child.fork();
 		}
 		for(int i = 0; i < adults; i++){
 			KThread adult = new KThread(runAdult);
 			adult.setName("Adult " + i);
 			AdultsOnOahu.add(adult);
+			System.out.println("Created " + AdultsOnOahu.get(i).getName());
 			adult.fork();
 		}
 
 		lock.release();
-		/*
-		while(COnOahu != 0){
-			child[COnOahu].fork();
-			child[COnOahu-1].fork();
-			child[COnOahu].join();
-			child[COnOahu-1].join();
-			COnOahu = COnOahu - 2;
-			COnMolokai = COnMolokai + 2;
-			child[COnMolokai].fork();
-			child[COnMolokai].join();
-			COnOahu = COnOahu + 1;
-			COnMolokai = COnMolokai - 1;
-		}
-		while(AOnOahu !=0){
-			adult[AOnOahu].fork();
-			adult[AOnOahu].join();
-			AOnOahu = AOnOahu - 1;
-			child[COnMolokai].fork();
-			child[COnMolokai].join();
-			COnOahu = COnOahu + 1;
-			COnMolokai = COnMolokai - 1;
-			child[COnOahu].fork();
-			child[COnOahu-1].fork();
-			child[COnOahu].join();
-			child[COnOahu-1].join();
-			COnOahu = COnOahu - 2;
-			COnMolokai = COnMolokai + 2;
-		}*/
-
-		/*
-		 * 
-		KThread childrenRide = new KThread(new Runnable() {
-			public void run() {
-				System.out.println(KThread.currentThread().getName()+" has started their long journey!");
-				lock.acquire();
-				bg.ChildRowToMolokai();
-				bg.ChildRideToMolokai();
-				System.out.println(KThread.currentThread().getName()+" has finished their long journey!");
-				lock.release();//releasing the lock
-				KThread.yield();
-			}
-		});
-		KThread childRide0 = new KThread(new Runnable() {
-			public void run() {
-				System.out.println(KThread.currentThread().getName()+" has started his long journey!");
-				lock.acquire();
-				bg.ChildRowToMolokai();
-				System.out.println(KThread.currentThread().getName()+" has finished his long journey!");
-				lock.release();//releasing the lock
-				KThread.yield();
-			}
-		});
-		KThread childRide = new KThread(new Runnable() {
-			public void run() {
-				System.out.println(KThread.currentThread().getName()+" has started his long journey!");
-				lock.acquire();
-				bg.ChildRowToOahu();
-				System.out.println(KThread.currentThread().getName()+" has finished his long journey!");
-				lock.release();//releasing the lock
-				KThread.yield();
-			}
-		});
-		KThread adultRow = new KThread(new Runnable() {
-			public void run() {
-				System.out.println(KThread.currentThread().getName()+" has started his long journey!");
-				lock.acquire();
-				bg.AdultRowToMolokai();
-				System.out.println(KThread.currentThread().getName()+" has finished his long journey!");
-				lock.release();//releasing the lock
-				KThread.yield();
-			}
-		});
-		childrenRide.setName("A Child rowing and a Child Riding to Molokai");
-		childRide0.setName("Child Rowing to Molokai");
-		childRide.setName("Child Rowing to Oahu");
-		adultRow.setName("Adult Rowing to Molokai");
-		 */
-
-		//All of these are put onto the readyQueue running first come first serve.
-		/*childRide0.fork();
-		childrenRide.fork();
-		childRide.fork();
-		adultRow.fork();*/
-
-		//childRide.fork();
-		//childRide.join();
-		//children++;
-		//System.out.println("Amount of children left: "+children+" We purposely left a child on an island by himself with a bunch of pedobears!~");
 	}
 
 	/*
@@ -190,6 +104,7 @@ public class Boat
 		if(AOnOahu != AdultsOnOahu.size()-1){
 			Machine.interrupt().disable();
 			Ad.sleep();			//Assumed will put all adults to sleep as it is called.
+			System.out.println("Putting adult to sleep: " + AdultsOnOahu.getFirst().getName());
 			Machine.interrupt().enable();
 		}
 		else{
@@ -230,6 +145,7 @@ public class Boat
 
 		Machine.interrupt().disable();
 		Cd.sleep();		//Assumed will put all children to sleep as it is called.
+		System.out.println("Putting child to sleep: " + ChildrenOnOahu.getFirst().getName());
 		Machine.interrupt().enable();
 		if(COnOahu == ChildrenOnOahu.size()-1){
 			lock.acquire();
@@ -269,10 +185,6 @@ public class Boat
 			}
 			lock.release();
 		}
-
-
-
-
 	}
 	public static LinkedList<KThread> ChildrenOnOahu = new LinkedList<KThread>();
 	public static LinkedList<KThread> ChildrenOnMolokai = new LinkedList<KThread>();
