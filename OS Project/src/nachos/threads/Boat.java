@@ -1,11 +1,21 @@
 package nachos.threads;
+import java.util.LinkedList;
+
 import nachos.ag.BoatGrader;
+import nachos.machine.Machine;
 
 public class Boat
 {
 	static BoatGrader bg;
 
-	private static Lock lock; 	//declare lock
+	private static Lock lock = new Lock(); 	//declare lock
+	private static boolean Loner = true;	//There will always be a loner, during school years. Kids...
+	//private static Lock boatLock = new Lock(); //Boat Lock
+
+	//private static Condition2 boat = new Condition2(boatLock); //The boat, will I need?
+	private static Condition2 Ad = new Condition2(lock); 
+	private static Condition2 Cd = new Condition2(lock);
+
 	private static int COnOahu; //total children on Oahu
 	private static int AOnOahu; //total adults on Oahu
 	private static int COnMolokai; //total children on Molokai
@@ -25,50 +35,55 @@ public class Boat
 		//  	begin(3, 3, b);
 	}
 
+
+	static Runnable runChild = new Runnable(){
+		public void run(){
+			ChildItinerary();
+		}
+	};
+	static Runnable runAdult = new Runnable(){
+		public void run(){
+			AdultItinerary();
+		}
+	};
+
+
+
+
 	public static void begin( int adults, int children, BoatGrader b )
 	{
 		// Store the externally generated autograder in a class
 		// variable to be accessible by children.
 		bg = b;
 		// Instantiate global variables here
-		lock = new Lock(); //This is the boat of passings.
+		//This is the boat of passings.
 		//starts everything off at 0
 		// Create threads here. See section 3.4 of the Nachos for Java
 		// Walkthrough linked from the projects page.
-		lock.acquire();		//get the lock
-		
 		COnOahu = children;
 		AOnOahu = adults;
-		COnMolokai = 0;
-		AOnMolokai = 0;
 
-		KThread child[] = new KThread[children];
-		KThread adult[] = new KThread[adults];
-
-		Runnable runChild = new Runnable(){
-			public void run(){
-				ChildItinerary();
-			}
-		};
-		Runnable runAdult = new Runnable(){
-			public void run(){
-				AdultItinerary();
-			}
-		};
-		
-		for(int i = 0; i < adults; i++){
-			adult[i] = new KThread(runAdult);
-		}
-
+		lock.acquire();		//get the lock
 		for(int i = 0; i < children; i++){
-			child[i] = new KThread(runChild);
+			KThread child = new KThread(runChild);
+			child.setName("Child " + i); 
+			ChildrenOnOahu.add(child);
+			child.fork();
 		}
-		
+		for(int i = 0; i < adults; i++){
+			KThread adult = new KThread(runAdult);
+			adult.setName("Adult " + i);
+			AdultsOnOahu.add(adult);
+			adult.fork();
+		}
+
+		lock.release();
+		/*
 		while(COnOahu != 0){
 			child[COnOahu].fork();
-			child[COnOahu].fork();
+			child[COnOahu-1].fork();
 			child[COnOahu].join();
-			child[COnOahu].join();
+			child[COnOahu-1].join();
 			COnOahu = COnOahu - 2;
 			COnMolokai = COnMolokai + 2;
 			child[COnMolokai].fork();
@@ -80,8 +95,17 @@ public class Boat
 			adult[AOnOahu].fork();
 			adult[AOnOahu].join();
 			AOnOahu = AOnOahu - 1;
-			
-		}
+			child[COnMolokai].fork();
+			child[COnMolokai].join();
+			COnOahu = COnOahu + 1;
+			COnMolokai = COnMolokai - 1;
+			child[COnOahu].fork();
+			child[COnOahu-1].fork();
+			child[COnOahu].join();
+			child[COnOahu-1].join();
+			COnOahu = COnOahu - 2;
+			COnMolokai = COnMolokai + 2;
+		}*/
 
 		/*
 		 * 
@@ -143,6 +167,7 @@ public class Boat
 		//children++;
 		//System.out.println("Amount of children left: "+children+" We purposely left a child on an island by himself with a bunch of pedobears!~");
 	}
+
 	/*
 	Runnable r = new Runnable() {
 	    public void run() {
@@ -162,30 +187,99 @@ public class Boat
 	       bg.AdultRowToMolokai();
 	   indicates that an adult has rowed the boat across to Molokai
 		 */
-		lock.acquire(); //get the lock 
-		bg.AdultRowToMolokai();
-		lock.release();//releasing the lock
+		if(AOnOahu != AdultsOnOahu.size()-1){
+			Machine.interrupt().disable();
+			Ad.sleep();			//Assumed will put all adults to sleep as it is called.
+			Machine.interrupt().enable();
+		}
+		else{
+			while(!AdultsOnOahu.isEmpty()){
+				//Adult to Molokai
+				bg.AdultRideToMolokai();
+				System.out.println("The Adult traveled to Molokai: " + AdultsOnOahu.getFirst().getName());
+				AdultsOnMolokai.add(AdultsOnOahu.getFirst());
+				AdultsOnOahu.removeFirst(); //Remove Adult from Oahu to Molokai
+
+				//Child back to Oahu
+				bg.ChildRowToOahu();	
+				System.out.println("A Child traveling back to Oahu: " + ChildrenOnMolokai.getFirst().getName());
+				ChildrenOnOahu.add(ChildrenOnMolokai.getFirst()); 
+				ChildrenOnMolokai.removeFirst(); //Remove Child from Molokai to Oahu
+
+				//Both Child back to Molokai
+				bg.ChildRowToMolokai();
+				bg.ChildRideToMolokai();
+				System.out.print("Two Children traveling to Molokai: " + ChildrenOnOahu.getFirst().getName());
+				ChildrenOnMolokai.add(ChildrenOnOahu.getFirst());
+				ChildrenOnOahu.removeFirst();	//Remove First Child from Oahu to Molokai
+				System.out.println(ChildrenOnOahu.getFirst().getName());
+				ChildrenOnMolokai.add(ChildrenOnOahu.getFirst());
+				ChildrenOnOahu.removeFirst(); //Remove Second Child from Oahu to Molokai
+
+				//Child back to Oahu
+				bg.ChildRowToOahu();	
+				System.out.println("A Child traveling back to Oahu: " + ChildrenOnMolokai.getFirst().getName());
+				ChildrenOnOahu.add(ChildrenOnMolokai.getFirst()); 
+				ChildrenOnMolokai.removeFirst(); //Remove Child from Molokai to Oahu
+			}
+		}
 	}
 
 	static void ChildItinerary()
 	{
-		lock.acquire(); // get the lock 
 
-		if(COnOahu > 1){
-			bg.ChildRowToMolokai();
-			bg.ChildRideToMolokai();
-			COnOahu = COnOahu - 2;
-			bg.ChildRowToOahu();
-			COnOahu = COnOahu - 1;
+		Machine.interrupt().disable();
+		Cd.sleep();		//Assumed will put all children to sleep as it is called.
+		Machine.interrupt().enable();
+		if(COnOahu == ChildrenOnOahu.size()-1){
+			lock.acquire();
+			while(!ChildrenOnOahu.isEmpty()){
+				if(ChildrenOnOahu.size()-1 == 1){
+					Loner = true;
+				}
+				if(Loner == false){		//Check if there is a lonely kid
+					//Both Child to Molokai
+					bg.ChildRowToMolokai();
+					bg.ChildRideToMolokai();
+					System.out.print("Two Children traveling to Molokai: " + ChildrenOnOahu.getFirst().getName());
+					ChildrenOnMolokai.add(ChildrenOnOahu.getFirst());
+					ChildrenOnOahu.removeFirst();	//Remove First Child from Oahu to Molokai
+					System.out.println(ChildrenOnOahu.getFirst().getName());
+					ChildrenOnMolokai.add(ChildrenOnOahu.getFirst());
+					ChildrenOnOahu.removeFirst(); //Remove Second Child from Oahu to Molokai
+
+					//Child back to Oahu
+					bg.ChildRowToOahu();	
+					System.out.println("A Child traveling back to Oahu: " + ChildrenOnMolokai.getFirst().getName());
+					ChildrenOnOahu.add(ChildrenOnMolokai.getFirst()); 
+					ChildrenOnMolokai.removeFirst(); //Remove Child from Molokai to Oahu
+				}
+				else{
+					System.out.println("Last kid on Oahu, became the loner");
+					AdultItinerary();
+
+					//Last child sent to Molokai
+					System.out.println("Last kid on Oahu, was the loner. This child was so scared of a pedobear attack.");
+					bg.ChildRowToMolokai();	
+					System.out.println("A Child traveling back to Molokai: " + ChildrenOnOahu.getFirst().getName());
+					ChildrenOnMolokai.add(ChildrenOnOahu.getFirst()); 
+					ChildrenOnOahu.removeFirst(); //Remove Child from Oahu to Molokai
+
+				}
+			}
+			lock.release();
 		}
-		else{
-			bg.ChildRideToMolokai();
-			COnOahu = COnOahu - 1;
-		}
-		lock.release(); // release the lock
+
+
+
+
 	}
+	public static LinkedList<KThread> ChildrenOnOahu = new LinkedList<KThread>();
+	public static LinkedList<KThread> ChildrenOnMolokai = new LinkedList<KThread>();
 
-	static void SampleItinerary()
+	public static LinkedList<KThread> AdultsOnOahu = new LinkedList<KThread>();
+	public static LinkedList<KThread> AdultsOnMolokai = new LinkedList<KThread>();
+	/*static void SampleItinerary()
 	{
 		// Please note that this isn't a valid solution (you can't fit
 		// all of them on the boat). Please also note that you may not
@@ -196,6 +290,6 @@ public class Boat
 		bg.ChildRideToMolokai();
 		bg.AdultRideToMolokai();
 		bg.ChildRideToMolokai();
-	}
+	}*/
 
 }
