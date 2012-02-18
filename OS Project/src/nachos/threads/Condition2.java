@@ -139,9 +139,9 @@ public class Condition2 {
 			list.add(new KThread(new Runnable() {
 				public void run() {
 					lock.acquire();
-					for(int i = 0; i<2; i++){
+					
 					System.out.println( KThread.currentThread().getName() + " IS GOING TO SLEEP" );
-					condition.wake();}
+					condition.sleep();
 					
 				}
 			}));
@@ -149,11 +149,11 @@ public class Condition2 {
 				public void run() {	
 					lock.acquire();
 					//System.out.println(KThread.currentThread().getName()+" IS NOT SUPPOSE TO RUN YET UNTIL A IS DONE");
-					for(int i = 0; i<2; i++){
+					
 
 						System.out.println(KThread.currentThread().getName()+" said: waking up!");
-						condition.sleep();
-					}//when exited it is finished
+						condition.wake();
+					//when exited it is finished
 					//System.out.println(KThread.currentThread().getName()+" said: I AM DONE. B RESUMES HERE ");
 				}
 
