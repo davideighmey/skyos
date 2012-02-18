@@ -21,34 +21,39 @@ public class Boat
 	private static int COnMolokai; //total children on Molokai
 	private static int AOnMolokai; //total adults on Molokai
 
+
+
 	public static void selfTest()
 	{
 		BoatGrader b = new BoatGrader();
 
-		System.out.println("\n ***Testing Boats with only 2 children***");
-		begin(0, 2, b);
+		//System.out.println("\n ***Testing Boats with only 2 children***");
+		//begin(0, 2, b);
 
 		//	System.out.println("\n ***Testing Boats with 2 children, 1 adult***");
 		//  	begin(1, 2, b);
 
-		//  	System.out.println("\n ***Testing Boats with 3 children, 3 adults***");
-		//  	begin(3, 3, b);
+		System.out.println("\n ***Testing Boats with 3 children, 3 adults***");
+		begin(3, 3, b);
 	}
 
-
-	static Runnable runChild = new Runnable(){
+	public static Runnable runChild = new Runnable(){
 		public void run(){
 			ChildItinerary();
 		}
 	};
-	static Runnable runAdult = new Runnable(){
+
+	public static Runnable PedoAdult = new Runnable(){
 		public void run(){
 			AdultItinerary();
 		}
 	};
 
+	public static LinkedList<KThread> ChildrenOnOahu = new LinkedList<KThread>();
+	public static LinkedList<KThread> ChildrenOnMolokai = new LinkedList<KThread>();
 
-
+	public static LinkedList<KThread> AdultsOnOahu = new LinkedList<KThread>();
+	public static LinkedList<KThread> AdultsOnMolokai = new LinkedList<KThread>();
 
 	public static void begin( int adults, int children, BoatGrader b )
 	{
@@ -62,8 +67,8 @@ public class Boat
 		// Walkthrough linked from the projects page.
 		COnOahu = children;
 		AOnOahu = adults;
-
 		lock.acquire();		//get the lock
+		
 		for(int i = 0; i < children; i++){
 			KThread child = new KThread(runChild);
 			child.setName("Child " + i); 
@@ -72,14 +77,19 @@ public class Boat
 			child.fork();
 		}
 		for(int i = 0; i < adults; i++){
-			KThread adult = new KThread(runAdult);
+			KThread adult = new KThread(PedoAdult);
 			adult.setName("Adult " + i);
 			AdultsOnOahu.add(adult);
 			System.out.println("Created " + AdultsOnOahu.get(i).getName());
 			adult.fork();
 		}
-
 		lock.release();
+		//while(true)
+		while(!ChildrenOnOahu.isEmpty())
+		{
+			ChildrenOnOahu.getFirst().join();
+		}
+		
 	}
 
 	/*
@@ -101,13 +111,13 @@ public class Boat
 	       bg.AdultRowToMolokai();
 	   indicates that an adult has rowed the boat across to Molokai
 		 */
-		if(AOnOahu != AdultsOnOahu.size()-1){
-			Machine.interrupt().disable();
-			Ad.sleep();			//Assumed will put all adults to sleep as it is called.
-			System.out.println("Putting adult to sleep: " + AdultsOnOahu.getFirst().getName());
-			Machine.interrupt().enable();
-		}
-		else{
+	//	if(AOnOahu != AdultsOnOahu.size()-1){
+		//	Machine.interrupt().disable();
+			//Ad.sleep();			//Assumed will put all adults to sleep as it is called.
+			//System.out.println("Putting adult to sleep: " + AdultsOnOahu.getFirst().getName());
+			//Machine.interrupt().enable();
+	//	}
+		//else{
 			while(!AdultsOnOahu.isEmpty()){
 				//Adult to Molokai
 				bg.AdultRideToMolokai();
@@ -133,21 +143,21 @@ public class Boat
 
 				//Child back to Oahu
 				bg.ChildRowToOahu();	
-				System.out.println("A Child traveling back to Oahu: " + ChildrenOnMolokai.getFirst().getName());
+				//System.out.println("A Child traveling back to Oahu: " + ChildrenOnMolokai.getFirst().getName());
 				ChildrenOnOahu.add(ChildrenOnMolokai.getFirst()); 
 				ChildrenOnMolokai.removeFirst(); //Remove Child from Molokai to Oahu
 			}
-		}
+		//}
 	}
 
 	static void ChildItinerary()
 	{
 
-		Machine.interrupt().disable();
-		Cd.sleep();		//Assumed will put all children to sleep as it is called.
-		System.out.println("Putting child to sleep: " + ChildrenOnOahu.getFirst().getName());
-		Machine.interrupt().enable();
-		if(COnOahu == ChildrenOnOahu.size()-1){
+		//Machine.interrupt().disable();
+		//Cd.sleep();		//Assumed will put all children to sleep as it is called.
+		//System.out.println("Putting child to sleep: " + ChildrenOnOahu.getFirst().getName());
+		//Machine.interrupt().enable();
+		//if(COnOahu == ChildrenOnOahu.size()-1){
 			lock.acquire();
 			while(!ChildrenOnOahu.isEmpty()){
 				if(ChildrenOnOahu.size()-1 == 1){
@@ -184,13 +194,9 @@ public class Boat
 				}
 			}
 			lock.release();
-		}
+		//}
 	}
-	public static LinkedList<KThread> ChildrenOnOahu = new LinkedList<KThread>();
-	public static LinkedList<KThread> ChildrenOnMolokai = new LinkedList<KThread>();
 
-	public static LinkedList<KThread> AdultsOnOahu = new LinkedList<KThread>();
-	public static LinkedList<KThread> AdultsOnMolokai = new LinkedList<KThread>();
 	/*static void SampleItinerary()
 	{
 		// Please note that this isn't a valid solution (you can't fit
