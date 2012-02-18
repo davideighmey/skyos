@@ -22,7 +22,7 @@ public class Boat
 	private static int AOnMolokai; //total adults on Molokai
 
 
-
+/**
 	public static void selfTest()
 	{
 		BoatGrader b = new BoatGrader();
@@ -36,7 +36,7 @@ public class Boat
 		//System.out.println("\n ***Testing Boats with 3 children, 3 adults***");
 		//begin(3, 3, b);
 	}
-
+*/
 	public static Runnable runChild = new Runnable(){
 		public void run(){
 			ChildItinerary();
@@ -187,17 +187,19 @@ public class Boat
 					}
 				}
 				else{
-					System.out.println("Last kid on Oahu, became the loner");
+					System.out.println("Last kid on Oahu, became the loner--- calling adultItinerary()");
 					if(!AdultsOnOahu.isEmpty())
 					AdultItinerary();
 
 					//Last child sent to Molokai
+					if(!ChildrenOnOahu.isEmpty())
+					{
 					System.out.println("Last kid on Oahu, was the loner. This child was so scared of a pedobear attack.");
 					bg.ChildRowToMolokai();	
 					System.out.println("A Child traveling back to Molokai: " + ChildrenOnOahu.getFirst().getName());
 					ChildrenOnMolokai.add(ChildrenOnOahu.getFirst()); 
 					ChildrenOnOahu.removeFirst(); //Remove Child from Oahu to Molokai
-
+					}
 				}
 			}
 			lock.release();
