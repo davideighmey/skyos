@@ -105,7 +105,9 @@ public class Condition2 {
 	
 	
 	
-	
+	/*
+	 * testing condition2.
+	 */
 	
 	private static final char dbgThread = 't';
 	public static void testMe(LinkedList<KThread> list,int priority1, int priority2,int priority3){
