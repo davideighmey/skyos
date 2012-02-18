@@ -349,14 +349,14 @@ public class PriorityScheduler extends Scheduler {
 						return;
 					}
 				}
-				else if(threadDonor.waitingResource!=null&&threadDonor.waitingResource.resourceOwner!=null){
+				/*else if(threadDonor.waitingResource!=null&&threadDonor.waitingResource.resourceOwner!=null){
 						if(threadDonor.waitingResource.resourceOwner!=threadDonor){
 							Donation donor = new Donation(waitQueue, threadDonor, threadDonor.waitingResource.resourceOwner);
 							listDonate.add(donor);
 							return;
-						}
+						}*/
 				
-				}
+				//}
 				//Donation holder =listDonate.get(listDonate.indexOf(donor));
 				//holder.setDonation();
 			}
