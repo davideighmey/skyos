@@ -340,28 +340,8 @@ public class PriorityScheduler extends Scheduler {
 
 
 			//addToQueue(waitQueue);									//add this to queue
-		}
+		}		
 
-		/*
-		 * 
-		 * LinkedList<ThreadState> seenThreadState = new LinkedList<ThreadState>();
-			if(!seenThreadState.contains(threadDonor) && waitingResource!=null){							//checks if there is a same Donor on the list		
-				seenThreadState.add(threadDonor);
-				if(threadDonor.thread.joinThread!=null){											//case where join is called
-					if(waitQueue.resourceOwner != threadDonor){
-						System.out.println("It went to donation");
-						Donation donor = new Donation(waitQueue, threadDonor, waitQueue.resourceOwner);
-						listDonate.add(donor);
-						waitQueue.resourceOwner.needReorded = true;
-						//addToQueue(waitQueue.resourceOwner);
-					}
-				}
-				//Donation holder =listDonate.get(listDonate.indexOf(donor));
-				//holder.setDonation();
-			}
-		 */
-		
-		
 		public void compute_donation(PriorityQueue waitQueue, ThreadState threadDonor){
 			LinkedList<ThreadState> seenThreadState = new LinkedList<ThreadState>();
 			if(!seenThreadState.contains(threadDonor) && waitingResource!=null){					//checks if there is a same Donor on the list					
@@ -373,14 +353,14 @@ public class PriorityScheduler extends Scheduler {
 						return;
 					}
 				}
-				/*if(threadDonor.waitingResource!=null&&threadDonor.waitingResource.resourceOwner!=null){
-					if(threadDonor.waitingResource.resourceOwner!=threadDonor){
+				if(threadDonor.waitingResource!=null&&threadDonor.waitingResource.resourceOwner!=null){
+					if(threadDonor.waitingResource.resourceOwner!=threadDonor&&threadDonor.waitingResource.resourceOwner.thread.getName()!="main"){
 						Donation donor = new Donation(waitQueue, threadDonor, threadDonor.waitingResource.resourceOwner);
 						listDonate.add(donor);
 						return;
-					}
+					}	
 
-				}*/
+				}
 				//Donation holder =listDonate.get(listDonate.indexOf(donor));
 				//holder.setDonation();
 			}
