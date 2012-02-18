@@ -355,7 +355,7 @@ public class PriorityScheduler extends Scheduler {
 						Donation donor = new Donation(waitQueue, threadDonor, waitQueue.resourceOwner);
 						listDonate.add(donor);
 					}
-				}
+				
 				else if(this.waitingResource!=null&&this.waitingResource.transferPriority&&threadDonor.waitingResource.resourceOwner!=null){
 					if(threadDonor.waitingResource.resourceOwner==threadDonor)
 						break;
@@ -365,10 +365,12 @@ public class PriorityScheduler extends Scheduler {
 						return;
 					}	
 
+				
 				}
 				//Donation holder =listDonate.get(listDonate.indexOf(donor));
 				//holder.setDonation();
 			}
+		}
 		}
 		/**
 		 * Called when the associated thread has acquired access to whatever is
