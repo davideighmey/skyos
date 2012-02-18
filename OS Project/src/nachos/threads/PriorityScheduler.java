@@ -367,6 +367,7 @@ public class PriorityScheduler extends Scheduler {
 
 				
 				}
+					threadDonor = threadDonor.waitingResource.resourceOwner;
 				//Donation holder =listDonate.get(listDonate.indexOf(donor));
 				//holder.setDonation();
 			}
