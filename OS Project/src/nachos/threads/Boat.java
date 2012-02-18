@@ -30,11 +30,11 @@ public class Boat
 		//System.out.println("\n ***Testing Boats with only 2 children***");
 		//begin(0, 2, b);
 
-		//	System.out.println("\n ***Testing Boats with 2 children, 1 adult***");
-		//  	begin(1, 2, b);
+			System.out.println("\n ***Testing Boats with 2 children, 1 adult***");
+		  	begin(1, 2, b);
 
-		System.out.println("\n ***Testing Boats with 3 children, 3 adults***");
-		begin(3, 3, b);
+		//System.out.println("\n ***Testing Boats with 3 children, 3 adults***");
+		//begin(3, 3, b);
 	}
 
 	public static Runnable runChild = new Runnable(){
@@ -120,7 +120,7 @@ public class Boat
 		//else{
 			while(!AdultsOnOahu.isEmpty()){
 				//Adult to Molokai
-				bg.AdultRideToMolokai();
+				bg.AdultRowToMolokai();
 				System.out.println("The Adult traveled to Molokai: " + AdultsOnOahu.getFirst().getName());
 				AdultsOnMolokai.add(AdultsOnOahu.getFirst());
 				AdultsOnOahu.removeFirst(); //Remove Adult from Oahu to Molokai
@@ -142,10 +142,14 @@ public class Boat
 				ChildrenOnOahu.removeFirst(); //Remove Second Child from Oahu to Molokai
 
 				//Child back to Oahu
+				if(!AdultsOnOahu.isEmpty()){
+					
+				
 				bg.ChildRowToOahu();	
-				//System.out.println("A Child traveling back to Oahu: " + ChildrenOnMolokai.getFirst().getName());
+				System.out.println("A Child traveling back to Oahu: " + ChildrenOnMolokai.getFirst().getName());
 				ChildrenOnOahu.add(ChildrenOnMolokai.getFirst()); 
 				ChildrenOnMolokai.removeFirst(); //Remove Child from Molokai to Oahu
+				}
 			}
 		//}
 	}
@@ -160,7 +164,7 @@ public class Boat
 		//if(COnOahu == ChildrenOnOahu.size()-1){
 			lock.acquire();
 			while(!ChildrenOnOahu.isEmpty()){
-				if(ChildrenOnOahu.size()-1 == 1){
+				if(ChildrenOnOahu.size() == 1){
 					Loner = true;
 				}
 				if(Loner == false){		//Check if there is a lonely kid
@@ -175,13 +179,16 @@ public class Boat
 					ChildrenOnOahu.removeFirst(); //Remove Second Child from Oahu to Molokai
 
 					//Child back to Oahu
+					if(!AdultsOnOahu.isEmpty()){
 					bg.ChildRowToOahu();	
-					System.out.println("A Child traveling back to Oahu: " + ChildrenOnMolokai.getFirst().getName());
+					System.out.println("A Child traveling back to Oahu: test " + ChildrenOnMolokai.getFirst().getName());
 					ChildrenOnOahu.add(ChildrenOnMolokai.getFirst()); 
 					ChildrenOnMolokai.removeFirst(); //Remove Child from Molokai to Oahu
+					}
 				}
 				else{
 					System.out.println("Last kid on Oahu, became the loner");
+					if(!AdultsOnOahu.isEmpty())
 					AdultItinerary();
 
 					//Last child sent to Molokai
