@@ -346,7 +346,16 @@ public class PriorityScheduler extends Scheduler {
 					if(getThreadState(threadDonor.thread.joinThread) != threadDonor){
 						Donation donor = new Donation(waitQueue, threadDonor, waitQueue.resourceOwner);
 						listDonate.add(donor);
+						return;
 					}
+				}
+				else if(threadDonor.waitingResource!=null&&threadDonor.waitingResource.resourceOwner!=null){
+						if(threadDonor.waitingResource.resourceOwner!=threadDonor){
+							Donation donor = new Donation(waitQueue, threadDonor, threadDonor.waitingResource.resourceOwner);
+							listDonate.add(donor);
+							return;
+						}
+				
 				}
 				//Donation holder =listDonate.get(listDonate.indexOf(donor));
 				//holder.setDonation();
