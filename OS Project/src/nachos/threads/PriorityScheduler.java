@@ -329,34 +329,58 @@ public class PriorityScheduler extends Scheduler {
 			if(waitQueue==null)													//in the case that it is null, do nothing
 				return;
 			this.timeINqueue = Machine.timer().getTime();						//this will keep track on how long it has been in the queue.
+			this.waitingResource = waitQueue;
+			waitQueue.waitPQueue.offer(this);
 			if(waitQueue.transferPriority&&waitQueue.resourceOwner!=null&&waitQueue.resourceOwner!=this){		//if this is true we have to transfer priority and there is a lock in play
 
 				//for(ThreadState k : waitQueue.waitPQueue)
 				//if(this.effective<k.effective)								//look at queue of there is a lower priority on the list
 				compute_donation(waitQueue,this);						//if there is one, priority inversion might be in play, so donate!
 			}
-			this.waitingResource = waitQueue;
-			waitQueue.waitPQueue.offer(this);
+
+
 			//addToQueue(waitQueue);									//add this to queue
 		}
 
-		public void compute_donation(PriorityQueue waitQueue, ThreadState threadDonor){
-			if(!listDonate.contains(threadDonor) && waitingResource!=null){							//checks if there is a same Donor on the list		
+		/*
+		 * 
+		 * LinkedList<ThreadState> seenThreadState = new LinkedList<ThreadState>();
+			if(!seenThreadState.contains(threadDonor) && waitingResource!=null){							//checks if there is a same Donor on the list		
+				seenThreadState.add(threadDonor);
 				if(threadDonor.thread.joinThread!=null){											//case where join is called
-					if(getThreadState(threadDonor.thread.joinThread) != threadDonor){
+					if(waitQueue.resourceOwner != threadDonor){
+						System.out.println("It went to donation");
+						Donation donor = new Donation(waitQueue, threadDonor, waitQueue.resourceOwner);
+						listDonate.add(donor);
+						waitQueue.resourceOwner.needReorded = true;
+						//addToQueue(waitQueue.resourceOwner);
+					}
+				}
+				//Donation holder =listDonate.get(listDonate.indexOf(donor));
+				//holder.setDonation();
+			}
+		 */
+		
+		
+		public void compute_donation(PriorityQueue waitQueue, ThreadState threadDonor){
+			LinkedList<ThreadState> seenThreadState = new LinkedList<ThreadState>();
+			if(!seenThreadState.contains(threadDonor) && waitingResource!=null){					//checks if there is a same Donor on the list					
+				seenThreadState.add(threadDonor);						
+				if(threadDonor.thread.joinThread!=null){											//case where join is called
+					if(waitQueue.resourceOwner != threadDonor){
 						Donation donor = new Donation(waitQueue, threadDonor, waitQueue.resourceOwner);
 						listDonate.add(donor);
 						return;
 					}
 				}
-				/*else if(threadDonor.waitingResource!=null&&threadDonor.waitingResource.resourceOwner!=null){
-						if(threadDonor.waitingResource.resourceOwner!=threadDonor){
-							Donation donor = new Donation(waitQueue, threadDonor, threadDonor.waitingResource.resourceOwner);
-							listDonate.add(donor);
-							return;
-						}*/
-				
-				//}
+				/*if(threadDonor.waitingResource!=null&&threadDonor.waitingResource.resourceOwner!=null){
+					if(threadDonor.waitingResource.resourceOwner!=threadDonor){
+						Donation donor = new Donation(waitQueue, threadDonor, threadDonor.waitingResource.resourceOwner);
+						listDonate.add(donor);
+						return;
+					}
+
+				}*/
 				//Donation holder =listDonate.get(listDonate.indexOf(donor));
 				//holder.setDonation();
 			}
