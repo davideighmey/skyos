@@ -423,20 +423,26 @@ public class PriorityScheduler extends Scheduler {
 		if(list!=null){
 			Random r = new Random();
 			int priority = 0;
+			KThread thread = null;
 			boolean int_state = Machine.interrupt().disable();
 			//Setting Priorities
 			for(int i =0; i< list.size();i++){
 				priority = r.nextInt(6)+1;
-				ThreadedKernel.scheduler.setPriority(list.get(i), priority);
+				thread = list.get(i);
+				ThreadedKernel.scheduler.setPriority(thread, priority);
 			}
 			Machine.interrupt().restore(int_state);
 			for(int i =0; i< list.size();i++){
-				list.get(i).setName("Thread "+ i).fork();
+				//list.get(i).setName("Thread "+ (char)(i+65)).fork();
+				thread = list.get(i);
+				thread.setName("Thread "+ (char)(i+65)).fork();
 			}
 			for(int i =0; i< list.size();i++){
-				list.get(i).join();
+				thread = list.get(i);
+				thread.join();
 			}
 		}
+		
 		/***************************************************************************************************************************/
 		/*
 		 * Test case for donation. There are three thread being created: A,B,C with priorities 6,4,7 in their respective order. 
@@ -450,9 +456,9 @@ public class PriorityScheduler extends Scheduler {
 		/***************************************************************************************************************************/
 		if(special!=null){
 			boolean int_state2 = Machine.interrupt().disable();
-			ThreadedKernel.scheduler.setPriority(list.get(0), priority1);
-			ThreadedKernel.scheduler.setPriority(list.get(1), priority2);
-			ThreadedKernel.scheduler.setPriority(list.get(2), priority3);
+			ThreadedKernel.scheduler.setPriority(special.get(0), priority1);
+			ThreadedKernel.scheduler.setPriority(special.get(1), priority2);
+			ThreadedKernel.scheduler.setPriority(special.get(2), priority3);
 			Machine.interrupt().restore(int_state2);
 			KThread spe1 = special.get(0);
 			KThread spe2 = special.get(1);
@@ -482,8 +488,8 @@ public class PriorityScheduler extends Scheduler {
 				public void run() {
 					System.out.println(KThread.currentThread().getName() + " has a priority of "+ ThreadedKernel.scheduler.getPriority());
 					System.out.println(KThread.currentThread().getName()+"  is a basic thread and is now starting!");
-					for(int i = 1; i<4; i++){
-						System.out.println(KThread.currentThread().getName()+" said: Running "+ i +" out of 3 times");
+					for(int i = 1; i<3; i++){
+						System.out.println(KThread.currentThread().getName()+" said: Running "+ i +" out of 2times");
 						KThread.yield();
 					}
 					System.out.println(KThread.currentThread().getName()+" has now finished! ");
@@ -585,10 +591,10 @@ public class PriorityScheduler extends Scheduler {
 		Lib.debug(dbgThread, "Enter PriorityQueue.selfTest");
 		//Created two threads with its runnable being printing things.
 		LinkedList<KThread> threadList = null, specialThreadList = null;
-		threadList = createThread(2,0); 	//creates five regular thread and run it
+		threadList = createThread(3,0); 	//creates five regular thread and run it
 		specialThreadList= createThread(0,1);	
 		System.out.println("Starting Basic Case: Random Madness!");
-		testMe(threadList,null,2,7,0);	
+		testMe(threadList,null,0,0,0);	
 		System.out.println("Starting Special Test Case: Priority Inversion Confusion!");
 		testMe(null,specialThreadList,6,4,7);
 	}
@@ -612,7 +618,7 @@ public class PriorityScheduler extends Scheduler {
 			//waitQueue.resourceOwner.waitingResource.waitPQueue.remove(getThreadState(test));
 			//waitQueue.resourceOwner.waitingResource.waitPQueue.add(getThreadState(test));
 			//waitQueue.waitPQueue.remove(getThreadState(test));
-			//waitQueue.waitPQueue.add(getThreadState(test));
+			//waitQueue.waitPQueue.add(g	etThreadState(test));
 
 		}
 		public void setDonation(){
