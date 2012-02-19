@@ -96,7 +96,7 @@ public class Condition2 {
 		//while (!waitQueue.isEmpty()){ // loop it .. didnt work
 			//wake(); // pop each one}
 		for (KThread Thread = waitQueue2.nextThread(); Thread!= null; waitQueue2.nextThread()){ //use for loop instead of while.. see if it works
-			Thread.ready(); // use a for loop to go to each thread and wake it up.. instead of a while.. see if this works
+			wake(); // use a for loop to go to each thread and wake it up.. instead of a while.. see if this works
 		}
 		Machine.interrupt().restore(intStatus);
 	}
@@ -140,7 +140,7 @@ public class Condition2 {
 				public void run() {
 					lock.acquire();
 					
-					System.out.println( KThread.currentThread().getName() + " IS GOING TO SLEEP" );
+					System.out.println( KThread.currentThread().getName() + " SLEEP" );
 					condition.sleep();
 					
 				}
@@ -151,17 +151,19 @@ public class Condition2 {
 					//System.out.println(KThread.currentThread().getName()+" IS NOT SUPPOSE TO RUN YET UNTIL A IS DONE");
 					
 
-						System.out.println(KThread.currentThread().getName()+" said: waking up!");
-						condition.wake();
+						System.out.println(KThread.currentThread().getName()+" said: sleeping!");
+						condition.sleep();
 					//when exited it is finished
 					//System.out.println(KThread.currentThread().getName()+" said: I AM DONE. B RESUMES HERE ");
 				}
 
 			}));
+			
+			
 			list.add(new KThread(new Runnable() {	 //when checking if thread c wakes all isnt called.. stuck =/
 				public void run() {
 					lock.acquire();
-					System.out.println( KThread.currentThread().getName() + " waking all!!!" );
+					System.out.println( KThread.currentThread().getName() + " waking all!" );
 					condition.wakeAll();
 					
 				}
