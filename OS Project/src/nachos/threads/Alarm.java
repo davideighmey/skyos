@@ -113,24 +113,13 @@ public class Alarm {
 	@SuppressWarnings("static-access") //Can Take out As not needed, just to rid of yellow line
 	public void waitUntil(long x) {
 		Machine.interrupt().disable();
-		// for now, cheat just to get something working (busy waiting is bad)
 		long wakeTime = Machine.timer().getTime() + x;
-		// No more Cheating!
-		//while (wakeTime > Machine.timer().getTime())
-		//   KThread.yield();
-		if (wakeTime == Machine.timer().getTime()){//x==0, changed from this to what it is now, for debug purposes
-			//waitQueue.add(KThread.currentThread()); //For testing purposes
-			KThread.currentThread().ready(); //Goes to the ready queue
-			timerInterrupt();
-		}
-		else{
-			threadHold hold = new threadHold(KThread.currentThread(), wakeTime); //Add both the current thread and time to list
-			sleepList.add(hold); //Add the thread and time to the list.
-			/*
-			 * reversed from putting thread to sleep than adding to list, to put thread onto sleepList than put thread to sleep.
-			 */
-			KThread.currentThread().sleep(); //Put thread to sleep
-		}
+		threadHold hold = new threadHold(KThread.currentThread(), wakeTime); //Add both the current thread and time to list
+		sleepList.add(hold); //Add the thread and time to the list.
+		/*
+		 * reversed from putting thread to sleep than adding to list, to put thread onto sleepList than put thread to sleep.
+		 */
+		KThread.currentThread().sleep(); //Put thread to sleep
 		Machine.interrupt().enable();
 	}
 
@@ -140,14 +129,14 @@ public class Alarm {
 		KThread thread1 = new KThread(new Runnable(){	
 			public void run(){
 				System.out.println("Creating Thread1");
-				long time = 500;
+				long time = 1500;
 				waitUntil(time);
 			}
 		});
 		KThread thread2 = new KThread(new Runnable(){	
 			public void run(){
 				System.out.println("Creating Thread2");
-				long time = 1500;
+				long time = 2500;
 				waitUntil(time);
 			}
 
@@ -155,21 +144,21 @@ public class Alarm {
 		KThread thread3 = new KThread(new Runnable(){	
 			public void run(){
 				System.out.println("Creating Thread3");
-				long time = 1000;
+				long time = 3500;
 				waitUntil(time);
 			}
 		});
 		KThread thread4 = new KThread(new Runnable(){	
 			public void run(){
 				System.out.println("Creating Thread4");
-				long time = 500;
+				long time = 4500;
 				waitUntil(time);
 			}
 		});
 		KThread thread5 = new KThread(new Runnable(){	
 			public void run(){
-				System.out.println("Creating Thread1");
-				long time = 10000;
+				System.out.println("Creating Thread5");
+				long time = 0;
 				waitUntil(time);
 			}
 		});
@@ -178,25 +167,25 @@ public class Alarm {
 		thread3.setName("Thread 3");
 		thread4.setName("Thread 4");
 		thread5.setName("Thread 5");
-
+		System.out.println("Running Threads");
+		Machine.interrupt().disable();
+		ThreadedKernel.scheduler.setPriority(thread1, 5);
+		ThreadedKernel.scheduler.setPriority(thread2, 7);
+		ThreadedKernel.scheduler.setPriority(thread3, 4);
+		ThreadedKernel.scheduler.setPriority(thread4, 6);
+		ThreadedKernel.scheduler.setPriority(thread5, 5);
+		Machine.interrupt().enable();
 		thread1.fork();
 		thread2.fork();
 		thread3.fork();
 		thread4.fork();
 		thread5.fork();
-
-		System.out.println("Running Threads");
-		thread1.join();
-		thread2.join();
-		thread3.join();
-		thread4.join();
-		thread5.join();
 		System.out.println("Thread1 should wake up first, than Thread4, Thread3, Thread2, Thread5");
 		System.out.println("Running Threads");
 		Machine.interrupt().disable();
 		long timebefore = Machine.timer().getTime();
 
-		while((timebefore+20000) > Machine.timer().getTime()){
+		while((timebefore+30000) > Machine.timer().getTime()){
 			timerInterrupt();
 		}
 		Machine.interrupt().enable();
