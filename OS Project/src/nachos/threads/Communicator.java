@@ -71,7 +71,7 @@ public class Communicator {
 	 * false. 	This thread now sets this.speaker to false so that other speaker threads know
 	 * this speaker will be finished shortly, and we wake any thread that was waiting on the
 	 * this.noSpeaker condition. 	Finally we make sure that the lock is released before the
-	 * this speaker method ends.
+	 * speaker method ends.
 	 */
 	
 	public void speak(int word)
@@ -127,7 +127,7 @@ public class Communicator {
 	 * In this listen method
 	 * Firstly acquire the lock. Now make sure that there are no other listening
 	 * threads in their critical section by checking that the listener boolean 
-	 * flag is flase if it is true then there is another listener thread in its
+	 * flag is false if it is true then there is another listener thread in its
 	 * critical section so this listening thread should go to sleep waiting for 
 	 * the other listening thread to finish.	If there is not listener in its
 	 * critical section then set let this listener thread enter and set the listener
