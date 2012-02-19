@@ -58,8 +58,10 @@ public class Alarm {
 			 */
 			if((sleepList.get(i).getduration()) <= Machine.timer().getTime()){
 				sleepList.get(i).getThread().ready(); //put the thread into the ready queue
-				System.out.println("Waking up thread : " + sleepList.get(i).getThread().getName());
 				//waitQueue.add(sleepList.get(i).getThread()); //Testing purposes
+				if(testcase == true){
+					System.out.println("Waking up thread : " + sleepList.get(i).getThread().getName());
+				}
 				sleepList.remove(i); //Removing the object that held the thread and times
 			}
 		}
@@ -133,6 +135,7 @@ public class Alarm {
 	}
 
 	public void selftest(){
+		testcase = true;
 		System.out.println("Starting alarm test");
 		KThread thread1 = new KThread(new Runnable(){	
 			public void run(){
@@ -192,14 +195,14 @@ public class Alarm {
 		System.out.println("Running Threads");
 		Machine.interrupt().disable();
 		long timebefore = Machine.timer().getTime();
+
 		while((timebefore+20000) > Machine.timer().getTime()){
 			timerInterrupt();
 		}
 		Machine.interrupt().enable();
-
-	//	System.out.println("Thread1 should wake up first, than Thread4, Thread3, Thread2, Thread5");
 		KThread.currentThread().yield();
 		System.out.println("Ending");
 	}
 	public LinkedList<threadHold> sleepList = new LinkedList<threadHold>();
+	boolean testcase = false;
 }
