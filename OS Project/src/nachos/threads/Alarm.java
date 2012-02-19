@@ -58,6 +58,7 @@ public class Alarm {
 			 */
 			if((sleepList.get(i).getduration()) <= Machine.timer().getTime()){
 				sleepList.get(i).getThread().ready(); //put the thread into the ready queue
+				System.out.println("Waking up thread : " + sleepList.get(i).getThread().getName());
 				//waitQueue.add(sleepList.get(i).getThread()); //Testing purposes
 				sleepList.remove(i); //Removing the object that held the thread and times
 			}
@@ -68,7 +69,7 @@ public class Alarm {
 		to run timerInterrupt() and check through the list;
 		You want yield the current thread(the one running timerInterrupt()), after the current thread has done what ever it has to do, which in this case
 		has finished checking the sleepList(), so now it will yield for another thread to run.
-		*/
+		 */
 	}
 
 	/**
@@ -131,5 +132,74 @@ public class Alarm {
 		Machine.interrupt().enable();
 	}
 
+	public void selftest(){
+		System.out.println("Starting alarm test");
+		KThread thread1 = new KThread(new Runnable(){	
+			public void run(){
+				System.out.println("Creating Thread1");
+				long time = 500;
+				waitUntil(time);
+			}
+		});
+		KThread thread2 = new KThread(new Runnable(){	
+			public void run(){
+				System.out.println("Creating Thread2");
+				long time = 1500;
+				waitUntil(time);
+			}
+
+		});
+		KThread thread3 = new KThread(new Runnable(){	
+			public void run(){
+				System.out.println("Creating Thread3");
+				long time = 1000;
+				waitUntil(time);
+			}
+		});
+		KThread thread4 = new KThread(new Runnable(){	
+			public void run(){
+				System.out.println("Creating Thread4");
+				long time = 500;
+				waitUntil(time);
+			}
+		});
+		KThread thread5 = new KThread(new Runnable(){	
+			public void run(){
+				System.out.println("Creating Thread1");
+				long time = 10000;
+				waitUntil(time);
+			}
+		});
+		thread1.setName("Thread 1");
+		thread2.setName("Thread 2");
+		thread3.setName("Thread 3");
+		thread4.setName("Thread 4");
+		thread5.setName("Thread 5");
+
+		thread1.fork();
+		thread2.fork();
+		thread3.fork();
+		thread4.fork();
+		thread5.fork();
+
+		System.out.println("Running Threads");
+		thread1.join();
+		thread2.join();
+		thread3.join();
+		thread4.join();
+		thread5.join();
+		System.out.println("Thread1 should wake up first, than Thread4, Thread3, Thread2, Thread5");
+		System.out.println("Running Threads");
+		Machine.interrupt().disable();
+		long timebefore = Machine.timer().getTime();
+		while((timebefore+20000) > Machine.timer().getTime()){
+			timerInterrupt();
+		}
+		Machine.interrupt().enable();
+
+	//	System.out.println("Thread1 should wake up first, than Thread4, Thread3, Thread2, Thread5");
+		KThread.currentThread().yield();
+		System.out.println("Ending");
+	}
 	public LinkedList<threadHold> sleepList = new LinkedList<threadHold>();
 }
