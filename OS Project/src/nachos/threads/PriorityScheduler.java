@@ -354,25 +354,25 @@ public class PriorityScheduler extends Scheduler {
 					if(waitQueue.resourceOwner != threadDonor){
 						Donation donor = new Donation(waitQueue, threadDonor, waitQueue.resourceOwner);
 						if(threadDonor.effective>=waitQueue.resourceOwner.effective)
-						listDonate.add(donor);
+							listDonate.add(donor);
 					}
-				
-				else if(this.waitingResource!=null&&this.waitingResource.transferPriority&&threadDonor.waitingResource.resourceOwner!=null){
-					if(threadDonor.waitingResource.resourceOwner==threadDonor)
-						break;
-					else if(threadDonor.effective>threadDonor.waitingResource.resourceOwner.effective){ //if(threadDonor.waitingResource.resourceOwner!=threadDonor&&threadDonor.waitingResource.resourceOwner.thread.getName()!="main"){
-						Donation donor = new Donation(waitQueue, threadDonor, threadDonor.waitingResource.resourceOwner);
-						if(threadDonor.effective>=threadDonor.waitingResource.resourceOwner.effective)
-						listDonate.add(donor);
-					}	
 
-				
-				}
+					else if(this.waitingResource!=null&&this.waitingResource.transferPriority&&threadDonor.waitingResource.resourceOwner!=null){
+						if(threadDonor.waitingResource.resourceOwner==threadDonor)
+							break;
+						else if(threadDonor.effective>threadDonor.waitingResource.resourceOwner.effective){ //if(threadDonor.waitingResource.resourceOwner!=threadDonor&&threadDonor.waitingResource.resourceOwner.thread.getName()!="main"){
+							Donation donor = new Donation(waitQueue, threadDonor, threadDonor.waitingResource.resourceOwner);
+							if(threadDonor.effective>=threadDonor.waitingResource.resourceOwner.effective)
+								listDonate.add(donor);
+						}	
+
+
+					}
 					threadDonor = threadDonor.waitingResource.resourceOwner;
-				//Donation holder =listDonate.get(listDonate.indexOf(donor));
-				//holder.setDonation();
+					//Donation holder =listDonate.get(listDonate.indexOf(donor));
+					//holder.setDonation();
+				}
 			}
-		}
 		}
 		/**
 		 * Called when the associated thread has acquired access to whatever is
@@ -411,69 +411,152 @@ public class PriorityScheduler extends Scheduler {
 	//private Queue<KThread> waitPQueue = new PriorityQueue<KThread>(1, new PriorityComparator());
 
 	private static final char dbgThread = 't';
-	public static void testMe(LinkedList<KThread> list,int priority1, int priority2,int priority3){
+	public static void testMe(LinkedList<KThread> list, LinkedList<KThread> special,int priority1, int priority2,int priority3){
 
-		boolean int_state = Machine.interrupt().disable();
-		ThreadedKernel.scheduler.setPriority(list.get(0), priority1);
-		ThreadedKernel.scheduler.setPriority(list.get(1), priority2);
-		if(priority3!=0)
+		/***************************************************************************************************************************/
+		/*
+		 * Test case for priority scheduling. Depending on the number of threads created, we will set each thread priority randomly and
+		 * allow them to run. The print out should be organize by their priority number with highest being first and the lowest being
+		 * last.
+		 */
+		/***************************************************************************************************************************/
+		if(list!=null){
+			Random r = new Random();
+			int priority = r.nextInt(6)+1;
+			ThreadedKernel.scheduler.setPriority(priority);
+
+			boolean int_state = Machine.interrupt().disable();
+			ThreadedKernel.scheduler.setPriority(list.get(0), priority1);
+			ThreadedKernel.scheduler.setPriority(list.get(1), priority2);
 			ThreadedKernel.scheduler.setPriority(list.get(2), priority3);	
-		ThreadedKernel.scheduler.setPriority(list.get(3), 6);
-		ThreadedKernel.scheduler.setPriority(list.get(4), 4);
-		if(priority3!=0)
-			ThreadedKernel.scheduler.setPriority(list.get(5), 7);	
-		Machine.interrupt().restore(int_state);
-		KThread th1 = list.get(0);
-		KThread th4 = list.get(3);
-		KThread th2 = list.get(1);
-		KThread th5 = list.get(4);
-		KThread th3 = list.get(2);
-		KThread th6 = list.get(5);
-		th1.setName("Thread A").fork();
-		th2.setName("Thread B").fork();
-		if(priority3 != 0)
-			th3.setName("Thread C").fork();
-		
-		th1.join();
-		th2.join();
-		if(priority3 != 0)
-			th3.join();
-		th4.setName("Thread D").fork();
+			Machine.interrupt().restore(int_state);
+			KThread th1 = list.get(0);
+			KThread th2 = list.get(1);
+			KThread th3 = list.get(2);
+			th1.setName("Thread A").fork();
+			th2.setName("Thread B").fork();
+			if(priority3 != 0)
+				th3.setName("Thread C").fork();
+
+			th1.join();
+			th2.join();
+			if(priority3 != 0)
+				th3.join();
+		}
+		/***************************************************************************************************************************/
+		/*
+		 * Test case for donation. There are three thread being created: A,B,C with priorities 6,4,7 in their respective order. 
+		 * C starts running with a lock since it has a priority of 7. However since we are testing priority inversion, it will
+		 * set its own priority to 2 so other threads that does not need to use Thread C resources can easily interrupt it. 
+		 * Since Thread A does need to use a resource that Thread C is using and also the current highest priority, it does not 
+		 * want to wait any longer than it should and proceeds to donate his priority to Thread C. This should allow Thread C 
+		 * to continue running and eventually give up its lock on the resource. Thread A shall proceed normally and Thread B 
+		 * following afterward.  
+		 */
+		/***************************************************************************************************************************/
+		if(special!=null){
+			boolean int_state2 = Machine.interrupt().disable();
+			ThreadedKernel.scheduler.setPriority(list.get(0), priority1);
+			ThreadedKernel.scheduler.setPriority(list.get(1), priority2);
+			ThreadedKernel.scheduler.setPriority(list.get(2), priority3);
+			Machine.interrupt().restore(int_state2);
+			KThread spe1 = special.get(0);
+			KThread spe2 = special.get(1);
+			KThread spe3 = special.get(2);
+			spe1.setName("Thread A").fork();
+			spe2.setName("Thread B").fork();
+			spe3.setName("Thread C").fork();
+			spe1.join();
+			spe2.join();
+			spe3.join();
+		}
+
+		/*th4.setName("Thread D").fork();
 		th5.setName("Thread E").fork();
 		if(priority3 != 0)
 			th6.setName("Thread F").fork();
 		th4.join();
 		th5.join();
 		if(priority3 != 0)
-			th6.join();
+			th6.join();*/
 	}
 
 	/**
 	 * Test if this module is working.
 	 */
 	public static LinkedList<KThread> createThread(int number, int special){
-		final Lock lock = new Lock();
+		final Lock lock1 = new Lock(); //creates a lock on one resource
+		final Lock lock2 = new Lock(); //creates a different lock on a different resource
 		LinkedList<KThread> list = new LinkedList<KThread>();
-		/*for(int i = 0; i<number;i++){				//creates a specific number of test thread
+		/*
+		 * This is a basic creation of thread. These threads created below will have a random priority assigned to them
+		 */
+
+		for(int i = 0; i<number;i++){				//creates a specific number of test thread
 			list.add(new KThread(new Runnable() {
 				public void run() {
-					System.out.println(KThread.currentThread().getName()+" IS NOT SUPPOSE TO RUN YET UNTIL A IS DONE");
-					for(int i = 0; i<5; i++){
-						System.out.println(KThread.currentThread().getName()+" said: IM RUNNING!");
+					System.out.println(KThread.currentThread().getName() + " has a priority of "+ ThreadedKernel.scheduler.getPriority());
+					System.out.println(KThread.currentThread().getName()+"  is a basic thread and is now starting!");
+					for(int i = 1; i<4; i++){
+						System.out.println(KThread.currentThread().getName()+" said: Running "+ i +" out of 3 times");
 						KThread.yield();
-					}//when exited it is finished
-					System.out.println(KThread.currentThread().getName()+" said: I AM DONE. B RESUMES HERE ");
+					}
+					System.out.println(KThread.currentThread().getName()+" has now finished! ");
 				}
-
 			}));
-		}*/
+		}
+		/*
+		 * Creation of Special threads with specific priority associated with them
+		 */
 		if(special!=0){
 			list.add(new KThread(new Runnable() {
 				public void run() {
+					System.out.println(KThread.currentThread().getName() + " is now attempting to Acquire Lock one. Should fail and let C resume");
+					lock1.acquire();
+					System.out.println( KThread.currentThread().getName() + " is currently running with the Lock one." );
+					lock1.release();
+					System.out.println(KThread.currentThread().getName()+" has release the lock and B shall run.");
+				}
+			}));
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					System.out.println(KThread.currentThread().getName()+" should be running after A is done.");
+					for(int i = 1; i<4; i++){
+						System.out.println(KThread.currentThread().getName()+" is now running " +i+" out of 3 times.");
+						KThread.yield();
+					}
+					System.out.println(KThread.currentThread().getName()+" said: I AM DONE.");
+				}
+
+			}));
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					System.out.println(KThread.currentThread().getName() + " has started with priority 7. It aquire the lock one first and will proceed to change its own priority");
+					lock1.acquire();
+					boolean int_state = Machine.interrupt().disable();
+					ThreadedKernel.scheduler.setPriority( 2 );
+					Machine.interrupt().restore( int_state );
+					System.out.println(KThread.currentThread().getName() + " now has priority 2...Priority Inversion chaos has started");
+					System.out.println(KThread.currentThread().getName() + " has now given up its runtime in the cpu. Will attempt to grab the cpu again.");
+					KThread.yield();
+					System.out.println( KThread.currentThread().getName() + " has grab hold of the cpu again! But is it in the right order?" );
+					System.out.println(KThread.currentThread().getName() + " is now going to release the lock. A should run after this.");
+					lock1.release();
+					KThread.yield();
+					System.out.println( KThread.currentThread().getName() + " has the cpu again. This thread should run after Thread A and B is finished" );
+					lock1.acquire();
+					System.out.println( KThread.currentThread().getName() + " is now running as a regular thread");
+					lock1.release();
+					System.out.println(KThread.currentThread().getName()+" said: I AM DONE.");
+				}
+			}));
+			/*
+			list.add(new KThread(new Runnable() {
+				public void run() {
 					System.out.println(KThread.currentThread().getName() + " HAS to run after C! C has to finish before A RUNS");
-					lock.acquire();
+					lock2.acquire();
 					System.out.println( KThread.currentThread().getName() + " IS RUNNING" );
-					lock.release();
+					lock2.release();
 					System.out.println(KThread.currentThread().getName()+" said: I AM DONE.");
 				}
 			}));
@@ -491,7 +574,7 @@ public class PriorityScheduler extends Scheduler {
 			list.add(new KThread(new Runnable() {
 				public void run() {
 					//System.out.println(KThread.currentThread().getName() + " has started with priority: "+PriorityScheduler.ThreadStateKThread.currentThread());
-					lock.acquire();
+					lock2.acquire();
 					boolean int_state = Machine.interrupt().disable();
 					ThreadedKernel.scheduler.setPriority( 2 );
 					Machine.interrupt().restore( int_state );
@@ -500,55 +583,15 @@ public class PriorityScheduler extends Scheduler {
 					// t1.acquire() will now have to realise that t3 owns the lock it wants to obtain
 					// so program execution will continue here.
 					System.out.println( KThread.currentThread().getName() + " active ('a' wants its lock back so we are here)" );
-					lock.release();
+					lock2.release();
 					KThread.yield();
-					lock.acquire();
+					lock2.acquire();
 					System.out.println( KThread.currentThread().getName() + " active-again (should be after 'a' and 'b' done)" );
-					lock.release();
+					lock2.release();
 					System.out.println(KThread.currentThread().getName()+" said: I AM DONE.");
 				}
 			}));
-			list.add(new KThread(new Runnable() {
-				public void run() {
-					System.out.println(KThread.currentThread().getName() + " HAS to run after C! C has to finish before A RUNS");
-					lock.acquire();
-					System.out.println( KThread.currentThread().getName() + " IS RUNNING" );
-					lock.release();
-					System.out.println(KThread.currentThread().getName()+" said: I AM DONE.");
-				}
-			}));
-			list.add(new KThread(new Runnable() {
-				public void run() {
-					System.out.println(KThread.currentThread().getName()+" IS NOT SUPPOSE TO RUN YET UNTIL A IS DONE");
-					for(int i = 0; i<5; i++){
-						System.out.println(KThread.currentThread().getName()+" said: IM RUNNING!");
-						KThread.yield();
-					}//when exited it is finished
-					System.out.println(KThread.currentThread().getName()+" said: I AM DONE.");
-				}
-
-			}));
-			list.add(new KThread(new Runnable() {
-				public void run() {
-					//System.out.println(KThread.currentThread().getName() + " has started with priority: "+PriorityScheduler.ThreadStateKThread.currentThread());
-					lock.acquire();
-					boolean int_state = Machine.interrupt().disable();
-					ThreadedKernel.scheduler.setPriority( 2 );
-					Machine.interrupt().restore( int_state );
-					System.out.println(KThread.currentThread().getName() + " now has priority 2...Priority Inversion chaos has started");
-					KThread.yield();
-					// t1.acquire() will now have to realise that t3 owns the lock it wants to obtain
-					// so program execution will continue here.
-					System.out.println( KThread.currentThread().getName() + " active ('a' wants its lock back so we are here)" );
-					lock.release();
-					KThread.yield();
-					lock.acquire();
-					System.out.println( KThread.currentThread().getName() + " active-again (should be after 'a' and 'b' done)" );
-					lock.release();
-					System.out.println(KThread.currentThread().getName()+" said: I AM DONE.");
-				}
-			}));
-
+			 */
 		}
 
 		return list;
@@ -556,11 +599,13 @@ public class PriorityScheduler extends Scheduler {
 	public static void selfTest(){
 		Lib.debug(dbgThread, "Enter PriorityQueue.selfTest");
 		//Created two threads with its runnable being printing things.
-		LinkedList<KThread> threadList;
-		//threadList = createThread(2,0); 	//creates two regular thread and run it
-		//testMe(threadList,2,7,0);
-		threadList= createThread(1,1);						//creates three thread-1 regular and 2 special
-		testMe(threadList,6,4,7);
+		LinkedList<KThread> threadList = null, specialThreadList = null;
+		threadList = createThread(2,0); 	//creates five regular thread and run it
+		specialThreadList= createThread(0,1);	
+		System.out.println("Starting Basic Case: Random Madness!");
+		testMe(threadList,null,2,7,0);	
+		System.out.println("Starting Special Test Case: Priority Inversion Confusion!");
+		testMe(null,specialThreadList,6,4,7);
 	}
 	public class Donation{
 		public int effective;
