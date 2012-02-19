@@ -422,26 +422,20 @@ public class PriorityScheduler extends Scheduler {
 		/***************************************************************************************************************************/
 		if(list!=null){
 			Random r = new Random();
-			int priority = r.nextInt(6)+1;
-			ThreadedKernel.scheduler.setPriority(priority);
-
+			int priority = 0;
 			boolean int_state = Machine.interrupt().disable();
-			ThreadedKernel.scheduler.setPriority(list.get(0), priority1);
-			ThreadedKernel.scheduler.setPriority(list.get(1), priority2);
-			ThreadedKernel.scheduler.setPriority(list.get(2), priority3);	
+			//Setting Priorities
+			for(int i =0; i< list.size();i++){
+				priority = r.nextInt(6)+1;
+				ThreadedKernel.scheduler.setPriority(list.get(i), priority);
+			}
 			Machine.interrupt().restore(int_state);
-			KThread th1 = list.get(0);
-			KThread th2 = list.get(1);
-			KThread th3 = list.get(2);
-			th1.setName("Thread A").fork();
-			th2.setName("Thread B").fork();
-			if(priority3 != 0)
-				th3.setName("Thread C").fork();
-
-			th1.join();
-			th2.join();
-			if(priority3 != 0)
-				th3.join();
+			for(int i =0; i< list.size();i++){
+				list.get(i).setName("Thread "+ i).fork();
+			}
+			for(int i =0; i< list.size();i++){
+				list.get(i).join();
+			}
 		}
 		/***************************************************************************************************************************/
 		/*
@@ -470,15 +464,6 @@ public class PriorityScheduler extends Scheduler {
 			spe2.join();
 			spe3.join();
 		}
-
-		/*th4.setName("Thread D").fork();
-		th5.setName("Thread E").fork();
-		if(priority3 != 0)
-			th6.setName("Thread F").fork();
-		th4.join();
-		th5.join();
-		if(priority3 != 0)
-			th6.join();*/
 	}
 
 	/**
