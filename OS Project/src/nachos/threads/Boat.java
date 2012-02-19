@@ -22,33 +22,36 @@ public class Boat
 	private static int AOnMolokai; //total adults on Molokai
 
 
-/**
+
 	public static void selfTest()
 	{
 		BoatGrader b = new BoatGrader();
 
-		//System.out.println("\n ***Testing Boats with only 2 children***");
-		//begin(0, 2, b);
+		System.out.println("\n ***Testing Boats with only 2 children***");
+		begin(0, 2, b);
 
-			System.out.println("\n ***Testing Boats with 2 children, 1 adult***");
-		  	begin(1, 2, b);
+		//	System.out.println("\n ***Testing Boats with 2 children, 1 adult***");
+		  //	begin(1, 2, b);
 
 		//System.out.println("\n ***Testing Boats with 3 children, 3 adults***");
 		//begin(3, 3, b);
 	}
-*/
-	public static Runnable runChild = new Runnable(){
+
+	/*The Runnable Code for each Child and Adult Thread that is being created*/
+	public static Runnable runChild = new Runnable(){ 
 		public void run(){
 			ChildItinerary();
 		}
 	};
-
 	public static Runnable PedoAdult = new Runnable(){
 		public void run(){
 			AdultItinerary();
 		}
 	};
 
+	/*Creating a list for each Child on Oahu, and Moloakai, and also for Adults on Oahu and Molokai. These Lists will be used to hold each
+	 * new thread created, with the first elements of each list being removed and added to another list, I.E. Child on Oahu when rowed to
+	 * Molokai, the child will be removed from the first and list and added to the 2nd list.*/
 	public static LinkedList<KThread> ChildrenOnOahu = new LinkedList<KThread>();
 	public static LinkedList<KThread> ChildrenOnMolokai = new LinkedList<KThread>();
 
@@ -67,8 +70,9 @@ public class Boat
 		// Walkthrough linked from the projects page.
 		COnOahu = children;
 		AOnOahu = adults;
-		lock.acquire();		//get the lock
+		lock.acquire();		//get the lock, disable inturrupt.
 		
+		//Creating each child thread, and adding it on to the correct List, and putting it on the ready queue.
 		for(int i = 0; i < children; i++){
 			KThread child = new KThread(runChild);
 			child.setName("Child " + i); 
@@ -76,6 +80,7 @@ public class Boat
 			System.out.println("Created " + ChildrenOnOahu.get(i).getName());
 			child.fork();
 		}
+		//Same as for child except with adults
 		for(int i = 0; i < adults; i++){
 			KThread adult = new KThread(PedoAdult);
 			adult.setName("Adult " + i);
@@ -83,8 +88,8 @@ public class Boat
 			System.out.println("Created " + AdultsOnOahu.get(i).getName());
 			adult.fork();
 		}
-		lock.release();
-		//while(true)
+		lock.release(); //Re-enable the inturrupt 
+		//Will now starting moving every child to the island Molokai after each thread has been created
 		while(!ChildrenOnOahu.isEmpty())
 		{
 			ChildrenOnOahu.getFirst().join();
@@ -111,13 +116,6 @@ public class Boat
 	       bg.AdultRowToMolokai();
 	   indicates that an adult has rowed the boat across to Molokai
 		 */
-	//	if(AOnOahu != AdultsOnOahu.size()-1){
-		//	Machine.interrupt().disable();
-			//Ad.sleep();			//Assumed will put all adults to sleep as it is called.
-			//System.out.println("Putting adult to sleep: " + AdultsOnOahu.getFirst().getName());
-			//Machine.interrupt().enable();
-	//	}
-		//else{
 			while(!AdultsOnOahu.isEmpty()){
 				//Adult to Molokai
 				bg.AdultRowToMolokai();
@@ -143,25 +141,16 @@ public class Boat
 
 				//Child back to Oahu
 				if(!AdultsOnOahu.isEmpty()){
-					
-				
 				bg.ChildRowToOahu();	
 				System.out.println("A Child traveling back to Oahu: " + ChildrenOnMolokai.getFirst().getName());
 				ChildrenOnOahu.add(ChildrenOnMolokai.getFirst()); 
 				ChildrenOnMolokai.removeFirst(); //Remove Child from Molokai to Oahu
 				}
 			}
-		//}
 	}
 
 	static void ChildItinerary()
 	{
-
-		//Machine.interrupt().disable();
-		//Cd.sleep();		//Assumed will put all children to sleep as it is called.
-		//System.out.println("Putting child to sleep: " + ChildrenOnOahu.getFirst().getName());
-		//Machine.interrupt().enable();
-		//if(COnOahu == ChildrenOnOahu.size()-1){
 			lock.acquire();
 			while(!ChildrenOnOahu.isEmpty()){
 				if(ChildrenOnOahu.size() == 1){
@@ -203,7 +192,6 @@ public class Boat
 				}
 			}
 			lock.release();
-		//}
 	}
 
 	/*static void SampleItinerary()
