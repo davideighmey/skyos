@@ -58,7 +58,6 @@ public class Alarm {
 			 */
 			if((sleepList.get(i).getduration()) <= Machine.timer().getTime()){
 				sleepList.get(i).getThread().ready(); //put the thread into the ready queue
-				//waitQueue.add(sleepList.get(i).getThread()); //Testing purposes
 				if(testcase == true){
 					System.out.println("Waking up thread : " + sleepList.get(i).getThread().getName());
 				}
