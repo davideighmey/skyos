@@ -266,7 +266,7 @@ public class PriorityScheduler extends Scheduler {
 		 * @return	the effective priority of the associated thread.
 		 */
 		public int getEffectivePriority() {
-			if(!listDonate.isEmpty()){
+			/*if(!listDonate.isEmpty()){
 				int found = 0;
 				for(int i = 0; i< listDonate.size();i++){
 					if(this == listDonate.get(i).threadInQuestion){
@@ -275,8 +275,8 @@ public class PriorityScheduler extends Scheduler {
 				}
 				return listDonate.get(found).effective;
 			}
-			else
-				return this.effective;
+			else*/
+			return this.effective;
 		}
 
 		/**
@@ -328,13 +328,15 @@ public class PriorityScheduler extends Scheduler {
 			while(!seenThreadState.contains(threadDonor)){					//checks if there is a same Donor on the list					
 				seenThreadState.add(threadDonor);						
 				//case where join is called
-				
-				if(waitQueue.resourceOwner != threadDonor&&threadDonor.thread.joinThread!=null){
-					if(threadDonor.thread.joinThread==threadDonor.thread)
-						break;
-					Donation donor = new Donation(waitQueue, threadDonor, waitQueue.resourceOwner);
-					if(threadDonor.effective>=waitQueue.resourceOwner.effective)
-						listDonate.add(donor);
+				if(threadDonor==null) break;
+				if(threadDonor.thread!=null){
+					if(waitQueue.resourceOwner != threadDonor&&threadDonor.thread.joinThread!=null){
+						if(threadDonor.thread.joinThread==threadDonor.thread)
+							break;
+						Donation donor = new Donation(waitQueue, threadDonor, waitQueue.resourceOwner);
+						if(threadDonor.effective>=waitQueue.resourceOwner.effective)
+							listDonate.add(donor);
+					}
 				}
 				if(threadDonor.waitingResource!=null){
 					if(this.waitingResource.resourceOwner!=null){
@@ -351,7 +353,7 @@ public class PriorityScheduler extends Scheduler {
 					}
 				}
 				if(threadDonor.waitingResource!=null)
-				threadDonor = threadDonor.waitingResource.resourceOwner;
+					threadDonor = threadDonor.waitingResource.resourceOwner;
 				//Donation holder =listDonate.get(listDonate.indexOf(donor));
 				//holder.setDonation();
 
@@ -631,9 +633,9 @@ public class PriorityScheduler extends Scheduler {
 		specialThreadList= createThread(0,1);	
 		specialThreadListPlus = createThread(1,1);
 		System.out.println("Starting Basic Case: Random Madness!");
-		testMe(threadList,null,0,0,0);	
+		//testMe(threadList,null,0,0,0);	
 		System.out.println("Starting Special Test Case: Priority Inversion Confusion!");
-		testMe(threadList,specialThreadList,6,4,7);
+		//testMe(threadList,specialThreadList,6,4,7);
 		System.out.println("Starting Special Test Plus Case: Priority Inversion Confusion EXTREME!!");
 		testMe(threadList,specialThreadListPlus,7,4,7);
 	}
