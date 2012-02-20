@@ -472,4 +472,48 @@ public class KThread {
 	private static KThread toBeDestroyed = null;
 	private static KThread idleThread = null;
 	
+	
+	
+	/** 
+	 * 
+	 *	Test for JOIN!
+	 *
+	 */
+	public static void testMe(LinkedList<KThread> list,int priority1, int priority2){
+	boolean int_state = Machine.interrupt().disable();
+	ThreadedKernel.scheduler.setPriority(list.get(0), priority1);
+	ThreadedKernel.scheduler.setPriority(list.get(1), priority2);
+	list.get(0).setName("Thread A").fork();
+	list.get(1).setName("Thread B").fork();
+	list.get(0).join();
+	list.get(1).join();
+	Machine.interrupt().restore(int_state);
+	}
+
+public static LinkedList<KThread> createThread(int number, int special){
+	LinkedList<KThread> list = new LinkedList<KThread>();
+	list.add(new KThread(new Runnable(){
+		public void run(){
+		int x = 0;
+		while(x < 10){
+			System.out.println(" x ");		
+			x++;}
+		}}));
+	list.add(new KThread(new Runnable(){
+		public void run(){
+			int y =0;
+			while(y < 10){
+				System.out.println(" y ");
+				y++;}
+	}}));
+	return list;
+}
+
+	public static void joinSelfTest(){
+		Lib.debug(dbgThread, "Enter PriorityQueue.selfTest");
+		LinkedList<KThread> threadList;
+		threadList= createThread(1,1);						
+	}
+
+	
 }
