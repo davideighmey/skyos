@@ -46,17 +46,12 @@ public class Condition2 {
 	 */
 	public void sleep() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread()); // make sure current thread has lock
-
 		boolean intStatus = Machine.interrupt().disable();//the interrupt disable(), to deal with thread 
 		conditionLock.release(); // releasing the lock
-
-		waitQueue2.waitForAccess(KThread.currentThread()); //the thread queue inside current thread 
-															// see semaphore p function
+		waitQueue2.waitForAccess(KThread.currentThread()); //the thread queue inside current thread.. see semaphore p function
 		KThread.sleep();//puts the thread to sleep
 		conditionLock.acquire(); //gets the lock when it wakes up
-
-		Machine.interrupt().restore(intStatus); //Interrupt enabled & restore to last status .
-
+		Machine.interrupt().restore(intStatus); //Interrupt enabled & restore to last status 
 	}
 	/**
 	 * Wake up at most one thread sleeping on this condition variable. The
@@ -70,16 +65,12 @@ public class Condition2 {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 		boolean intStatus = Machine.interrupt().disable(); // the interrupted disable, to prevent the thread being changed
 		//if (!waitQueue.isEmpty()){ //check and see if the thread queue is not empty.. dont need
-			
-			KThread thread = waitQueue2.nextThread(); // use the semaphore implementation readying the first thread on queue
-													  // see semaphore.java v function
+			KThread thread = waitQueue2.nextThread(); // use the semaphore implementation readying the first thread on queue.. see semaphore.java v function
 			if (thread != null) {  // make sure there is a thread
 			    thread.ready(); // get it ready
 			}
-			
 			//waitQueue.removeFirst(); //Grab the first sleeping thread on the list (FIFO Queue).. already woke it up with the ready()
-			Machine.interrupt().restore(intStatus); //enable the interrupt & restores
-			
+			Machine.interrupt().restore(intStatus); //enable the interrupt & restores	
 		}
 	
 	/**
@@ -101,8 +92,10 @@ public class Condition2 {
 		Machine.interrupt().restore(intStatus);
 	}
 	
-	
-	
+	//private static KThread currentThread = null; .. no need for this
+	//private LinkedList<KThread> waitQueue = new LinkedList<KThread>(); // only going to use one queue... see if this works
+	private ThreadQueue waitQueue2 = ThreadedKernel.scheduler.newThreadQueue(false); // make a new wait queue so the thread doesn't loose all its data															
+	private Lock conditionLock;
 	
 	
 	
@@ -112,14 +105,12 @@ public class Condition2 {
 	
 	private static final char dbgThread = 't';
 	public static void testMe(LinkedList<KThread> list,int priority1, int priority2,int priority3){
-
 		boolean int_state = Machine.interrupt().disable();
 		ThreadedKernel.scheduler.setPriority(list.get(0), priority1);
 		ThreadedKernel.scheduler.setPriority(list.get(1), priority2);
 		if(priority3!=0)
 			ThreadedKernel.scheduler.setPriority(list.get(2), priority3);	
 		Machine.interrupt().restore(int_state);
-
 		list.get(0).setName("Thread A").fork();
 		list.get(1).setName("Thread B").fork();
 		if(priority3 != 0)
@@ -134,69 +125,37 @@ public class Condition2 {
 		final Lock lock = new Lock();
 		final Condition2 condition = new Condition2(lock);
 		LinkedList<KThread> list = new LinkedList<KThread>();
-	
 		if(special!=0){
 			list.add(new KThread(new Runnable() {
 				public void run() {
 					lock.acquire();
-					
 					System.out.println( KThread.currentThread().getName() + " SLEEP" );
-					condition.sleep();
-					
-				}
+					condition.sleep();}
 			}));
 			list.add(new KThread(new Runnable() {
 				public void run() {	
 					lock.acquire();
-					//System.out.println(KThread.currentThread().getName()+" IS NOT SUPPOSE TO RUN YET UNTIL A IS DONE");
-					
-
 						System.out.println(KThread.currentThread().getName()+" said: sleeping!");
-						condition.sleep();
-					//when exited it is finished
-					//System.out.println(KThread.currentThread().getName()+" said: I AM DONE. B RESUMES HERE ");
-				}
-
+						condition.sleep();}
 			}));
-			
-			
-			list.add(new KThread(new Runnable() {	 //when checking if thread c wakes all isnt called.. stuck =/
+			list.add(new KThread(new Runnable() {	 
 				public void run() {
 					lock.acquire();
 					System.out.println( KThread.currentThread().getName() + " waking all!" );
-					condition.wakeAll();
-					
-				}
+					condition.wakeAll();}
 			}));
-
-
 		}
-
 		return list;
 	}
 	
-	
-
 	public static void condSelfTest(){
 		Lib.debug(dbgThread, "Enter PriorityQueue.selfTest");
-		//Created two threads with its runnable being printing things.
 		LinkedList<KThread> threadList;
-		//threadList = createThread(2,0); 	//creates two regular thread and run it
-		//testMe(threadList,2,7,0);
-		threadList= createThread(1,1);						//creates three thread-1 regular and 2 special
+		threadList= createThread(1,1);						
 		testMe(threadList,7,3,2);
 	}
+
 	
-	
-	
-
-
-
-
-	//private static KThread currentThread = null; .. no need for this
-	//private LinkedList<KThread> waitQueue = new LinkedList<KThread>(); // only going to use one queue... see if this works
-	private ThreadQueue waitQueue2 = ThreadedKernel.scheduler.newThreadQueue(false); // make a new wait queue so the thread doesn't loose all its data															
-	private Lock conditionLock;
 	
 	
 	
