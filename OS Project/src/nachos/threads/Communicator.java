@@ -166,6 +166,36 @@ public class Communicator {
 		
 		return (toReturn);		
 	}
+	//test communicator class with CommunicatorTest
+	public static void test()
+	{
+		CommunicatorTest.runTest();
+	}
+	//test
+	public static void selfTest()
+	{
+		System.out.println("Starting Test Case for Communicator!!");
+		//Create threads
+		KThread loud = new KThread(new Runnable(){
+			public void run(){
+				System.out.println("Loud guy thread created");
+				
+			}
+		});
+		KThread quite = new KThread(new Runnable(){
+			public void run(){
+				System.out.println("Quite guy thread created");
+			}
+		});
+		
+		// create communicator
+		Communicator com = new Communicator();
+		int sent = 4444;
+		System.out.println("Sent " + sent);
+		com.speak(sent);
+		int recieved = com.listen();
+		System.out.println("Recieved: " + recieved);		
+	}
 	
 	// This part words with the test cases 2a and 2b but not with 2c (multiple words)
 	/*
