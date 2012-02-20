@@ -248,7 +248,7 @@ public class PriorityScheduler extends Scheduler {
 		 */
 		public ThreadState(KThread thread) {
 			this.thread = thread;
-				setPriority(priorityDefault);
+			setPriority(priorityDefault);
 		}
 
 		/**
@@ -304,28 +304,6 @@ public class PriorityScheduler extends Scheduler {
 		 *
 		 * @see	nachos.threads.ThreadQueue#waitForAccess
 		 */
-		public void addToQueue(){
-			addToQueue(this.waitingResource);
-		}
-
-		public void addToQueue(PriorityQueue waitQueue){	//using the current queue, add thread
-			if(waitQueue==null) return;
-			if(this.needReorded){
-				reSort(waitQueue, this);
-			}
-			if(waitQueue.resourceOwner!=null)
-				if(waitQueue.resourceOwner.needReorded)
-					reSort(waitQueue, waitQueue.resourceOwner);
-
-
-				else
-					waitQueue.waitPQueue.add(this);
-		}
-		public void reSort(PriorityQueue waitQueue,ThreadState sort){
-			waitQueue.waitPQueue.remove(sort);
-			waitQueue.waitPQueue.add(sort);
-			this.needReorded = false;
-		}
 		public void waitForAccess(PriorityQueue waitQueue) {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			if(waitQueue==null)													//in the case that it is null, do nothing
@@ -346,11 +324,11 @@ public class PriorityScheduler extends Scheduler {
 
 		public void compute_donation(PriorityQueue waitQueue, ThreadState threadDonor){
 			LinkedList<ThreadState> seenThreadState = new LinkedList<ThreadState>();
-			if(threadDonor == null) return;
-			while(!seenThreadState.contains(threadDonor)&&threadDonor.waitingResource!=null){					//checks if there is a same Donor on the list					
+			if(waitQueue==null||threadDonor == null) return;
+			while(!seenThreadState.contains(threadDonor)){					//checks if there is a same Donor on the list					
 				seenThreadState.add(threadDonor);						
 				//case where join is called
-
+				
 				if(waitQueue.resourceOwner != threadDonor&&threadDonor.thread.joinThread!=null){
 					if(threadDonor.thread.joinThread==threadDonor.thread)
 						break;
@@ -358,18 +336,21 @@ public class PriorityScheduler extends Scheduler {
 					if(threadDonor.effective>=waitQueue.resourceOwner.effective)
 						listDonate.add(donor);
 				}
-				else if(this.waitingResource.resourceOwner!=null){
-					if(this.waitingResource!=null&&this.waitingResource.transferPriority&&threadDonor.waitingResource.resourceOwner!=null){
-						if(threadDonor.waitingResource.resourceOwner==threadDonor)
-							break;
-						else if(threadDonor.effective>threadDonor.waitingResource.resourceOwner.effective){ //if(threadDonor.waitingResource.resourceOwner!=threadDonor&&threadDonor.waitingResource.resourceOwner.thread.getName()!="main"){
-							Donation donor = new Donation(waitQueue, threadDonor, threadDonor.waitingResource.resourceOwner);
-							if(threadDonor.effective>=threadDonor.waitingResource.resourceOwner.effective)
-								listDonate.add(donor);
-						}	
+				if(threadDonor.waitingResource!=null){
+					if(this.waitingResource.resourceOwner!=null){
+						if(this.waitingResource!=null&&this.waitingResource.transferPriority&&threadDonor.waitingResource.resourceOwner!=null){
+							if(threadDonor.waitingResource.resourceOwner==threadDonor)
+								break;
+							else if(threadDonor.effective>threadDonor.waitingResource.resourceOwner.effective){ //if(threadDonor.waitingResource.resourceOwner!=threadDonor&&threadDonor.waitingResource.resourceOwner.thread.getName()!="main"){
+								Donation donor = new Donation(waitQueue, threadDonor, threadDonor.waitingResource.resourceOwner);
+								if(threadDonor.effective>=threadDonor.waitingResource.resourceOwner.effective)
+									listDonate.add(donor);
+							}	
 
+						}
 					}
 				}
+				if(threadDonor.waitingResource!=null)
 				threadDonor = threadDonor.waitingResource.resourceOwner;
 				//Donation holder =listDonate.get(listDonate.indexOf(donor));
 				//holder.setDonation();
