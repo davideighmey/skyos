@@ -266,7 +266,7 @@ public class PriorityScheduler extends Scheduler {
 		 * @return	the effective priority of the associated thread.
 		 */
 		public int getEffectivePriority() {
-			/*if(!listDonate.isEmpty()){
+			if(!listDonate.isEmpty()){
 				int found = 0;
 				for(int i = 0; i< listDonate.size();i++){
 					if(this == listDonate.get(i).threadInQuestion){
@@ -275,7 +275,7 @@ public class PriorityScheduler extends Scheduler {
 				}
 				return listDonate.get(found).effective;
 			}
-			else*/
+			else
 			return this.effective;
 		}
 
