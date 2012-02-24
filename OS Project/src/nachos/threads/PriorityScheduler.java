@@ -913,6 +913,10 @@ public class PriorityScheduler extends Scheduler {
 		System.out.println("Starting Special Test Case 2: Double Lock Priority Inversion Confusion!                **");
 		System.out.println("************************************************************************************************************");
 		testMe(null,doubleLockConfusion,7,4,7);
+		System.out.print("************************************************************************************************************\n**                                ");
+		System.out.println("Priority Scheduler Test Cases Completed!!                               **");
+		System.out.println("************************************************************************************************************");
+		
 	}
 	public class Donation{
 		public int effective;
