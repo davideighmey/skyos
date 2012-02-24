@@ -150,11 +150,11 @@ public class PriorityScheduler extends Scheduler {
 		public void reOrdered(){
 			PriorityQueue buffer = new PriorityQueue(this.transferPriority);
 			ThreadState hold = null;								
-			while(!this.waitPQueue.isEmpty()){										//for each element in the queue, check to make sure it has the highest priority 
+			while(!this.waitPQueue.isEmpty()){		
 				hold =this.waitPQueue.poll();
 				buffer.waitPQueue.offer(hold);	
 			}
-			while(!buffer.waitPQueue.isEmpty()){										//for each element in the queue, check to make sure it has the highest priority 
+			while(!buffer.waitPQueue.isEmpty()){										 
 				hold = buffer.waitPQueue.poll();
 				this.waitPQueue.offer(hold);	
 			}
@@ -218,6 +218,13 @@ public class PriorityScheduler extends Scheduler {
 						k.thread.getName()!="main") //check if there is a longer waiting thread
 					hold = k;
 			}
+			for(ThreadState k:waitPQueue){				//aging implemented here
+				if(Machine.timer().getTime() - k.timeINqueue>=500)		//if a thread has been waiting for more than 200 ticks increase priority
+					if(k.effective!=7){
+						k.effective++;
+						//System.out.println(k.thread.getName()+" has its priority increased due to aging! It is now: "+ k.effective);
+					}
+			}																
 			return hold;
 		}
 
@@ -293,8 +300,11 @@ public class PriorityScheduler extends Scheduler {
 				return listDonate.get(found).effective;
 			}
 			else*/
-			if(this.needReorded)
+			if(this.needReorded){
 				this.effective = priority;
+				this.needReorded = false;
+				return this.effective;
+			}
 			if(this.effective==0||this.effective<priority)
 				this.effective = priority;
 			return this.effective;
@@ -308,10 +318,12 @@ public class PriorityScheduler extends Scheduler {
 		public void setPriority(int priority) {
 			if (this.priority == priority)
 				return;
-
 			this.priority = priority;
-			if(this.needReorded)
+			if(this.needReorded){
 				this.effective = priority;
+				this.needReorded = false;
+				return;
+			}
 			if(this.effective==0||this.effective<priority)
 				this.effective = priority;
 		}
@@ -335,15 +347,9 @@ public class PriorityScheduler extends Scheduler {
 			this.timeINqueue = Machine.timer().getTime();						//this will keep track on how long it has been in the queue.
 			this.waitingResource = waitQueue;
 			waitQueue.waitPQueue.offer(this);
-			if(waitQueue.transferPriority&&waitQueue.resourceOwner!=null&&waitQueue.resourceOwner!=this){		//if this is true we have to transfer priority and there is a lock in play
-
-				//for(ThreadState k : waitQueue.waitPQueue)
-				//if(this.effective<k.effective)								//look at queue of there is a lower priority on the list
+			if(waitQueue.transferPriority){								//if this is true we have to transfer priority and there is a lock in play
 				compute_donation(waitQueue,this);						//if there is one, priority inversion might be in play, so donate!
-			}
-
-
-			//addToQueue(waitQueue);									//add this to queue
+			}						
 		}		
 
 		public void compute_donation(PriorityQueue waitQueue, ThreadState threadDonor){
@@ -844,7 +850,7 @@ public class PriorityScheduler extends Scheduler {
 			list.add(new KThread(new Runnable() {
 				public void run() {
 					//System.out.println(KThread.currentThread().getName() + " has a priority of "+ ThreadedKernel.scheduler.getPriority());
-					System.out.println(KThread.currentThread().getName()+" should come after Thread F!");
+					System.out.println(KThread.currentThread().getName()+" should come after Thread D!");
 					System.out.println(KThread.currentThread().getName()+" has finished.");
 					KThread.yield();
 				}
@@ -916,7 +922,7 @@ public class PriorityScheduler extends Scheduler {
 		System.out.print("************************************************************************************************************\n**                                ");
 		System.out.println("Priority Scheduler Test Cases Completed!!                               **");
 		System.out.println("************************************************************************************************************");
-		
+
 	}
 	public class Donation{
 		public int effective;
@@ -940,7 +946,9 @@ public class PriorityScheduler extends Scheduler {
 				threadInQuestion.effective = donateFrom.effective;	//set the donation
 		}
 		public void removeDonation(){
-			threadInQuestion.effective = orginalPriority;	//set the priority to its original
+			//System.out.println(this.threadInQuestion.thread.getName()+ " has its donation removed. Effective: " + this.threadInQuestion.effective + " Original: " + this.orginalPriority);
+			this.threadInQuestion.effective = this.orginalPriority;	//set the priority to its original
+			
 		}	
 	}
 }
