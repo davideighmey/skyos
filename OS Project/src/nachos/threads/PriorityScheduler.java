@@ -157,7 +157,7 @@ public class PriorityScheduler extends Scheduler {
 			while(!buffer.waitPQueue.isEmpty()){										//for each element in the queue, check to make sure it has the highest priority 
 				hold = buffer.waitPQueue.poll();
 				this.waitPQueue.offer(hold);	
-				}
+			}
 		}
 		public KThread nextThread() {
 			Lib.assertTrue(Machine.interrupt().disabled());
@@ -283,7 +283,7 @@ public class PriorityScheduler extends Scheduler {
 		 * @return	the effective priority of the associated thread.
 		 */
 		public int getEffectivePriority() {
-		/*	if(!listDonate.isEmpty()){
+			/*	if(!listDonate.isEmpty()){
 				int found = 0;
 				for(int i = 0; i< listDonate.size();i++){
 					if(this == listDonate.get(i).threadInQuestion){
@@ -297,7 +297,7 @@ public class PriorityScheduler extends Scheduler {
 				this.effective = priority;
 			if(this.effective==0||this.effective<priority)
 				this.effective = priority;
-				return this.effective;
+			return this.effective;
 		}
 
 		/**
@@ -358,8 +358,10 @@ public class PriorityScheduler extends Scheduler {
 						if(threadDonor.thread.joinThread==threadDonor.thread)
 							break;
 						Donation donor = new Donation(waitQueue, threadDonor, waitQueue.resourceOwner);
-						if(threadDonor.effective>=waitQueue.resourceOwner.effective)
+						if(threadDonor.effective>=waitQueue.resourceOwner.effective){
 							listDonate.add(donor);
+							waitQueue.resourceOwner.effective = threadDonor.effective;
+						}
 					}
 				}
 				if(threadDonor.waitingResource!=null){
@@ -369,8 +371,10 @@ public class PriorityScheduler extends Scheduler {
 								break;
 							else if(threadDonor.effective>threadDonor.waitingResource.resourceOwner.effective){ //if(threadDonor.waitingResource.resourceOwner!=threadDonor&&threadDonor.waitingResource.resourceOwner.thread.getName()!="main"){
 								Donation donor = new Donation(waitQueue, threadDonor, threadDonor.waitingResource.resourceOwner);
-								if(threadDonor.effective>=threadDonor.waitingResource.resourceOwner.effective)
+								if(threadDonor.effective>=threadDonor.waitingResource.resourceOwner.effective){
 									listDonate.add(donor);
+									threadDonor.waitingResource.resourceOwner.effective = threadDonor.effective;
+								}
 							}	
 
 						}
@@ -841,8 +845,8 @@ public class PriorityScheduler extends Scheduler {
 				public void run() {
 					//System.out.println(KThread.currentThread().getName() + " has a priority of "+ ThreadedKernel.scheduler.getPriority());
 					System.out.println(KThread.currentThread().getName()+" should come after Thread F!");
-						System.out.println(KThread.currentThread().getName()+" has finished.");
-						KThread.yield();
+					System.out.println(KThread.currentThread().getName()+" has finished.");
+					KThread.yield();
 				}
 			}));
 			//This will be Thread I && Priority 3
@@ -850,8 +854,8 @@ public class PriorityScheduler extends Scheduler {
 				public void run() {
 					//System.out.println(KThread.currentThread().getName() + " has a priority of "+ ThreadedKernel.scheduler.getPriority());
 					System.out.println(KThread.currentThread().getName()+" should come after Thread F!");
-						System.out.println(KThread.currentThread().getName()+" has finished.");
-						KThread.yield();
+					System.out.println(KThread.currentThread().getName()+" has finished.");
+					KThread.yield();
 				}
 			}));
 			//This will be Thread J && priority 4
@@ -859,8 +863,8 @@ public class PriorityScheduler extends Scheduler {
 				public void run() {
 					//System.out.println(KThread.currentThread().getName() + " has a priority of "+ ThreadedKernel.scheduler.getPriority());
 					System.out.println(KThread.currentThread().getName()+" is strolling by! Should come after Thread A!");
-						System.out.println(KThread.currentThread().getName()+" has finished.");
-						KThread.yield();
+					System.out.println(KThread.currentThread().getName()+" has finished.");
+					KThread.yield();
 				}
 			}));
 			//This will be Thread K && priority 5
@@ -868,8 +872,8 @@ public class PriorityScheduler extends Scheduler {
 				public void run() {
 					//System.out.println(KThread.currentThread().getName() + " has a priority of "+ ThreadedKernel.scheduler.getPriority());
 					System.out.println(KThread.currentThread().getName()+" is strolling by! Should come after Thread G!");
-						System.out.println(KThread.currentThread().getName()+" has finished.");
-						KThread.yield();
+					System.out.println(KThread.currentThread().getName()+" has finished.");
+					KThread.yield();
 				}
 			}));
 			//This will be Thread L && priority 6
@@ -877,8 +881,8 @@ public class PriorityScheduler extends Scheduler {
 				public void run() {
 					//System.out.println(KThread.currentThread().getName() + " has a priority of "+ ThreadedKernel.scheduler.getPriority());
 					System.out.println(KThread.currentThread().getName()+" is strolling by. Should come after Thread F!");
-						System.out.println(KThread.currentThread().getName()+" has finished. Thread G, are you next?");
-						KThread.yield();
+					System.out.println(KThread.currentThread().getName()+" has finished. Thread G, are you next?");
+					KThread.yield();
 				}
 			}));
 		}
