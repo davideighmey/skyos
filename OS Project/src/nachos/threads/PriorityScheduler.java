@@ -293,6 +293,10 @@ public class PriorityScheduler extends Scheduler {
 				return listDonate.get(found).effective;
 			}
 			else*/
+			if(this.needReorded)
+				this.effective = priority;
+			if(this.effective==0||this.effective<priority)
+				this.effective = priority;
 				return this.effective;
 		}
 
