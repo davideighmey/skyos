@@ -128,7 +128,7 @@ public class Alarm {
 		KThread thread1 = new KThread(new Runnable(){	
 			public void run(){
 				System.out.println("Creating Thread1");
-				long time = 1500;
+				long time = 0;
 				waitUntil(time);
 			}
 		});
@@ -143,21 +143,21 @@ public class Alarm {
 		KThread thread3 = new KThread(new Runnable(){	
 			public void run(){
 				System.out.println("Creating Thread3");
-				long time = 3500;
+				long time = 2500;
 				waitUntil(time);
 			}
 		});
 		KThread thread4 = new KThread(new Runnable(){	
 			public void run(){
 				System.out.println("Creating Thread4");
-				long time = 4500;
+				long time = 500;
 				waitUntil(time);
 			}
 		});
 		KThread thread5 = new KThread(new Runnable(){	
 			public void run(){
 				System.out.println("Creating Thread5");
-				long time = 0;
+				long time = 1000;
 				waitUntil(time);
 			}
 		});
