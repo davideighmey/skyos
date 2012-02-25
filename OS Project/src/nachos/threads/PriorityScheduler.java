@@ -233,7 +233,7 @@ public class PriorityScheduler extends Scheduler {
 		public void setPriority(int priority) {
 			if (this.priority == priority)
 				return;
-			this.effective = priority;
+			//this.effective = priority;
 			this.priority = priority;
 
 			// implement me
@@ -296,13 +296,14 @@ public class PriorityScheduler extends Scheduler {
 		 */
 		/***************************************************************************************************************************/
 		if(list!=null&&special==null){
-			Random r = new Random();
+			//Random r = new Random();
 			int priority = 0;
 			KThread thread = null;
 			boolean int_state = Machine.interrupt().disable();
 			//Setting Priorities
 			for(int i =0; i< list.size();i++){
-				priority = r.nextInt(4)+2;	//priority will be between 2 and 6
+				//priority = r.nextInt(4)+2;	//priority will be between 2 and 6
+				priority = i +2;
 				thread = list.get(i);
 				thread.setName("Thread "+ (char)(i+72));
 				ThreadedKernel.scheduler.setPriority(thread, priority);
