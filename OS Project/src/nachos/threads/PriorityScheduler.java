@@ -145,6 +145,7 @@ public class PriorityScheduler extends Scheduler {
 				//reOrdered();
 				if(this.transferPriority&&this.resourceOwner!=null){			//Removes donation of the once running thread
 					this.resourceOwner.effective = this.resourceOwner.priority;
+					System.out.println(this.resourceOwner.thread.getName() + " has its priority set back to normal. It is now " + this.resourceOwner.effective);
 					updatePriorities(this.resourceOwner);
 				}
 			ThreadState peek = pickNextThread();					//peek at the nextThread and return a thread with a highest priority and longest wait time
@@ -277,7 +278,7 @@ public class PriorityScheduler extends Scheduler {
 				return;
 			this.effective = priority;
 			this.priority = priority;
-
+			updatePriorities(this);
 			// implement me
 		}
 
@@ -308,15 +309,16 @@ public class PriorityScheduler extends Scheduler {
 				if(waitQueue==null||threadDonor == null) return;
 				while(!seenQueueState.contains(waitQueue)){								//checks if there is a same Donor on the list					
 					seenQueueState.add(waitQueue);						
-					if(threadDonor == null||threadDonor.thread==null||waitQueue.resourceOwner.thread.getName()=="main" ) break;
+					if(threadDonor == null||threadDonor.thread==null/*||waitQueue.resourceOwner.thread.getName()=="main" */) break;
 					if(waitQueue.resourceOwner != threadDonor){							//Don't want it to donate to itself
 						if(threadDonor.effective > waitQueue.resourceOwner.effective){	//only donate if the resource owner has a lower priority
 							waitQueue.resourceOwner.effective = threadDonor.effective;	
+							System.out.println(threadDonor.thread.getName() + " with effective " + threadDonor.effective +" has donated to " + waitQueue.resourceOwner.thread.getName());
 							updatePriorities(waitQueue.resourceOwner);		//Since priorities has change, update everywhere else
 						}
 					}
 				}
-				queueList.get(i);
+				waitQueue = queueList.get(i);
 				i++;
 			}
 		}
