@@ -1,10 +1,5 @@
 package nachos.threads;
-
 import nachos.machine.*;
-import nachos.threads.PriorityScheduler.Donation;
-import nachos.threads.PriorityScheduler.PriorityQueue;
-
-
 import java.util.*;
 
 
