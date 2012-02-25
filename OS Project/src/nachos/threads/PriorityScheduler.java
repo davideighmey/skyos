@@ -1,8 +1,6 @@
 package nachos.threads;
 import nachos.machine.*;
 import java.util.*;
-
-
 /**
  * A scheduler that chooses threads based on their priorities.
  *
@@ -29,7 +27,6 @@ public class PriorityScheduler extends Scheduler {
 	 */
 	public PriorityScheduler() {
 	}
-
 	/**
 	 * Allocate a new priority thread queue.
 	 *
@@ -38,58 +35,40 @@ public class PriorityScheduler extends Scheduler {
 	 *					to the owning thread.
 	 * @return	a new priority thread queue.
 	 */
-
 	public ThreadQueue newThreadQueue(boolean transferPriority) {
 		return new PriorityQueue(transferPriority);
 	}
-
 	public int getPriority(KThread thread) {
 		Lib.assertTrue(Machine.interrupt().disabled());
-
 		return getThreadState(thread).getPriority();
 	}
-
 	public int getEffectivePriority(KThread thread) {
 		Lib.assertTrue(Machine.interrupt().disabled());
-
 		return getThreadState(thread).getEffectivePriority();
 	}
-
 	public void setPriority(KThread thread, int priority) {
 		Lib.assertTrue(Machine.interrupt().disabled());
-
 		Lib.assertTrue(priority >= priorityMinimum &&
 				priority <= priorityMaximum);
 		getThreadState(thread).needReorded = true;
-		getThreadState(thread).setPriority(priority);
-	}
-
+		getThreadState(thread).setPriority(priority);}
 	public boolean increasePriority() {
 		boolean intStatus = Machine.interrupt().disable();
-
 		KThread thread = KThread.currentThread();
-
 		int priority = getPriority(thread);
 		if (priority == priorityMaximum)
 			return false;
-
 		setPriority(thread, priority+1);
-
 		Machine.interrupt().restore(intStatus);
 		return true;
 	}
-
 	public boolean decreasePriority() {
 		boolean intStatus = Machine.interrupt().disable();
-
 		KThread thread = KThread.currentThread();
-
 		int priority = getPriority(thread);
 		if (priority == priorityMinimum)
 			return false;
-
 		setPriority(thread, priority-1);
-
 		Machine.interrupt().restore(intStatus);
 		return true;
 	}
@@ -106,7 +85,6 @@ public class PriorityScheduler extends Scheduler {
 	 * The maximum priority that a thread can have. Do not change this value.
 	 */
 	public static final int priorityMaximum = 7;    
-
 	/**
 	 * Return the scheduling state of the specified thread.
 	 *
@@ -116,10 +94,8 @@ public class PriorityScheduler extends Scheduler {
 	protected ThreadState getThreadState(KThread thread) {
 		if (thread.schedulingState == null)
 			thread.schedulingState = new ThreadState(thread);
-
 		return (ThreadState) thread.schedulingState;
 	}
-
 	/**
 	 * A <tt>ThreadQueue</tt> that sorts threads by priority.
 	 */
@@ -127,7 +103,6 @@ public class PriorityScheduler extends Scheduler {
 		PriorityQueue(boolean transferPriority) {
 			this.transferPriority = transferPriority;
 		}
-
 		public void waitForAccess(KThread thread) {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			getThreadState(thread).waitForAccess(this);
@@ -140,7 +115,6 @@ public class PriorityScheduler extends Scheduler {
 		public void acquire(KThread thread) {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			getThreadState(thread).acquire(this);
-
 		}
 		public void reOrdered(){
 			PriorityQueue buffer = new PriorityQueue(this.transferPriority);
@@ -158,15 +132,22 @@ public class PriorityScheduler extends Scheduler {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			PriorityQueue buffer = null;
 			KThread returnThread = null;
-			reOrdered();
+			if(waitPQueue!=null)	
+				reOrdered();
 			if(this.transferPriority&&this.resourceOwner!=null&&listDonate.size()!=0){			//Removes donation of the once running thread
-				for(Donation k: listDonate){
+					/*for(Donation k: listDonate){
 					if(k.threadInQuestion.thread==this.resourceOwner.thread){
 						this.resourceOwner.effective = this.resourceOwner.priority;
 						k.removeDonation();
 					} 
+				}*/
+				for(int i = 0; i < listDonate.size(); i++){
+					if(listDonate.get(i).threadInQuestion.thread==this.resourceOwner.thread){
+						listDonate.get(i).removeDonation();
+						listDonate.remove(i);
+					}
 				}
-				this.resourceOwner.effective = this.resourceOwner.priority;
+				//this.resourceOwner.effective = this.resourceOwner.priority;
 			}
 			ThreadState peek = pickNextThread();					//peek at the nextThread and return a thread with a highest priority and longest wait time
 			if(peek!=waitPQueue.peek()){							//if not the same, there is a thread that has been waiting longer
@@ -204,7 +185,6 @@ public class PriorityScheduler extends Scheduler {
 			for(ThreadState k:waitPQueue){										//for each element in the queue, check to make sure it has the highest priority 
 				if((hold.effective<k.effective))								//if the current hold has a lower effective than the checked effective set hold to the checked						
 					hold = k;
-
 			}
 			for(ThreadState k:waitPQueue){	
 				if((hold.effective==k.effective)&&
@@ -943,7 +923,7 @@ public class PriorityScheduler extends Scheduler {
 		public void removeDonation(){
 			//System.out.println(this.threadInQuestion.thread.getName()+ " has its donation removed. Effective: " + this.threadInQuestion.effective + " Original: " + this.orginalPriority);
 			this.threadInQuestion.effective = this.orginalPriority;	//set the priority to its original
-			
+
 		}	
 	}
 }
