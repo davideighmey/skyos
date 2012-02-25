@@ -233,7 +233,7 @@ public class PriorityScheduler extends Scheduler {
 		public void setPriority(int priority) {
 			if (this.priority == priority)
 				return;
-			//this.effective = priority;
+			this.effective = priority;
 			this.priority = priority;
 
 			// implement me
