@@ -1,7 +1,5 @@
 package nachos.threads;
 import nachos.machine.*;
-
-
 import java.util.*;
 
 
@@ -139,13 +137,38 @@ public class PriorityScheduler extends Scheduler {
 			getThreadState(thread).acquire(this);
 		}
 
-		public KThread nextThread() {
+		public KThread nextThread() {//ThreadQueue changes here. Need look at the effective priority of the owner (Remove)
 			Lib.assertTrue(Machine.interrupt().disabled());
-			// implement me
-			ThreadState returnThread = waitPQueue.poll();
-			if(returnThread!= null)
-				return returnThread.thread;
-			return null;
+			PriorityQueue buffer = null;
+			KThread returnThread = null;
+			if(waitPQueue!=null)	
+				//reOrdered();
+				if(this.transferPriority&&this.resourceOwner!=null){			//Removes donation of the once running thread
+					this.resourceOwner.effective = this.resourceOwner.priority;
+					updatePriorities(this.resourceOwner);
+				}
+			ThreadState peek = pickNextThread();					//peek at the nextThread and return a thread with a highest priority and longest wait time
+			if(peek!=waitPQueue.peek()){							//if not the same, there is a thread that has been waiting longer
+				buffer = new PriorityQueue(this.transferPriority);	//create a buffer to hold reorganize the queue
+				while(peek!=waitPQueue.peek()){						//pop out the current queue and store it in the buffer until we see the one that has been waiting the longest
+					buffer.waitPQueue.offer(waitPQueue.poll());
+				}
+				returnThread = waitPQueue.poll().thread;			//save the thread that we need
+				while(buffer.waitPQueue.peek()!=null){				//store back the elements in the buffer back to the orginal queue
+					waitPQueue.offer(buffer.waitPQueue.poll());
+				}
+			}
+			else{													//nothing special happen so, just remove the highest priority
+				ThreadState re = waitPQueue.poll();
+				if(re==null)
+					return null;
+				else
+					returnThread = re.thread;
+
+			}
+			getThreadState(returnThread).timeINqueue = Machine.timer().getTime();		//time in queue has been reseted	
+			//this.resourceOwner = getThreadState(returnThread);
+			return returnThread;
 		}
 
 		/**
@@ -156,8 +179,26 @@ public class PriorityScheduler extends Scheduler {
 		 *		return.
 		 */
 		protected ThreadState pickNextThread() {
-			// implement me
-			return waitPQueue.peek();
+			ThreadState hold = waitPQueue.peek();								//original peek
+			for(ThreadState k:waitPQueue){										//for each element in the queue, check to make sure it has the highest priority 
+				if((hold.effective<k.effective))								//if the current hold has a lower effective than the checked effective set hold to the checked						
+					hold = k;
+			}
+			for(ThreadState k:waitPQueue){	
+				if((hold.effective==k.effective)&&
+						(Machine.timer().getTime()-hold.timeINqueue)
+						<(Machine.timer().getTime() - k.timeINqueue)&&
+						k.thread.getName()!="main") //check if there is a longer waiting thread
+					hold = k;
+			}
+			for(ThreadState k:waitPQueue){				//aging implemented here
+				if(Machine.timer().getTime() - k.timeINqueue>=500)		//if a thread has been waiting for more than 200 ticks increase priority
+					if(k.effective!=7){
+						k.effective++;
+						//System.out.println(k.thread.getName()+" has its priority increased due to aging! It is now: "+ k.effective);
+					}
+			}																
+			return hold;
 		}
 
 		public void print() {
@@ -170,7 +211,8 @@ public class PriorityScheduler extends Scheduler {
 		 * threads to the owning thread.
 		 */
 		public boolean transferPriority;
-		protected ThreadState resourceOwner; 
+		//Threads that holds a resource will be called resourceOwner and is also the owner of the ThreadQueue
+		protected ThreadState resourceOwner; 					
 		public Queue<ThreadState> waitPQueue = new java.util.PriorityQueue<ThreadState>(1, new PriorityComparator());
 		public class PriorityComparator implements Comparator<ThreadState>
 		{	@Override
@@ -251,7 +293,7 @@ public class PriorityScheduler extends Scheduler {
 		 *
 		 * @see	nachos.threads.ThreadQueue#waitForAccess
 		 */
-		public void waitForAccess(PriorityQueue waitQueue) {
+		public void waitForAccess(PriorityQueue waitQueue) {//ThreadQueue changes here. Need look at the effective priority of the owner (Donate)
 			// implement me
 			this.timeINqueue = Machine.timer().getTime();	
 			waitQueue.waitPQueue.offer(this);
@@ -260,7 +302,23 @@ public class PriorityScheduler extends Scheduler {
 			}	
 		}
 		public void compute_donation(PriorityQueue waitQueue, ThreadState threadDonor){
-
+			int i = 0;
+			LinkedList<PriorityQueue> seenQueueState = new LinkedList<PriorityQueue>();
+			while(i<queueList.size()){
+				if(waitQueue==null||threadDonor == null) return;
+				while(!seenQueueState.contains(waitQueue)){								//checks if there is a same Donor on the list					
+					seenQueueState.add(waitQueue);						
+					if(threadDonor == null||threadDonor.thread==null||waitQueue.resourceOwner.thread.getName()=="main" ) break;
+					if(waitQueue.resourceOwner != threadDonor){							//Don't want it to donate to itself
+						if(threadDonor.effective > waitQueue.resourceOwner.effective){	//only donate if the resource owner has a lower priority
+							waitQueue.resourceOwner.effective = threadDonor.effective;	
+							updatePriorities(waitQueue.resourceOwner);		//Since priorities has change, update everywhere else
+						}
+					}
+				}
+				queueList.get(i);
+				i++;
+			}
 		}
 
 		/**
@@ -273,10 +331,11 @@ public class PriorityScheduler extends Scheduler {
 		 * @see	nachos.threads.ThreadQueue#acquire
 		 * @see	nachos.threads.ThreadQueue#nextThread
 		 */
-		public void acquire(PriorityQueue waitQueue) {
+		public void acquire(PriorityQueue waitQueue) {					//ThreadQueue changes here. Need look at the effective priority of the owner (??)
 			if(waitQueue.waitPQueue.equals(waitQueue))					//check if the thread is removed, if not remove it
 				waitQueue.waitPQueue.remove(waitQueue);	
-			waitQueue.resourceOwner = this;
+			waitQueue.resourceOwner = this;								//notify this queue that a thread has received access
+			queueList.add(waitQueue);
 		}	
 
 		/** The thread with which this object is associated. */	   
@@ -285,6 +344,25 @@ public class PriorityScheduler extends Scheduler {
 		protected int priority;
 		protected int effective;
 		protected long timeINqueue;
+		protected ThreadState donatedFrom;
+	}
+	LinkedList<PriorityQueue> queueList = new LinkedList<PriorityQueue>();
+
+	public void updatePriorities(ThreadState threadInQuestion){
+		for(PriorityQueue queue: queueList){
+			if (queue.resourceOwner == null)								//if there is no owner of the queue...assume that queue is dead
+				queueList.remove(queue);	
+			if(queue.resourceOwner==threadInQuestion)						//if the queue resource owner matches up, set it, no need to search
+				queue.resourceOwner.effective = threadInQuestion.effective;
+			else{
+				for(ThreadState k:queue.waitPQueue){
+					if(k == threadInQuestion){
+						k.effective = threadInQuestion.effective;
+						break;
+					}
+				}
+			}
+		}
 	}
 	public static void testMe(LinkedList<KThread> list, LinkedList<KThread> special,int priority1, int priority2,int priority3){
 
@@ -766,15 +844,15 @@ public class PriorityScheduler extends Scheduler {
 		System.out.print("************************************************************************************************************\n**                       ");
 		System.out.println("Starting Special Test Case: Priority Inversion Confusion!                        **");
 		System.out.println("************************************************************************************************************");
-		//testMe(null,specialThreadList,6,4,7);
+		testMe(null,specialThreadList,6,4,7);
 		System.out.print("************************************************************************************************************\n**                 ");
 		System.out.println("Starting Special Test Plus Case: Priority Inversion Confusion EXTREME!!                **");
 		System.out.println("************************************************************************************************************");
-		//testMe(null,specialThreadListPlus,7,4,7);
+		testMe(null,specialThreadListPlus,7,4,7);
 		System.out.print("************************************************************************************************************\n**                 ");
 		System.out.println("Starting Special Test Case 2: Double Lock Priority Inversion Confusion!                **");
 		System.out.println("************************************************************************************************************");
-		//testMe(null,doubleLockConfusion,7,4,7);
+		testMe(null,doubleLockConfusion,7,4,7);
 		System.out.print("************************************************************************************************************\n**                                ");
 		System.out.println("Priority Scheduler Test Cases Completed!!                               **");
 		System.out.println("************************************************************************************************************");
