@@ -27,22 +27,79 @@ import java.util.Iterator;
  * the maximum).
  */
 public class LotteryScheduler extends PriorityScheduler {
-    /**
-     * Allocate a new lottery scheduler.
-     */
-    public LotteryScheduler() {
-    }
-    
-    /**
-     * Allocate a new lottery thread queue.
-     *
-     * @param	transferPriority	<tt>true</tt> if this queue should
-     *					transfer tickets from waiting threads
-     *					to the owning thread.
-     * @return	a new lottery thread queue.
-     */
-    public ThreadQueue newThreadQueue(boolean transferPriority) {
-	// implement me
-	return null;
-    }
+	/**
+	 * Allocate a new lottery scheduler.
+	 */
+	public LotteryScheduler() {
+	}
+
+	/**
+	 * Allocate a new lottery thread queue.
+	 *
+	 * @param	transferPriority	<tt>true</tt> if this queue should
+	 *					transfer tickets from waiting threads
+	 *					to the owning thread.
+	 * @return	a new lottery thread queue.
+	 */
+	public ThreadQueue newThreadQueue(boolean transferPriority){
+		return new LotteryQueue(transferPriority);   
+	}
+
+	public static final int priorityMaximum = Integer.MAX_VALUE;
+	public static final int priorityMinimun = 1;
+	
+	protected class LotteryQueue extends ThreadQueue {
+
+		LotteryQueue(boolean transferPriority){
+			this.transferPriority = transferPriority;
+		}
+
+		public KThread nextThread(){
+			//Picks the next thread here
+			//Generate a random number
+			//Pick the winner and return the thread   
+			return null;
+		}
+
+		@Override
+		public void waitForAccess(KThread thread) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void acquire(KThread thread) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void print() {
+			// TODO Auto-generated method stub
+		}
+		public boolean transferPriority;
+	}
+	protected class ThreadState {
+		public ThreadState(KThread thread){
+			this.thread = thread;
+			setPriority(priorityMinimun);
+		}
+
+		public void waitForAccess(LotteryQueue waitQueue){
+			//add the thread the queue
+		}
+
+		public void compute_donation(LotteryQueue waitQueue){
+			//gives tickets to the queue owner
+		}
+
+		public void acquire(LotteryQueue waitQueue){
+			//set the resource owner to the current thread
+		}
+
+		protected KThread thread;
+		protected int priority;
+		protected int ticketCount;   
+
+	}
 }
