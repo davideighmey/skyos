@@ -2,7 +2,6 @@ package nachos.threads;
 import nachos.machine.*;
 import java.util.*;
 
-
 /**
  * A scheduler that chooses threads based on their priorities.
  *
@@ -136,39 +135,52 @@ public class PriorityScheduler extends Scheduler {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			getThreadState(thread).acquire(this);
 		}
-
+		public void reOrdered(){
+			PriorityQueue buffer = new PriorityQueue(this.transferPriority);
+			ThreadState hold = null;								
+			while(!this.waitPQueue.isEmpty()){		
+				hold =this.waitPQueue.poll();
+				buffer.waitPQueue.offer(hold);	
+			}
+			while(!buffer.waitPQueue.isEmpty()){										 
+				hold = buffer.waitPQueue.poll();
+				this.waitPQueue.offer(hold);	
+			}
+		}
 		public KThread nextThread() {//ThreadQueue changes here. Need look at the effective priority of the owner (Remove)
 			Lib.assertTrue(Machine.interrupt().disabled());
 			PriorityQueue buffer = null;
 			KThread returnThread = null;
+			ThreadState returnThreadState = null;
 			if(waitPQueue!=null)	
-				//reOrdered();
-				if(this.transferPriority&&this.resourceOwner!=null){			//Removes donation of the once running thread
-					this.resourceOwner.effective = this.resourceOwner.priority;
-					System.out.println(this.resourceOwner.thread.getName() + " has its priority set back to normal. It is now " + this.resourceOwner.effective);
-					updatePriorities(this.resourceOwner);
-				}
+				reOrdered();													//Re-order the queue according to the effective
+			if(this.transferPriority&&this.resourceOwner!=null){			//Removes donation of the once running thread
+				this.resourceOwner.effective = this.resourceOwner.priority;
+				//System.out.println(this.resourceOwner.thread.getName() + " has its priority set back to normal. It is now " + this.resourceOwner.effective);
+				updatePriorities(this.resourceOwner);
+			}
 			ThreadState peek = pickNextThread();					//peek at the nextThread and return a thread with a highest priority and longest wait time
 			if(peek!=waitPQueue.peek()){							//if not the same, there is a thread that has been waiting longer
 				buffer = new PriorityQueue(this.transferPriority);	//create a buffer to hold reorganize the queue
 				while(peek!=waitPQueue.peek()){						//pop out the current queue and store it in the buffer until we see the one that has been waiting the longest
 					buffer.waitPQueue.offer(waitPQueue.poll());
 				}
-				returnThread = waitPQueue.poll().thread;			//save the thread that we need
+				returnThreadState = waitPQueue.poll();
+				returnThread = returnThreadState.thread;			//save the thread that we need
 				while(buffer.waitPQueue.peek()!=null){				//store back the elements in the buffer back to the orginal queue
 					waitPQueue.offer(buffer.waitPQueue.poll());
 				}
 			}
 			else{													//nothing special happen so, just remove the highest priority
-				ThreadState re = waitPQueue.poll();
-				if(re==null)
+				returnThreadState = waitPQueue.poll();
+				if(returnThreadState==null)
 					return null;
 				else
-					returnThread = re.thread;
+					returnThread = returnThreadState.thread;
 
 			}
-			getThreadState(returnThread).timeINqueue = Machine.timer().getTime();		//time in queue has been reseted	
-			//this.resourceOwner = getThreadState(returnThread);
+			returnThreadState.timeINqueue = Machine.timer().getTime();		//time in queue has been reseted	
+			this.resourceOwner = returnThreadState;
 			return returnThread;
 		}
 
@@ -195,7 +207,7 @@ public class PriorityScheduler extends Scheduler {
 			for(ThreadState k:waitPQueue){				//aging implemented here
 				if(Machine.timer().getTime() - k.timeINqueue>=500)		//if a thread has been waiting for more than 200 ticks increase priority
 					if(k.effective!=7){
-						k.effective++;
+						//k.effective++;
 						//System.out.println(k.thread.getName()+" has its priority increased due to aging! It is now: "+ k.effective);
 					}
 			}																
@@ -298,6 +310,7 @@ public class PriorityScheduler extends Scheduler {
 			// implement me
 			this.timeINqueue = Machine.timer().getTime();	
 			waitQueue.waitPQueue.offer(this);
+			this.waitingForResource = waitQueue;
 			if(waitQueue.transferPriority){								//if this is true we have to transfer priority and there is a lock in play
 				compute_donation(waitQueue,this);						//if there is one, priority inversion might be in play, so donate!
 			}	
@@ -309,9 +322,10 @@ public class PriorityScheduler extends Scheduler {
 				if(waitQueue==null||threadDonor == null) return;
 				while(!seenQueueState.contains(waitQueue)){								//checks if there is a same Donor on the list					
 					seenQueueState.add(waitQueue);						
-					if(threadDonor == null||threadDonor.thread==null/*||waitQueue.resourceOwner.thread.getName()=="main" */) break;
-					if(waitQueue.resourceOwner != threadDonor){							//Don't want it to donate to itself
+					if(threadDonor == null||threadDonor.thread==null||waitQueue.resourceOwner==null/*||waitQueue.resourceOwner.thread.getName()=="main" */) break;
+					if(waitQueue.resourceOwner != threadDonor && waitQueue.waitPQueue.contains(threadDonor) ){							//Don't want it to donate to itself and do not donate to the resource owner you are not part of
 						if(threadDonor.effective > waitQueue.resourceOwner.effective){	//only donate if the resource owner has a lower priority
+							waitQueue.resourceOwner.donatedFrom = threadDonor;
 							waitQueue.resourceOwner.effective = threadDonor.effective;	
 							System.out.println(threadDonor.thread.getName() + " with effective " + threadDonor.effective +" has donated to " + waitQueue.resourceOwner.thread.getName());
 							updatePriorities(waitQueue.resourceOwner);		//Since priorities has change, update everywhere else
@@ -334,8 +348,10 @@ public class PriorityScheduler extends Scheduler {
 		 * @see	nachos.threads.ThreadQueue#nextThread
 		 */
 		public void acquire(PriorityQueue waitQueue) {					//ThreadQueue changes here. Need look at the effective priority of the owner (??)
-			if(waitQueue.waitPQueue.equals(waitQueue))					//check if the thread is removed, if not remove it
-				waitQueue.waitPQueue.remove(waitQueue);	
+			if(waitQueue.waitPQueue.equals(this))						//check if the thread is removed, if not remove it
+				waitQueue.waitPQueue.remove(this);	
+			if(this.waitingForResource == waitQueue)					//if this thread is waiting for the current resource, remove it
+				this.waitingForResource = null;
 			waitQueue.resourceOwner = this;								//notify this queue that a thread has received access
 			queueList.add(waitQueue);
 		}	
@@ -344,9 +360,14 @@ public class PriorityScheduler extends Scheduler {
 		protected KThread thread;
 		/** The priority of the associated thread. */
 		protected int priority;
-		protected int effective;
-		protected long timeINqueue;
-		protected ThreadState donatedFrom;
+		/** The effective priority of the associated thread */
+		protected int effective = 0;
+		/** The time in queue of the associated thread  */
+		protected long timeINqueue = 0;
+		/** The donor to this associated thread */
+		protected ThreadState donatedFrom = null;
+		/** The resource the associated thread is waiting on */
+		protected PriorityQueue waitingForResource = null;
 	}
 	LinkedList<PriorityQueue> queueList = new LinkedList<PriorityQueue>();
 
@@ -354,11 +375,12 @@ public class PriorityScheduler extends Scheduler {
 		for(PriorityQueue queue: queueList){
 			if (queue.resourceOwner == null)								//if there is no owner of the queue...assume that queue is dead
 				queueList.remove(queue);	
-			if(queue.resourceOwner==threadInQuestion)						//if the queue resource owner matches up, set it, no need to search
+			if(queue.resourceOwner.thread==threadInQuestion.thread)						//if the queue resource owner matches up, set it, no need to search
 				queue.resourceOwner.effective = threadInQuestion.effective;
 			else{
 				for(ThreadState k:queue.waitPQueue){
-					if(k == threadInQuestion){
+					if(k.thread == threadInQuestion.thread){
+						if(k.effective==threadInQuestion.effective) break;
 						k.effective = threadInQuestion.effective;
 						break;
 					}
@@ -619,16 +641,17 @@ public class PriorityScheduler extends Scheduler {
 			//This will be Thread A
 			list.add(new KThread(new Runnable() {
 				public void run() {
-					System.out.println(KThread.currentThread().getName() + " taking the CPU and interupting Thread C");
+					System.out.println(KThread.currentThread().getName() + " taking the CPU first");
 					//lock1.acquire();
 					System.out.println( KThread.currentThread().getName() + " is currently executing." );
 					//lock1.release();
-					System.out.println(KThread.currentThread().getName()+" has finished executing. Thread D shall attempt next.");
+					System.out.println(KThread.currentThread().getName()+" has finished executing. Thread C shall attempt next.");
 				}
 			}));
 			//This will be Thread B
 			list.add(new KThread(new Runnable() {
 				public void run() {
+					System.out.println(KThread.currentThread().getName()+" said Did I stall C?");
 					System.out.println(KThread.currentThread().getName()+" should be running after E is done.");
 					for(int i = 1; i<4; i++){
 						System.out.println(KThread.currentThread().getName()+" is now running " +i+" out of 3 times.");
@@ -663,7 +686,7 @@ public class PriorityScheduler extends Scheduler {
 			//This will be Thread D
 			list.add(new KThread(new Runnable() {
 				public void run() {
-					System.out.println(KThread.currentThread().getName() + " is now attempting to Acquire Lock one. Should fail and let C resume");
+					System.out.println(KThread.currentThread().getName() + " is now attempting to Acquire Lock one. Should fail and donate to Thread C to prevent B and E from taking the CPU");
 					lock1.acquire();
 					System.out.println( KThread.currentThread().getName() + " is currently running with the Lock one." );
 					lock1.release();
@@ -841,7 +864,7 @@ public class PriorityScheduler extends Scheduler {
 		System.out.print("************************************************************************************************************\n**                                  ");
 		System.out.println("Starting Basic Case: Random Madness!                                  **");
 		System.out.println("************************************************************************************************************");
-		testMe(threadList,null,0,0,0);
+		//testMe(threadList,null,0,0,0);
 		System.out.println("FINISH TEST CASE!");
 		System.out.print("************************************************************************************************************\n**                       ");
 		System.out.println("Starting Special Test Case: Priority Inversion Confusion!                        **");
