@@ -156,7 +156,7 @@ public class PriorityScheduler extends Scheduler {
 				reOrdered();													//Re-order the queue according to the effective
 			if(this.transferPriority&&this.resourceOwner!=null){			//Removes donation of the once running thread
 				this.resourceOwner.effective = this.resourceOwner.priority;
-				//System.out.println(this.resourceOwner.thread.getName() + " has its priority set back to normal. It is now " + this.resourceOwner.effective);
+				//System.out.println(this.resourceOwner.thread.getName() + " has its priority change to " + this.resourceOwner.effective);
 				updatePriorities(this.resourceOwner);
 			}
 			ThreadState peek = pickNextThread();					//peek at the nextThread and return a thread with a highest priority and longest wait time
@@ -200,8 +200,8 @@ public class PriorityScheduler extends Scheduler {
 			for(ThreadState k:waitPQueue){	
 				if((hold.effective==k.effective)&&
 						(Machine.timer().getTime()-hold.timeINqueue)
-						<(Machine.timer().getTime() - k.timeINqueue)&&
-						k.thread.getName()!="main") //check if there is a longer waiting thread
+						<(Machine.timer().getTime() - k.timeINqueue)/*&&
+						k.thread.getName()!="main"*/) //check if there is a longer waiting thread
 					hold = k;
 			}
 			for(ThreadState k:waitPQueue){				//aging implemented here
@@ -290,6 +290,7 @@ public class PriorityScheduler extends Scheduler {
 				return;
 			this.effective = priority;
 			this.priority = priority;
+			//System.out.println(this.thread.getName() + " has its priority set to " + this.effective);
 			updatePriorities(this);
 			// implement me
 		}
@@ -327,7 +328,8 @@ public class PriorityScheduler extends Scheduler {
 						if(threadDonor.effective > waitQueue.resourceOwner.effective){	//only donate if the resource owner has a lower priority
 							waitQueue.resourceOwner.donatedFrom = threadDonor;
 							waitQueue.resourceOwner.effective = threadDonor.effective;	
-							System.out.println(threadDonor.thread.getName() + " with effective " + threadDonor.effective +" has donated to " + waitQueue.resourceOwner.thread.getName());
+							//System.out.println(threadDonor.thread.getName() + " with effective " + threadDonor.effective +" has donated to " + waitQueue.resourceOwner.thread.getName());
+							//System.out.println(waitQueue.resourceOwner.thread.getName() + " got donated and has its effective change to " + waitQueue.resourceOwner.effective);
 							updatePriorities(waitQueue.resourceOwner);		//Since priorities has change, update everywhere else
 						}
 					}
@@ -380,7 +382,6 @@ public class PriorityScheduler extends Scheduler {
 			else{
 				for(ThreadState k:queue.waitPQueue){
 					if(k.thread == threadInQuestion.thread){
-						if(k.effective==threadInQuestion.effective) break;
 						k.effective = threadInQuestion.effective;
 						break;
 					}
@@ -864,7 +865,7 @@ public class PriorityScheduler extends Scheduler {
 		System.out.print("************************************************************************************************************\n**                                  ");
 		System.out.println("Starting Basic Case: Random Madness!                                  **");
 		System.out.println("************************************************************************************************************");
-		//testMe(threadList,null,0,0,0);
+		testMe(threadList,null,0,0,0);
 		System.out.println("FINISH TEST CASE!");
 		System.out.print("************************************************************************************************************\n**                       ");
 		System.out.println("Starting Special Test Case: Priority Inversion Confusion!                        **");
