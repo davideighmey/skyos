@@ -167,10 +167,11 @@ public class Communicator {
 		return (toReturn);		
 	}
 	//test communicator class with CommunicatorTest
-	public static void test()
+	/**public static void test()
 	{
 		CommunicatorTest.runTest();
 	}
+	*/
 	//test
 	public static void selfTest()
 	{
