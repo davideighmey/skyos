@@ -298,7 +298,7 @@ public class KThread {
 		 * The thread that called join() will be ran which was determined by the priority scheduler.  
 		 */
 		//joinList.add(currentThread);
-		joinThread = currentThread;
+		//joinThread = currentThread;
 		currentThread.yield(); 
 		//yield(); //Now you yield(stop) the current thread than run the thread that called join.
 		//joinCounter = true;
