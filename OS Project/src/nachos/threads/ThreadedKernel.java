@@ -52,7 +52,8 @@ public class ThreadedKernel extends Kernel {
     //Communicator.selfTest();
     // Condition2.condSelfTest();
    //Condition2.condSelfTest();
-  // PriorityScheduler.selfTest();
+   PriorityScheduler.selfTest();
+  //Boat.selfTest();
 	KThread.selfTest();
 	Semaphore.selfTest();
 	SynchList.selfTest();
