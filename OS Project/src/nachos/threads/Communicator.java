@@ -82,10 +82,10 @@ public class Communicator {
 			this.noSpeaker.sleep(); // set condition to sleep until there is no speaker
 		
 		this.speaker = true; // there is now a speaker 
-		
+		System.out.println("checking for listener");
 		while(listener == false) // while there is no listener
 			this.listenerArrived.sleep(); // sleep on this condition (there is a listener condition)
-		
+		System.out.println("pass the listener check");
 		this.toTransfer = word; // save the word to a global variable
 		this.wordThere = true; // there is now a word available
 		
@@ -151,10 +151,10 @@ public class Communicator {
 		
 		this.listener = true; // there is now a listener (true)
 		this.listenerArrived.wake();// wake anyone waiting on the listener here condition
-		
+		System.out.println("checking if valid word");
 		while(wordThere == false) // if a word is not available 
 			this.wordReady.sleep(); // then sleep on this condition until a word is available 
-		
+		System.out.println("Valid word");
 		int toReturn = this.toTransfer; // store word to return from global variable
 		this.wordThere = false; // the word there is no longer valid
 		
@@ -175,7 +175,7 @@ public class Communicator {
 	//test
 	public static void selfTest()
 	{
-		System.out.println("Starting Test Case for Communicator!!");
+		System.out.println("!!!!!!!!!!!!!!!Starting Test Case for Communicator!!!!!!!!!!!!!!!!!!!");
 		//Create threads
 		KThread loud = new KThread(new Runnable(){
 			public void run(){
@@ -191,9 +191,14 @@ public class Communicator {
 		
 		// create communicator
 		Communicator com = new Communicator();
+		//Communicator com2 = new Communicator();
 		int sent = 4444;
-		System.out.println("Sent " + sent);
+		//System.out.println("listening");
+		//int rec1 = com.listen();
+		System.out.println("speaking " + sent);
 		com.speak(sent);
+		//int rec2 = com2.listen();
+		//System.out.println(sent + " Sent calling listen()");
 		int recieved = com.listen();
 		System.out.println("Recieved: " + recieved);		
 	}
