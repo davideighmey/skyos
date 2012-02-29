@@ -45,12 +45,12 @@ public class LotteryScheduler extends PriorityScheduler {
 
 	public static final int priorityMaximum = Integer.MAX_VALUE;
 	public static final int priorityMinimun = 1;
-	protected ThreadState getThreadState(KThread thread) {
-		if (thread.schedulingState == null)
-			thread.schedulingState = new ThreadState(thread);
-
-		return (ThreadState)thread.schedulingState;
-	}
+	//protected ThreadState getThreadState(KThread thread) {
+		//if (thread.schedulingState == null)
+			//thread.schedulingState = new ThreadState(thread);
+//
+	//	return (ThreadState)thread.schedulingState;
+	//}
 	protected class LotteryQueue extends ThreadQueue {
 
 		LotteryQueue(boolean transferPriority){
@@ -74,14 +74,14 @@ public class LotteryScheduler extends PriorityScheduler {
 		@Override
 		public void waitForAccess(KThread thread) {
 			Lib.assertTrue(Machine.interrupt().disabled());
-			getThreadState(thread).waitForAccess(this);
+			//getThreadState(thread).waitForAccess(this);
 
 		}
 
 		@Override
 		public void acquire(KThread thread) {
 			Lib.assertTrue(Machine.interrupt().disabled());
-			getThreadState(thread).acquire(this);
+			//getThreadState(thread).acquire(this);
 		}
 		
 
