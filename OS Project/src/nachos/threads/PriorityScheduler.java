@@ -571,6 +571,7 @@ public class PriorityScheduler extends Scheduler {
 			ThreadedKernel.scheduler.setPriority(special.get(6), 5);
 			ThreadedKernel.scheduler.setPriority(special.get(7), 4);
 			ThreadedKernel.scheduler.setPriority(special.get(8), 3);
+			//ThreadedKernel.scheduler.setPriority(special.get(9), 4);
 			Machine.interrupt().restore(int_state2);
 			KThread spe1 = special.get(0);
 			KThread spe2 = special.get(1);
@@ -581,6 +582,7 @@ public class PriorityScheduler extends Scheduler {
 			KThread spe7 = special.get(6);
 			KThread spe8 = special.get(7);
 			KThread spe9 = special.get(8);
+			//KThread spe10 = special.get(9);
 			spe1.setName("Tier1 Thread A::P2::E6").fork();
 			spe2.setName("Tier2 Thread B::P3::E6").fork();
 			spe3.setName("Tier2 Thread C::P3::E5").fork();
@@ -590,6 +592,7 @@ public class PriorityScheduler extends Scheduler {
 			spe7.setName("Tier3 Thread G::P5").fork();
 			spe8.setName("Tier3 Thread H::P4").fork();
 			spe9.setName("Tier3 Thread I::P3").fork();
+			//spe10.setName("Block Thread").fork();
 			System.out.println("Setting up test environment!");
 			spe1.join();
 			spe2.join();
@@ -600,6 +603,53 @@ public class PriorityScheduler extends Scheduler {
 			spe7.join();
 			spe8.join();
 			spe9.join();
+	
+		}
+		if(special!=null&&special.size()==10){
+
+			boolean int_state2 = Machine.interrupt().disable();
+			ThreadedKernel.scheduler.setPriority(special.get(0), 7);
+			ThreadedKernel.scheduler.setPriority(special.get(1), 7);
+			ThreadedKernel.scheduler.setPriority(special.get(2), 7);
+			ThreadedKernel.scheduler.setPriority(special.get(3), 7);
+			ThreadedKernel.scheduler.setPriority(special.get(4), 7);
+			ThreadedKernel.scheduler.setPriority(special.get(5), 6);
+			ThreadedKernel.scheduler.setPriority(special.get(6), 5);
+			ThreadedKernel.scheduler.setPriority(special.get(7), 4);
+			ThreadedKernel.scheduler.setPriority(special.get(8), 3);
+			ThreadedKernel.scheduler.setPriority(special.get(9), 4);
+			Machine.interrupt().restore(int_state2);
+			KThread spe1 = special.get(0);
+			KThread spe2 = special.get(1);
+			KThread spe3 = special.get(2);
+			KThread spe4 = special.get(3);
+			KThread spe5 = special.get(4);
+			KThread spe6 = special.get(5);
+			KThread spe7 = special.get(6);
+			KThread spe8 = special.get(7);
+			KThread spe9 = special.get(8);
+			KThread spe10 = special.get(9);
+			spe1.setName("Tier1 Thread A::P2::E6").fork();
+			spe2.setName("Tier2 Thread B::P3::E6").fork();
+			spe3.setName("Tier2 Thread C::P3::E5").fork();
+			spe4.setName("Tier2 Thread D::P3::E4").fork();
+			spe5.setName("Tier2 Thread E::P3::E3").fork();
+			spe6.setName("Tier3 Thread F::P6").fork();
+			spe7.setName("Tier3 Thread G::P5").fork();
+			spe8.setName("Tier3 Thread H::P4").fork();
+			spe9.setName("Tier3 Thread I::P3").fork();
+			spe10.setName("Block Thread").fork();
+			System.out.println("Setting up test environment!");
+			spe1.join();
+			spe2.join();
+			spe3.join();
+			spe4.join();
+			spe5.join();
+			spe6.join();
+			spe7.join();
+			spe8.join();
+			spe9.join();
+			spe10.join();
 
 		}
 
@@ -615,6 +665,7 @@ public class PriorityScheduler extends Scheduler {
 		final Lock lock3 = new Lock(); //creates a different lock on a different resource
 		final Lock lock4 = new Lock(); //creates a different lock on a different resource
 		final Lock lock5 = new Lock(); //creates a different lock on a different resource
+		final Alarm alarm = new Alarm();
 		LinkedList<KThread> list = new LinkedList<KThread>();
 		/*
 		 * This is a basic creation of thread. These threads created below will have a random priority assigned to them
@@ -1003,6 +1054,9 @@ public class PriorityScheduler extends Scheduler {
 			list.add(new KThread(new Runnable() {
 				public void run() {
 					//System.out.println(KThread.currentThread().getName() + " is now attempting to Acquire ResourceTier2(a), but failed.");
+					for(int i = 0; i <9;i++){
+						KThread.yield();
+					}
 					lock2.acquire();
 					System.out.println( KThread.currentThread().getName() + " has grabbed ResourceTier2(a)!" );
 					lock2.release();
@@ -1012,6 +1066,9 @@ public class PriorityScheduler extends Scheduler {
 			list.add(new KThread(new Runnable() {
 				public void run() {
 					//System.out.println(KThread.currentThread().getName() + " is now attempting to Acquire ResourceTier2(b), but failed.");
+					for(int i = 0; i <9;i++){
+						KThread.yield();
+					}
 					lock3.acquire();
 					System.out.println( KThread.currentThread().getName() + " has grabbed ResourceTier2(b)!" );
 					lock3.release();
@@ -1021,6 +1078,9 @@ public class PriorityScheduler extends Scheduler {
 			list.add(new KThread(new Runnable() {
 				public void run() {
 					//System.out.println(KThread.currentThread().getName() + " is now attempting to Acquire ResourceTier2(c), but failed.");
+					for(int i = 0; i <9;i++){
+						KThread.yield();
+					}
 					lock4.acquire();
 					System.out.println( KThread.currentThread().getName() + " has grabbed ResourceTier2(c)!" );
 					lock4.release();
@@ -1030,11 +1090,175 @@ public class PriorityScheduler extends Scheduler {
 			list.add(new KThread(new Runnable() {
 				public void run() {
 					//System.out.println(KThread.currentThread().getName() + " is now attempting to Acquire ResourceTier2(d), but failed.");
+					for(int i = 0; i <9;i++){
+						KThread.yield();
+					}
 					lock5.acquire();
 					System.out.println( KThread.currentThread().getName() + " has grabbed ResourceTier2(d)!" );
 					lock5.release();
 					System.out.println(KThread.currentThread().getName()+" has release the ResourceTier2(d).");
 					System.out.println("Test case completed!");
+				}
+			}));
+		}
+		if(special==4){
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					//System.out.println(KThread.currentThread().getName() + " has started with priority 7 and owns ResourceTier1. Tier One-Everyone wants this resource. Changing its own priorties to 2.");
+					lock1.acquire();
+					boolean int_state = Machine.interrupt().disable();
+					ThreadedKernel.scheduler.setPriority( 2 );
+					Machine.interrupt().restore( int_state );
+					System.out.println(KThread.currentThread().getName() + " owns ResourceTier1. Tier One--Everyone wants this resource!");		
+					System.out.println(KThread.currentThread().getName() + " has now given up its runtime in the cpu....Fighting for this resource has commence!\n In the end, Tier2 Thread B should take it.");
+					KThread.yield();
+					System.out.println( KThread.currentThread().getName() + " has grab hold of the cpu again! " );
+					System.out.println(KThread.currentThread().getName() + " is now going to give up ResourceTier1. Tier2 Thread B should run after this.");
+					lock1.release();
+					KThread.yield();
+				}
+			}));
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					lock2.acquire();
+					boolean int_state = Machine.interrupt().disable();
+					ThreadedKernel.scheduler.setPriority( 3 );
+					Machine.interrupt().restore( int_state );
+					KThread.yield();
+					//System.out.println(KThread.currentThread().getName() + " owns ResourceTier2(a) is determined to grab ResourceTier1 but failed.");
+					lock1.acquire();
+					//KThread.yield();
+					System.out.println( KThread.currentThread().getName() + " has grab hold of ResourceTier1! Is tired and giving up cpu..." );
+					KThread.yield();
+					System.out.println( KThread.currentThread().getName() + " got the cpu and now releasing the Legendary Tier1 Resource!");
+					lock1.release();
+					KThread.yield();
+					System.out.println(KThread.currentThread().getName() + " is now going to give up ResourceTier2(a). Tier3 Thread F should run after this.");
+					lock2.release();
+					KThread.yield();
+				}
+			}));
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					lock3.acquire();
+					boolean int_state = Machine.interrupt().disable();
+					ThreadedKernel.scheduler.setPriority( 3 );
+					Machine.interrupt().restore( int_state );
+					KThread.yield();
+					//System.out.println(KThread.currentThread().getName() + " owns ResourceTier2(b) is determined to grab ResourceTier1 but failed.");
+					lock1.acquire();
+					//KThread.yield();
+					System.out.println( KThread.currentThread().getName() + " has grab hold of ResourceTier1! Is tired and giving up cpu..." );
+					KThread.yield();
+					System.out.println( KThread.currentThread().getName() + " got the cpu and now releasing the Legendary Tier1 Resource!");
+					lock1.release();
+					KThread.yield();
+					System.out.println(KThread.currentThread().getName() + " is now going to give up ResourceTier2(b). Tier3 Thread G should run after this.");
+					lock3.release();
+					KThread.yield();
+				}
+			}));
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					//System.out.println(KThread.currentThread().getName() + " has spawn with Priority 3");
+
+					lock4.acquire();
+					boolean int_state = Machine.interrupt().disable();
+					ThreadedKernel.scheduler.setPriority( 3 );
+					Machine.interrupt().restore( int_state );
+					KThread.yield();
+					//System.out.println(KThread.currentThread().getName() + " owns ResourceTier2(c) is determined to grab ResourceTier1 but failed.");
+					lock1.acquire();
+					//KThread.yield();
+					System.out.println( KThread.currentThread().getName() + " has grab hold of ResourceTier1! Is tired and giving up cpu..." );
+					KThread.yield();
+					System.out.println( KThread.currentThread().getName() + " got the cpu and now releasing the Legendary Tier1 Resource!");
+					lock1.release();
+					KThread.yield();
+					System.out.println(KThread.currentThread().getName() + " is now going to give up ResourceTier2(c). Tier3 Thread H should run after this.");
+					lock4.release();
+					KThread.yield();
+				}
+			}));
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					//System.out.println(KThread.currentThread().getName() + " has spawn with Priority 3");
+
+					lock5.acquire();
+					boolean int_state = Machine.interrupt().disable();
+					ThreadedKernel.scheduler.setPriority( 3 );
+					Machine.interrupt().restore( int_state );
+					KThread.yield();
+					//System.out.println(KThread.currentThread().getName() + " owns ResourceTier2(d) is determined to grab ResourceTier1 but failed.");
+					lock1.acquire();
+					//KThread.yield();
+					System.out.println( KThread.currentThread().getName() + " has grab hold of ResourceTier1! Is tired and giving up cpu..." );
+					KThread.yield();
+					System.out.println( KThread.currentThread().getName() + " got the cpu and now releasing the Legendary Tier1 Resource!");
+					lock1.release();
+					KThread.yield();
+					System.out.println(KThread.currentThread().getName() + " is now going to give up ResourceTier2(d). Tier3 Thread I should run after this.");
+					lock5.release();
+					KThread.yield();
+				}
+			}));
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					//System.out.println(KThread.currentThread().getName() + " is now attempting to Acquire ResourceTier2(a), but failed.");
+					for(int i = 0; i <9;i++){
+						KThread.yield();
+					}
+					lock2.acquire();
+					System.out.println( KThread.currentThread().getName() + " has grabbed ResourceTier2(a)!" );
+					lock2.release();
+					System.out.println(KThread.currentThread().getName()+" has release the ResourceTier2(a) and Thread C shall run.");
+				}
+			}));	
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					//System.out.println(KThread.currentThread().getName() + " is now attempting to Acquire ResourceTier2(b), but failed.");
+					for(int i = 0; i <9;i++){
+						KThread.yield();
+					}
+					lock3.acquire();
+					System.out.println( KThread.currentThread().getName() + " has grabbed ResourceTier2(b)!" );
+					lock3.release();
+					System.out.println(KThread.currentThread().getName()+" has release the ResourceTier2(b) and Thread D shall run.");
+				}
+			}));	
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					//System.out.println(KThread.currentThread().getName() + " is now attempting to Acquire ResourceTier2(c), but failed.");
+					for(int i = 0; i <9;i++){
+						KThread.yield();
+					}
+					lock4.acquire();
+					System.out.println( KThread.currentThread().getName() + " has grabbed ResourceTier2(c)!" );
+					lock4.release();
+					System.out.println(KThread.currentThread().getName()+" has release the ResourceTier2(c) and Thread E shall run.");
+				}
+			}));	
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					//System.out.println(KThread.currentThread().getName() + " is now attempting to Acquire ResourceTier2(d), but failed.");
+					for(int i = 0; i <9;i++){
+						KThread.yield();
+					}
+					lock5.acquire();
+					System.out.println( KThread.currentThread().getName() + " has grabbed ResourceTier2(d)!" );
+					lock5.release();
+					System.out.println(KThread.currentThread().getName()+" has release the ResourceTier2(d).");
+					System.out.println("Test case completed!");
+				}
+			}));
+			list.add(new KThread(new Runnable() {
+				public void run() {
+					//System.out.println(KThread.currentThread().getName() + " is now attempting to Acquire ResourceTier2(d), but failed.");
+					
+					for(int i = 0;i<100;i++){
+						System.out.println(KThread.currentThread().getName()+" is running! " + i + " times");
+						KThread.yield();
+					}
 				}
 			}));	
 		}
@@ -1042,12 +1266,13 @@ public class PriorityScheduler extends Scheduler {
 	}
 	public static void selfTest(){
 		//Created two threads with its runnable being printing things.
-		LinkedList<KThread> threadList = null, specialThreadList = null, specialThreadListPlus = null, doubleLockConfusion = null, deepDonation = null;
+		LinkedList<KThread> threadList = null, specialThreadList = null, specialThreadListPlus = null, doubleLockConfusion = null, deepDonation = null,deepDonation2 = null;
 		threadList = createThread(5,0); 	//creates five regular thread and run it
 		specialThreadList= createThread(0,1);	
 		specialThreadListPlus = createThread(1,1);
 		doubleLockConfusion = createThread(1,2);
 		deepDonation = createThread(1,3);
+		deepDonation2 = createThread(1,4);
 		System.out.print("************************************************************************************************************\n**                                  ");
 		System.out.println("Starting Basic Case: Random Madness!                                  **");
 		System.out.println("************************************************************************************************************");
@@ -1069,6 +1294,10 @@ public class PriorityScheduler extends Scheduler {
 		System.out.println("Starting Special Test Case 3: Deep Donation!                              **");
 		System.out.println("************************************************************************************************************");
 		testMe(null,deepDonation,0,0,0);
+		System.out.print("************************************************************************************************************\n**                         ");
+		System.out.println("Starting Special Test Case 4: Deep Donation w/Blocking!                        **");
+		System.out.println("************************************************************************************************************");
+		testMe(null,deepDonation2,0,0,0);
 		System.out.print("************************************************************************************************************\n**                                ");
 		System.out.println("Priority Scheduler Test Cases Completed!!                               **");
 		System.out.println("************************************************************************************************************");
