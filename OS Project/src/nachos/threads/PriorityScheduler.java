@@ -326,6 +326,9 @@ public class PriorityScheduler extends Scheduler {
 			this.timeINqueue = Machine.timer().getTime();	
 			//Add this thread to the queue
 			waitQueue.waitPQueue.offer(this);
+			//Donation is allowed for this thread only if transferPriority is true
+			if (waitQueue.transferPriority)
+				donationAllowed = true;
 			//It is now waiting for the resouce that is owned by the queue owner
 			this.waitingForResource = waitQueue;
 
@@ -352,19 +355,26 @@ public class PriorityScheduler extends Scheduler {
 				waitQueue.waitPQueue.remove(this);	
 			//This thread is not waiting for any resource as it will be the owner
 			waitingForResource = null;
+			//Donation is allowed for this thread only if transferPriority is true
+			if (waitQueue.transferPriority)
+				donationAllowed = true;
 			//Set the owner of this queue/resource to this thread
-			waitQueue.resourceOwner = this;					
+			waitQueue.resourceOwner = this;		
+			
 		}	
 		/** The thread with which this object is associated. */	   
 		protected KThread thread;
 		/** The priority of the associated thread. */
-		protected int priority;
+		protected int priority = priorityDefault;
 		/** The effective priority of the associated thread */
-		protected int effective = 0;
+		protected int effective = priorityDefault;
+		/** Boolean Check if donation is allowed for the current thread**/
+		protected boolean donationAllowed = false;
 		/** The time in queue of the associated thread  */
 		protected long timeINqueue = 0;
 		/** The resource the associated thread is waiting on */
 		//protected LinkedList<PriorityQueue> waitingForResource = new LinkedList<PriorityQueue>();
+		//A Thread can only wait for one resource
 		protected PriorityQueue waitingForResource = null;
 	}
 	public static void testMe(LinkedList<KThread> list, LinkedList<KThread> special,int priority1, int priority2,int priority3){
