@@ -389,7 +389,8 @@ public class CopyOfUserProcess {
     				return descriptorTable.indexOf(openedFile);}
     	else
 			System.out.println("open unsuccesful");
-    		return -1;}
+    		return -1;
+    		}
     
     private int handleRead(int a0, int a1, int a2){
     	System.out.println("read");
@@ -408,9 +409,9 @@ public class CopyOfUserProcess {
         }else{
                 return -1;
         }
-}
+    }
 
-private int handleWrite(int a0, int a1, int a2){
+    private int handleWrite(int a0, int a1, int a2){
         System.out.println("write");
         if(a0 >= 0 && a0 < descriptorTable.size() && descriptorTable.get(a0) != null && a2 > 0){
                 OpenFile file = descriptorTable.get(a0);
@@ -428,7 +429,7 @@ private int handleWrite(int a0, int a1, int a2){
         }else{
                 return -1;
         }
-}
+	}
     private int handleClose(int a0){
         if(a0 < descriptorTable.size() && a0 >= 0 && descriptorTable.get(a0) != null){
         	System.out.println("close succesful");
@@ -439,7 +440,7 @@ private int handleWrite(int a0, int a1, int a2){
         else{
         System.out.println("close unsuccesful");
         return -1;}
-}
+    }
 
     private int handleUnlink(int a0){
         String filename = readVirtualMemoryString(a0, 256);
