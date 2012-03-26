@@ -5,6 +5,7 @@ import nachos.threads.*;
 import nachos.userprog.*;
 
 import java.io.EOFException;
+import java.util.ArrayList;
 
 /**
  * Encapsulates the state of a user process that is not contained in its
@@ -345,10 +346,113 @@ public class UserProcess {
 	Lib.assertNotReached("Machine.halt() did not halt machine!");
 	return 0;
     }
+    private int handleCreate (int a0){
+    	System.out.println("creating started");
+    	String filename = readVirtualMemoryString(a0,256);
+    	if (filename != null){
+    		OpenFile createdFile = UserKernel.fileSystem.open(filename, true);
+    		if (createdFile == null){
+       			System.out.println("creating the file was unsuccesful");
+    			return -1;}
+    		else 
+    			System.out.println("creating file");
+    			descriptorTable.add(createdFile);
+    			System.out.println("creating ended");
+    			return descriptorTable.indexOf(createdFile);}
+       else
+   			System.out.println("creating the file was unsuccesful");
+    	   return -1;
+    			
+    }
+    
+    
+    private int handleOpen (int a0){
+    	System.out.println("starting open");
+    	String filename =readVirtualMemoryString(a0, 256);  //address to 256
+    	if( filename != null){
+    		OpenFile openedFile = UserKernel.fileSystem.open(filename, false);
+    			if (openedFile == null){
+    				System.out.println("open unsuccesful");
+    				return -1;}
+    			else
+    				System.out.println("opening file");
+    				descriptorTable.add(openedFile);
+    				System.out.println("opened file succesfully");
+    				return descriptorTable.indexOf(openedFile);}
+    	else
+			System.out.println("open unsuccesful");
+    		return -1;
+    		}
+    
+    private int handleRead(int a0, int a1, int a2){
+    	System.out.println("read");
+        if(a0 >= 0 && a0 < descriptorTable.size() &&descriptorTable.get(a0) != null && a2 > 0){
+                OpenFile file = descriptorTable.get(a0);
+                byte[] data = new byte[a2];
+                int bytesRead = file.read(data, 0, a2);
+                if(bytesRead <0){
+                        return -1;
+                }
+                int bytesWritten = writeVirtualMemory(a1, data);
+                if(bytesWritten < 0){
+                        return -1; }
+                	return bytesRead;}
+        else
+                return -1;
+        
+    }
+
+    private int handleWrite(int a0, int a1, int a2){
+        System.out.println("write");
+        if(a0 >= 0 && a0 < descriptorTable.size() && descriptorTable.get(a0) != null && a2 > 0){
+                OpenFile file = descriptorTable.get(a0);
+                String data = readVirtualMemoryString(a1, 256);
+                if(data == null){
+                        return -1;}
+                else{
+                        int bytesWritten = file.write(data.getBytes(), 0, a2);
+                        if(bytesWritten < a2){
+                                return -1;
+                        }else{
+                                return bytesWritten;}
+                        }
+                }
+        else{
+                return -1;
+        }
+	}
+    
+    private int handleClose(int a0){
+        if(a0 < descriptorTable.size() && a0 >= 0 && descriptorTable.get(a0) != null){
+        	System.out.println("close succesful");
+                descriptorTable.get(a0).close();
+                descriptorTable.set(a0, null);
+                return 0;
+        }
+        else{
+        	System.out.println("close unsuccesful");
+        	return -1;}
+    }
+
+    private int handleUnlink(int a0){
+        String filename = readVirtualMemoryString(a0, 256);
+        if(filename == null){
+        	 	System.out.println("unlink unsuccesful");
+                return -1;
+        }else{
+                if(!UserKernel.fileSystem.remove(filename)){
+                		System.out.println("unlink unsuccesful");
+                        return -1;
+                }else{
+            	 		System.out.println("unlink succesful");
+                        return 0;
+                }
+        }
+    }
 
 
     private static final int
-        syscallHalt = 0,
+    syscallHalt = 0,
 	syscallExit = 1,
 	syscallExec = 2,
 	syscallJoin = 3,
@@ -391,6 +495,19 @@ public class UserProcess {
 	switch (syscall) {
 	case syscallHalt:
 	    return handleHalt();
+	case syscallOpen:
+		return handleOpen(a0);
+	case syscallCreate:
+		return handleCreate(a0);
+	case syscallRead:
+		return handleRead(a0,a1,a2);
+	case syscallWrite:
+		return handleWrite(a0,a1,a2);
+	case syscallClose:
+		return handleClose(a0);
+	case syscallUnlink:
+		return handleUnlink(a0);
+		
 
 
 	default:
@@ -432,6 +549,8 @@ public class UserProcess {
 
     /** The program being run by this process. */
     protected Coff coff;
+
+    private ArrayList<OpenFile> descriptorTable = new ArrayList<OpenFile>(16);
 
     /** This process's page table. */
     protected TranslationEntry[] pageTable;
