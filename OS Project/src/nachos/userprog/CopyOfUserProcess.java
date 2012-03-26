@@ -363,10 +363,10 @@ public class CopyOfUserProcess {
        			System.out.println("creating the file was unsuccesful");
     			return -1;}
     		else 
-    		System.out.println("creating file");
-    		descriptorTable.add(createdFile);
-    		System.out.println("creating ended");
-            return descriptorTable.indexOf(createdFile);}
+    			System.out.println("creating file");
+    			descriptorTable.add(createdFile);
+    			System.out.println("creating ended");
+    			return descriptorTable.indexOf(createdFile);}
        else
    			System.out.println("creating the file was unsuccesful");
     	   return -1;
@@ -403,12 +403,11 @@ public class CopyOfUserProcess {
                 }
                 int bytesWritten = writeVirtualMemory(a1, data);
                 if(bytesWritten < 0){
-                        return -1;
-                }
-                	return bytesRead;
-        }else{
+                        return -1; }
+                	return bytesRead;}
+        else
                 return -1;
-        }
+        
     }
 
     private int handleWrite(int a0, int a1, int a2){
@@ -417,19 +416,20 @@ public class CopyOfUserProcess {
                 OpenFile file = descriptorTable.get(a0);
                 String data = readVirtualMemoryString(a1, 256);
                 if(data == null){
-                        return -1;
-                }else{
+                        return -1;}
+                else{
                         int bytesWritten = file.write(data.getBytes(), 0, a2);
                         if(bytesWritten < a2){
                                 return -1;
                         }else{
-                                return bytesWritten;
+                                return bytesWritten;}
                         }
                 }
-        }else{
+        else{
                 return -1;
         }
 	}
+    
     private int handleClose(int a0){
         if(a0 < descriptorTable.size() && a0 >= 0 && descriptorTable.get(a0) != null){
         	System.out.println("close succesful");
@@ -438,8 +438,8 @@ public class CopyOfUserProcess {
                 return 0;
         }
         else{
-        System.out.println("close unsuccesful");
-        return -1;}
+        	System.out.println("close unsuccesful");
+        	return -1;}
     }
 
     private int handleUnlink(int a0){
