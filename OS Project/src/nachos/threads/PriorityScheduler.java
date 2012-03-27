@@ -146,9 +146,6 @@ public class PriorityScheduler extends Scheduler {
 			Lib.assertTrue(Machine.interrupt().disabled());
 			ThreadState next = this.pickNextThread();
 
-			//if (resourceOwner != null)
-			//	resourceOwner.resourceQueue.remove(this);
-			//resourceOwner = null;
 			if (next != null) {
 				//this thread will now acquire the resource/queue
 				next.acquire(this);
@@ -166,7 +163,9 @@ public class PriorityScheduler extends Scheduler {
 		 * @return the next thread that <tt>nextThread()</tt> would return.
 		 */
 		protected ThreadState pickNextThread() {
+			//Create temp ThreadState
 			ThreadState maxThread = null;
+			//Will keep track of the highest priority
 			int maxVal = -1;
 			for (ThreadState thread : waitPQueue) {
 				if (thread.getEffectivePriority() > maxVal) {
@@ -189,18 +188,6 @@ public class PriorityScheduler extends Scheduler {
 			System.out.println(". end");
 		}
 
-		public int calculateDonated(ThreadState requester) {
-			int maxPriority = -1;
-			for (ThreadState thread : waitPQueue) {
-				if (thread != requester) {
-					maxPriority = Math.max(maxPriority, thread
-							.getEffectivePriority());
-					if (maxPriority >= priorityMaximum)
-						return priorityMaximum;
-				}
-			}
-			return maxPriority;
-		}
 
 		/**
 		 * <tt>true</tt> if this queue should transfer priority from waiting
@@ -249,7 +236,6 @@ public class PriorityScheduler extends Scheduler {
 		 */
 		public int getEffectivePriority() {
 			if (donationAllowed) {
-
 				effective = calculateDonated();
 				donationAllowed = false;
 			}
@@ -261,7 +247,16 @@ public class PriorityScheduler extends Scheduler {
 			int tempEffective = 0;
 			//For each queue, check donation 
 			for (PriorityQueue pq : resourceQueue) {
-				tempEffective = Math.max(tempEffective, pq.calculateDonated(this));
+				int maxPriority = -1;
+				for (ThreadState thread : pq.waitPQueue) {
+					if (thread != this) {
+						maxPriority = Math.max(maxPriority, thread
+								.getEffectivePriority());
+						if (maxPriority >= priorityMaximum)
+							return priorityMaximum;
+					}
+				}
+				tempEffective = Math.max(tempEffective, maxPriority);
 				if (tempEffective == priorityMaximum)
 					break;
 			}
