@@ -29,6 +29,7 @@ public class UserKernel extends ThreadedKernel {
 	Machine.processor().setExceptionHandler(new Runnable() {
 		public void run() { exceptionHandler(); }
 	    });
+	InitializeMem();
 	
     }
     public void InitializeMem(){
