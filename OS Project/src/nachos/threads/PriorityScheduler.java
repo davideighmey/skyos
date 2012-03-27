@@ -207,10 +207,10 @@ public class PriorityScheduler extends Scheduler {
 		 * threads to the owning thread.
 		 */
 		public boolean transferPriority;
+		// the thread that is receiving the resource
+		public ThreadState resourceOwner;
 		// The priority queue that will hold the waiting threads
 		LinkedList<ThreadState> waitPQueue;
-		public ThreadState resourceOwner; // the thread that is receiving the
-
 	}
 
 	/**
