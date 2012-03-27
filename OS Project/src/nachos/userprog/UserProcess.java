@@ -72,7 +72,7 @@ public class UserProcess {
     public void restoreState() {
 	Machine.processor().setPageTable(pageTable);
     }
-    
+
     /**
      * Read a null-terminated string from this process's virtual memory. Read
      * at most <tt>maxLength + 1</tt> bytes from the specified address, search
@@ -101,282 +101,218 @@ public class UserProcess {
 
 	return null;
     }
-	/*@JAMES START*/
 
-	/*
-	 * Takes in a virtual address vaddr, which will than calculate the offset and virtual page number from the given address provided
-	 * it will than calculate the physical address from the virtual page number and frame number, i.e. the physical page number
-	 */
-	public int vaddrTranslation(int vaddr){
-		int Offset = Processor.offsetFromAddress(vaddr);
-		//vPageNum will be the index of the page table. 
-		int vPageNum = Processor.pageFromAddress(vaddr);
-		if(pageTable == null){
-			System.out.println("PageTable was not initialized");
-			return -1;
-		}
-		/*
-		 * Check if the Virtual page number is on the page table, where the Page Table length is the max number of entries within that page table
-		 */
-		if(vPageNum > pageTable.length || vPageNum < 0){
-			System.out.println("Virtual Address may not be mapped" + vPageNum + "out of bounds");
-			return -1;
-		}
-		/*Since each virtual address are being translated individually the virtual page number will be mapped to the page table as indexes on the
-		page table which than will determine the frame number to determine the physical address.*/
-		//TranslationEntry pageTableIndex = pageTable[vPageNum]; 
-		int frameNum =  pageTable[vPageNum].ppn;
-		int paddr = Processor.makeAddress(frameNum, Offset);
-		if(pageTable[vPageNum].valid == false){
-			System.out.println("Page Fault");
-			System.out.println("Invalid - Not in physical memory");
-			return -1; //Return error
-		}
-		else{
-			pageTable[vPageNum].used = true;  //Since at this address will be used(either read or write) it will be set to true as it will be used.
-			return paddr;
-		}
+    /**
+     * Transfer data from this process's virtual memory to all of the specified
+     * array. Same as <tt>readVirtualMemory(vaddr, data, 0, data.length)</tt>.
+     *
+     * @param	vaddr	the first byte of virtual memory to read.
+     * @param	data	the array where the data will be stored.
+     * @return	the number of bytes successfully transferred.
+     */
+    public int readVirtualMemory(int vaddr, byte[] data) {
+	return readVirtualMemory(vaddr, data, 0, data.length);
+    }
+
+    /**
+     * Transfer data from this process's virtual memory to the specified array.
+     * This method handles address translation details. This method must
+     * <i>not</i> destroy the current process if an error occurs, but instead
+     * should return the number of bytes successfully copied (or zero if no
+     * data could be copied).
+     *
+     * @param	vaddr	the first byte of virtual memory to read.
+     * @param	data	the array where the data will be stored.
+     * @param	offset	the first byte to write in the array.
+     * @param	length	the number of bytes to transfer from virtual memory to
+     *			the array.
+     * @return	the number of bytes successfully transferred.
+     */
+    public int readVirtualMemory(int vaddr, byte[] data, int offset,
+				 int length) {
+	Lib.assertTrue(offset >= 0 && length >= 0 && offset+length <= data.length);
+
+	byte[] memory = Machine.processor().getMemory();
+	
+	// for now, just assume that virtual addresses equal physical addresses
+	if (vaddr < 0 || vaddr >= memory.length)
+	    return 0;
+
+	int amount = Math.min(length, memory.length-vaddr);
+	System.arraycopy(memory, vaddr, data, offset, amount);
+
+	return amount;
+    }
+
+    /**
+     * Transfer all data from the specified array to this process's virtual
+     * memory.
+     * Same as <tt>writeVirtualMemory(vaddr, data, 0, data.length)</tt>.
+     *
+     * @param	vaddr	the first byte of virtual memory to write.
+     * @param	data	the array containing the data to transfer.
+     * @return	the number of bytes successfully transferred.
+     */
+    public int writeVirtualMemory(int vaddr, byte[] data) {
+	return writeVirtualMemory(vaddr, data, 0, data.length);
+    }
+
+    /**
+     * Transfer data from the specified array to this process's virtual memory.
+     * This method handles address translation details. This method must
+     * <i>not</i> destroy the current process if an error occurs, but instead
+     * should return the number of bytes successfully copied (or zero if no
+     * data could be copied).
+     *
+     * @param	vaddr	the first byte of virtual memory to write.
+     * @param	data	the array containing the data to transfer.
+     * @param	offset	the first byte to transfer from the array.
+     * @param	length	the number of bytes to transfer from the array to
+     *			virtual memory.
+     * @return	the number of bytes successfully transferred.
+     */
+    public int writeVirtualMemory(int vaddr, byte[] data, int offset,
+				  int length) {
+	Lib.assertTrue(offset >= 0 && length >= 0 && offset+length <= data.length);
+
+	byte[] memory = Machine.processor().getMemory();
+	
+	// for now, just assume that virtual addresses equal physical addresses
+	if (vaddr < 0 || vaddr >= memory.length)
+	    return 0;
+
+	int amount = Math.min(length, memory.length-vaddr);
+	System.arraycopy(data, offset, memory, vaddr, amount);
+
+	return amount;
+    }
+
+    /**
+     * Load the executable with the specified name into this process, and
+     * prepare to pass it the specified arguments. Opens the executable, reads
+     * its header information, and copies sections and arguments into this
+     * process's virtual memory.
+     *
+     * @param	name	the name of the file containing the executable.
+     * @param	args	the arguments to pass to the executable.
+     * @return	<tt>true</tt> if the executable was successfully loaded.
+     */
+    private boolean load(String name, String[] args) {
+	Lib.debug(dbgProcess, "UserProcess.load(\"" + name + "\")");
+	
+	OpenFile executable = ThreadedKernel.fileSystem.open(name, false);
+	if (executable == null) {
+	    Lib.debug(dbgProcess, "\topen failed");
+	    return false;
 	}
 
-	/**
-	 * Transfer data from this process's virtual memory to all of the specified
-	 * array. Same as <tt>readVirtualMemory(vaddr, data, 0, data.length)</tt>.
-	 *
-	 * @param	vaddr	the first byte of virtual memory to read.
-	 * @param	data	the array where the data will be stored.
-	 * @return	the number of bytes successfully transferred.
-	 */
-	public int readVirtualMemory(int vaddr, byte[] data) {
-		return readVirtualMemory(vaddr, data, 0, data.length);
+	try {
+	    coff = new Coff(executable);
+	}
+	catch (EOFException e) {
+	    executable.close();
+	    Lib.debug(dbgProcess, "\tcoff load failed");
+	    return false;
 	}
 
-	/**
-	 * Transfer data from this process's virtual memory to the specified array.
-	 * This method handles address translation details. This method must
-	 * <i>not</i> destroy the current process if an error occurs, but instead
-	 * should return the number of bytes successfully copied (or zero if no
-	 * data could be copied).
-	 *
-	 * @param	vaddr	the first byte of virtual memory to read.
-	 * @param	data	the array where the data will be stored.
-	 * @param	offset	the first byte to write in the array.
-	 * @param	length	the number of bytes to transfer from virtual memory to
-	 *			the array.
-	 * @return	the number of bytes successfully transferred.
-	 */
-	public int readVirtualMemory(int vaddr, byte[] data, int offset,
-			int length) {
-		Lib.assertTrue(offset >= 0 && length >= 0 && offset+length <= data.length);
-		int paddr = vaddrTranslation(vaddr);
-		if(paddr == -1){
-			return 0;
-		}
-		//Get physical memory
-		byte[] memory = Machine.processor().getMemory();
-		int amount = Math.min(length, memory.length-paddr);
-		System.out.println("data length: " + length + "\n" +"memory.length-paddr: " + (memory.length - paddr));
-		/*
-		 * Transfering and amount of data to physical main memory by starting at the physical address, than by offset. 
-		 */
-		System.arraycopy(memory, paddr, data, offset, amount);
-
-		return amount;
+	// make sure the sections are contiguous and start at page 0
+	numPages = 0;
+	for (int s=0; s<coff.getNumSections(); s++) {
+	    CoffSection section = coff.getSection(s);
+	    if (section.getFirstVPN() != numPages) {
+		coff.close();
+		Lib.debug(dbgProcess, "\tfragmented executable");
+		return false;
+	    }
+	    numPages += section.getLength();
 	}
 
-	/**
-	 * Transfer all data from the specified array to this process's virtual
-	 * memory.
-	 * Same as <tt>writeVirtualMemory(vaddr, data, 0, data.length)</tt>.
-	 *
-	 * @param	vaddr	the first byte of virtual memory to write.
-	 * @param	data	the array containing the data to transfer.
-	 * @return	the number of bytes successfully transferred.
-	 */
-	public int writeVirtualMemory(int vaddr, byte[] data) {
-		return writeVirtualMemory(vaddr, data, 0, data.length);
+	// make sure the argv array will fit in one page
+	byte[][] argv = new byte[args.length][];
+	int argsSize = 0;
+	for (int i=0; i<args.length; i++) {
+	    argv[i] = args[i].getBytes();
+	    // 4 bytes for argv[] pointer; then string plus one for null byte
+	    argsSize += 4 + argv[i].length + 1;
+	}
+	if (argsSize > pageSize) {
+	    coff.close();
+	    Lib.debug(dbgProcess, "\targuments too long");
+	    return false;
 	}
 
-	/**
-	 * Transfer data from the specified array to this process's virtual memory.
-	 * This method handles address translation details. This method must
-	 * <i>not</i> destroy the current process if an error occurs, but instead
-	 * should return the number of bytes successfully copied (or zero if no
-	 * data could be copied).
-	 *
-	 * @param	vaddr	the first byte of virtual memory to write.
-	 * @param	data	the array containing the data to transfer.
-	 * @param	offset	the first byte to transfer from the array.
-	 * @param	length	the number of bytes to transfer from the array to
-	 *			virtual memory.
-	 * @return	the number of bytes successfully transferred.
-	 */
-	public int writeVirtualMemory(int vaddr, byte[] data, int offset,
-			int length) {
-		Lib.assertTrue(offset >= 0 && length >= 0 && offset+length <= data.length);
-		/*Need to write to the virtual memory now, so find the virtual page number for
-		 * the correct index at which you are writing the data to.
-		 */
-		int vPageNum = Processor.pageFromAddress(vaddr);
-		byte[] memory = Machine.processor().getMemory();
-		int paddr = vaddrTranslation(vaddr);
-		if(paddr == -1){
-			return 0;
-		}
-		int amount = Math.min(length, memory.length-vaddr);
-		if(pageTable[vPageNum].readOnly == true){
-			System.out.println("Cannot write to current page table index, as it is read-only");
-			//pageTableIndex.used = false; //As it was an unsuccessful write, used will be set to false.
-			return 0; //Can not return error, instead will return zero bits
-		}
-		/*
-		arraycopy(Object source, int sourcePosition, Object destination, int destinationPosition, int numberOfElements)
-		 */
-		System.arraycopy(data, offset, memory, paddr, amount);
-		pageTable[vPageNum].dirty = true;
-		return amount;
+	// program counter initially points at the program entry point
+	initialPC = coff.getEntryPoint();	
+
+	// next comes the stack; stack pointer initially points to top of it
+	numPages += stackPages;
+	initialSP = numPages*pageSize;
+
+	// and finally reserve 1 page for arguments
+	numPages++;
+
+	if (!loadSections())
+	    return false;
+
+	// store arguments in last page
+	int entryOffset = (numPages-1)*pageSize;
+	int stringOffset = entryOffset + args.length*4;
+
+	this.argc = args.length;
+	this.argv = entryOffset;
+	
+	for (int i=0; i<argv.length; i++) {
+	    byte[] stringOffsetBytes = Lib.bytesFromInt(stringOffset);
+	    Lib.assertTrue(writeVirtualMemory(entryOffset,stringOffsetBytes) == 4);
+	    entryOffset += 4;
+	    Lib.assertTrue(writeVirtualMemory(stringOffset, argv[i]) ==
+		       argv[i].length);
+	    stringOffset += argv[i].length;
+	    Lib.assertTrue(writeVirtualMemory(stringOffset,new byte[] { 0 }) == 1);
+	    stringOffset += 1;
 	}
 
-	/**
-	 * Load the executable with the specified name into this process, and
-	 * prepare to pass it the specified arguments. Opens the executable, reads
-	 * its header information, and copies sections and arguments into this
-	 * process's virtual memory.
-	 *
-	 * @param	name	the name of the file containing the executable.
-	 * @param	args	the arguments to pass to the executable.
-	 * @return	<tt>true</tt> if the executable was successfully loaded.
-	 */
-	private boolean load(String name, String[] args) {
-		Lib.debug(dbgProcess, "UserProcess.load(\"" + name + "\")");
+	return true;
+    }
 
-		OpenFile executable = ThreadedKernel.fileSystem.open(name, false);
-		if (executable == null) {
-			Lib.debug(dbgProcess, "\topen failed");
-			return false;
-		}
-
-		try {
-			coff = new Coff(executable);
-		}
-		catch (EOFException e) {
-			executable.close();
-			Lib.debug(dbgProcess, "\tcoff load failed");
-			return false;
-		}
-
-		// make sure the sections are contiguous and start at page 0
-		numPages = 0;
-		for (int s=0; s<coff.getNumSections(); s++) {
-			CoffSection section = coff.getSection(s);
-			if (section.getFirstVPN() != numPages) {
-				coff.close();
-				Lib.debug(dbgProcess, "\tfragmented executable");
-				return false;
-			}
-			numPages += section.getLength();
-		}
-
-		// make sure the argv array will fit in one page
-		byte[][] argv = new byte[args.length][];
-		int argsSize = 0;
-		for (int i=0; i<args.length; i++) {
-			argv[i] = args[i].getBytes();
-			// 4 bytes for argv[] pointer; then string plus one for null byte
-			argsSize += 4 + argv[i].length + 1;
-		}
-		if (argsSize > pageSize) {
-			coff.close();
-			Lib.debug(dbgProcess, "\targuments too long");
-			return false;
-		}
-
-		// program counter initially points at the program entry point
-		initialPC = coff.getEntryPoint();	
-
-		// next comes the stack; stack pointer initially points to top of it
-		numPages += stackPages;
-		initialSP = numPages*pageSize;
-
-		// and finally reserve 1 page for arguments
-		numPages++;
-
-		if (!loadSections())
-			return false;
-
-		// store arguments in last page
-		int entryOffset = (numPages-1)*pageSize;
-		int stringOffset = entryOffset + args.length*4;
-
-		this.argc = args.length;
-		this.argv = entryOffset;
-
-		for (int i=0; i<argv.length; i++) {
-			byte[] stringOffsetBytes = Lib.bytesFromInt(stringOffset);
-			Lib.assertTrue(writeVirtualMemory(entryOffset,stringOffsetBytes) == 4);
-			entryOffset += 4;
-			Lib.assertTrue(writeVirtualMemory(stringOffset, argv[i]) ==
-					argv[i].length);
-			stringOffset += argv[i].length;
-			Lib.assertTrue(writeVirtualMemory(stringOffset,new byte[] { 0 }) == 1);
-			stringOffset += 1;
-		}
-
-		return true;
+    /**
+     * Allocates memory for this process, and loads the COFF sections into
+     * memory. If this returns successfully, the process will definitely be
+     * run (this is the last step in process initialization that can fail).
+     *
+     * @return	<tt>true</tt> if the sections were successfully loaded.
+     */
+    protected boolean loadSections() {
+	if (numPages > Machine.processor().getNumPhysPages()) {
+	    coff.close();
+	    Lib.debug(dbgProcess, "\tinsufficient physical memory");
+	    return false;
 	}
 
-	/**
-	 * Allocates memory for this process, and loads the COFF sections into
-	 * memory. If this returns successfully, the process will definitely be
-	 * run (this is the last step in process initialization that can fail).
-	 *
-	 * @return	<tt>true</tt> if the sections were successfully loaded.
-	 */
-	protected boolean loadSections() {
-		if (numPages > Machine.processor().getNumPhysPages()) {
-			coff.close();
-			Lib.debug(dbgProcess, "\tinsufficient physical memory");
-			return false;
-		}
+	// load sections
+	for (int s=0; s<coff.getNumSections(); s++) {
+	    CoffSection section = coff.getSection(s);
+	    
+	    Lib.debug(dbgProcess, "\tinitializing " + section.getName()
+		      + " section (" + section.getLength() + " pages)");
 
-		if(((UserKernel)Kernel.kernel).freePhysicalPages.size() == 0){
-			System.out.println("There are no free Physical pages");
-			return false;
-		}
-		//Start Initializing the pageTable
-		// load sections
-		for (int s=0; s<coff.getNumSections(); s++) {
-			CoffSection section = coff.getSection(s);
+	    for (int i=0; i<section.getLength(); i++) {
+		int vpn = section.getFirstVPN()+i;
 
-			Lib.debug(dbgProcess, "\tinitializing " + section.getName()
-					+ " section (" + section.getLength() + " pages)");
-
-			for (int i=0; i<section.getLength(); i++) {
-				int vpn = section.getFirstVPN()+i;
-				//checks if the CoffSection is read only.
-				pageTable[vpn].readOnly = section.isReadOnly();
-				pageTable[vpn].vpn = vpn;
-				pageTable[vpn].used = false;
-				pageTable[vpn].ppn = ((UserKernel)Kernel.kernel).freePhysicalPages.removeFirst();
-				// for now, just assume virtual addresses=physical addresses
-				section.loadPage(i, pageTable[vpn].ppn);
-			}
-		}
-
-		return true;
+		// for now, just assume virtual addresses=physical addresses
+		section.loadPage(i, vpn);
+	    }
 	}
+	
+	return true;
+    }
 
-	/**
-	 * Release any resources allocated by <tt>loadSections()</tt>.
-	 */
-	protected void unloadSections() {
-		for(int i = 0; i < pageTable.length; i++){
-			if(pageTable[i].used == true){
-				pageTable[i].used = false;
-				((UserKernel)Kernel.kernel).freePhysicalPages.add(pageTable[i].ppn);
-			}
-		}
-	}    
-	/*JAMES ENDS*/
+    /**
+     * Release any resources allocated by <tt>loadSections()</tt>.
+     */
+    protected void unloadSections() {
+    }    
+
     /**
      * Initialize the processor's registers in preparation for running the
      * program loaded into this process. Set the PC register to point at the
@@ -411,7 +347,7 @@ public class UserProcess {
 	return 0;
     }
     private int handleCreate (int a0){
-    	System.out.println("creating started");
+    	//System.out.println("creating started");
     	String filename = readVirtualMemoryString(a0,256);
     	if (filename != null){
     		OpenFile createdFile = UserKernel.fileSystem.open(filename, true);
@@ -431,7 +367,7 @@ public class UserProcess {
     
     
     private int handleOpen (int a0){
-    	System.out.println("starting open");
+    //	System.out.println("starting open");
     	String filename =readVirtualMemoryString(a0, 256);  //address to 256
     	if( filename != null){
     		OpenFile openedFile = UserKernel.fileSystem.open(filename, false);
@@ -449,7 +385,7 @@ public class UserProcess {
     		}
     
     private int handleRead(int a0, int a1, int a2){
-    	System.out.println("read");
+    //	System.out.println("read");
         if(a0 >= 0 && a0 < descriptorTable.size() &&descriptorTable.get(a0) != null && a2 > 0){
                 OpenFile file = descriptorTable.get(a0);
                 byte[] data = new byte[a2];
@@ -467,7 +403,7 @@ public class UserProcess {
     }
 
     private int handleWrite(int a0, int a1, int a2){
-        System.out.println("write");
+      //  System.out.println("write");
         if(a0 >= 0 && a0 < descriptorTable.size() && descriptorTable.get(a0) != null && a2 > 0){
                 OpenFile file = descriptorTable.get(a0);
                 String data = readVirtualMemoryString(a1, 256);
