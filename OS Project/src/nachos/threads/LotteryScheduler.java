@@ -202,19 +202,6 @@ public class LotteryScheduler extends Scheduler {
 			System.out.println(". end");
 
 		}
-
-		public int calculateDonated(ThreadState requester) {
-			long maxPriority = 0;
-			for (ThreadState thread : waitPQueue) {
-				if (thread != requester) {
-						maxPriority += thread.getEffectivePriority();
-					if (maxPriority >= priorityMaximum)
-						return priorityMaximum;
-				}
-			}
-			return (int)maxPriority;
-		}
-
 		/**
 		 * <tt>true</tt> if this queue should transfer priority from waiting
 		 * threads to the owning thread.
@@ -224,7 +211,7 @@ public class LotteryScheduler extends Scheduler {
 		LinkedList<LotteryScheduler.ThreadState> waitPQueue;
 		public ThreadState resourceOwner; 
 		//The amount of tickets in the system
-		private int totalTickets = 0;
+		//private int totalTickets = 0;
 	}
 
 
@@ -352,13 +339,21 @@ public class LotteryScheduler extends Scheduler {
 			// queues this thread is waiting for)
 			if (priority == priorityMaximum)
 				return priority;
-			long gift = 0;
+			long ticket = 0;
 			for (LotteryScheduler.LotteryQueue pq : resourceQueue) {
-				gift += pq.calculateDonated(this);
-				if(gift>=Integer.MAX_VALUE)
+				long maxPriority = 0;
+				for (ThreadState thread : pq.waitPQueue) {
+					if (thread != this) {
+							maxPriority += thread.getEffectivePriority();
+						if (maxPriority >= priorityMaximum)
+							return priorityMaximum;
+					}
+				}
+				ticket += maxPriority;
+				if(ticket>=Integer.MAX_VALUE)
 					return priorityMaximum; 
 			}
-			return (int)gift;
+			return (int)ticket;
 		}
 
 		/** The thread with which this object is associated. */    
