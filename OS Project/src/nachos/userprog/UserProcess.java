@@ -354,17 +354,19 @@ public class UserProcess {
 			Lib.debug(dbgProcess, "\tinsufficient physical memory");
 			return false;
 		}
+		//Start Initializing the pageTable for this process, give it only what it needs
+		pageTable = new TranslationEntry[numPages];
 		//the number pages occupied by the process, load all free physical pages into table
-		/*for(int i = 0; i < numPages; i++){
+		for (int i=0; i < pageTable.length; i++){
 			if(((UserKernel)Kernel.kernel).getNumPages() == 0){
 				System.out.println("There are no free Physical pages");
 				return false;
 			}
-			pageTable[i].ppn = ((UserKernel)Kernel.kernel).getFreePage();
-		}*/
-		//Start Initializing the pageTable
+			int ppn = ((UserKernel)Kernel.kernel).getFreePage();
+			pageTable[i] = new TranslationEntry(i,ppn, true,false,false,false);
+		} 
+		
 		// load sections
-
 		for (int s=0; s<coff.getNumSections(); s++) {
 			CoffSection section = coff.getSection(s);
 
@@ -376,11 +378,7 @@ public class UserProcess {
 				int vpn = section.getFirstVPN()+i;
 				System.out.println("Virtual Page Number: " + Integer.toBinaryString(vpn)+" - " + vpn + " PageTable VPN: " + Integer.toBinaryString(pageTable[vpn].vpn));
 				//checks if the CoffSection is read only.
-				if(((UserKernel)Kernel.kernel).getNumPages() == 0){
-					System.out.println("There are no free Physical pages");
-					return false;
-				}
-				pageTable[vpn].ppn = ((UserKernel)Kernel.kernel).getFreePage();
+				
 				pageTable[vpn].readOnly = section.isReadOnly();
 				section.loadPage(i, pageTable[vpn].ppn);
 			}
