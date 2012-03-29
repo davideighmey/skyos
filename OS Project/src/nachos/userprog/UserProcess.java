@@ -108,34 +108,37 @@ public class UserProcess {
 	 * it will than calculate the physical address from the virtual page number and frame number, i.e. the physical page number
 	 */
 	public int vaddrTranslation(int vaddr){
+		System.out.println("Starting to convert vaddr: " + Integer.toBinaryString(vaddr));
 		int Offset = Processor.offsetFromAddress(vaddr);
+		System.out.println("Offset is: " + Integer.toBinaryString(Offset));
 		//vPageNum will be the index of the page table. 
 		int vPageNum = Processor.pageFromAddress(vaddr);
-		if(pageTable == null){
-			System.out.println("PageTable was not initialized");
-			return -1;
-		}
+		System.out.println("vPageNum is: " + Integer.toBinaryString(vPageNum));
+		System.out.println("vPageNum in pageTable is: " + Integer.toBinaryString(pageTable[vPageNum].vpn));
+		System.out.println("PPageNum is: " + Integer.toBinaryString(pageTable[vPageNum].ppn));
 		/*
 		 * Check if the Virtual page number is on the page table, where the Page Table length is the max number of entries within that page table
 		 */
-		if(vPageNum > pageTable.length || vPageNum < 0){
-			System.out.println("Virtual Address may not be mapped" + vPageNum + "out of bounds");
+		System.out.println("Page Table Size is: " + pageTable.length + " Binary of it: " +Integer.toBinaryString(pageTable.length));
+		if(vPageNum >= pageTable.length || vPageNum < 0){
+			System.out.println("Virtual Address may not be mapped" + Integer.toBinaryString(vPageNum) + "out of bounds");
 			return -1;
 		}
+		System.out.println("Page Size is: " + Processor.pageSize);
 		/*Since each virtual address are being translated individually the virtual page number will be mapped to the page table as indexes on the
 		page table which than will determine the frame number to determine the physical address.*/
 		//TranslationEntry pageTableIndex = pageTable[vPageNum]; 
 		int frameNum =  pageTable[vPageNum].ppn;
-		int paddr = Processor.makeAddress(frameNum, Offset);
+		System.out.println("frameNum is: " + Integer.toBinaryString(pageTable[vPageNum].ppn) +" pageTable[vPageNum].valid is: "+ pageTable[vPageNum].valid);
 		if(pageTable[vPageNum].valid == false){
 			System.out.println("Page Fault");
 			System.out.println("Invalid - Not in physical memory");
 			return -1; //Return error
 		}
-		else{
-			pageTable[vPageNum].used = true;  //Since at this address will be used(either read or write) it will be set to true as it will be used.
-			return paddr;
-		}
+		System.out.println("Setting vPageNum: " + Integer.toBinaryString(vPageNum)+ " to true.");
+		pageTable[vPageNum].used = true;
+		int paddr = Processor.makeAddress(frameNum, Offset);
+		return paddr;
 	}
 
 	/**
@@ -167,17 +170,20 @@ public class UserProcess {
 	public int readVirtualMemory(int vaddr, byte[] data, int offset,
 			int length) {
 		Lib.assertTrue(offset >= 0 && length >= 0 && offset+length <= data.length);
+		System.out.println("Starting Read Virtual Memory");
 		int paddr = vaddrTranslation(vaddr);
+		System.out.println("paddr is: " + Integer.toBinaryString(paddr));
 		if(paddr == -1){
 			return 0;
 		}
 		//Get physical memory
 		byte[] memory = Machine.processor().getMemory();
 		int amount = Math.min(length, memory.length-paddr);
-		System.out.println("data length: " + length + "\n" +"memory.length-paddr: " + (memory.length - paddr));
+		System.out.println("data length: " + Integer.toBinaryString(length) +" memory.length-paddr: " + Integer.toBinaryString(memory.length - paddr));
 		/*
 		 * Transfering and amount of data to physical main memory by starting at the physical address, than by offset. 
 		 */
+		System.out.println("vPageNum: " + Integer.toBinaryString(paddr));
 		System.arraycopy(memory, paddr, data, offset, amount);
 
 		return amount;
@@ -213,26 +219,37 @@ public class UserProcess {
 	public int writeVirtualMemory(int vaddr, byte[] data, int offset,
 			int length) {
 		Lib.assertTrue(offset >= 0 && length >= 0 && offset+length <= data.length);
+		System.out.println("Starting Write Virtual Memory");
 		/*Need to write to the virtual memory now, so find the virtual page number for
 		 * the correct index at which you are writing the data to.
 		 */
-		int vPageNum = Processor.pageFromAddress(vaddr);
 		byte[] memory = Machine.processor().getMemory();
+		if(vaddr < 0 || vaddr >= memory.length){
+			System.out.println("vaddr Out of Bounds!!!");
+			return 0;
+		}
+		int vPageNum = Processor.pageFromAddress(vaddr);
+		System.out.println("vPageNum: " + Integer.toBinaryString(vPageNum));
+		
 		int paddr = vaddrTranslation(vaddr);
 		if(paddr == -1){
 			return 0;
 		}
-		int amount = Math.min(length, memory.length-vaddr);
+		System.out.println("memory.length: " + memory.length + " Physical Addr " + paddr);
+		int amount = Math.min(length, memory.length-paddr);
 		if(pageTable[vPageNum].readOnly == true){
 			System.out.println("Cannot write to current page table index, as it is read-only");
 			//pageTableIndex.used = false; //As it was an unsuccessful write, used will be set to false.
 			return 0; //Can not return error, instead will return zero bits
 		}
+
+		System.out.println("Physical Address: " + Integer.toBinaryString(paddr));
 		/*
 		arraycopy(Object source, int sourcePosition, Object destination, int destinationPosition, int numberOfElements)
 		 */
 		System.arraycopy(data, offset, memory, paddr, amount);
 		pageTable[vPageNum].dirty = true;
+		System.out.println("Amount: " + amount);
 		return amount;
 	}
 
@@ -332,33 +349,39 @@ public class UserProcess {
 	 * @return	<tt>true</tt> if the sections were successfully loaded.
 	 */
 	protected boolean loadSections() {
-
 		if (numPages > Machine.processor().getNumPhysPages()) {
 			coff.close();
 			Lib.debug(dbgProcess, "\tinsufficient physical memory");
 			return false;
 		}
-
-		if(((UserKernel)Kernel.kernel).freePhysicalPages.size() == 0){
-			System.out.println("There are no free Physical pages");
-			return false;
-		}
+		//the number pages occupied by the process, load all free physical pages into table
+		/*for(int i = 0; i < numPages; i++){
+			if(((UserKernel)Kernel.kernel).getNumPages() == 0){
+				System.out.println("There are no free Physical pages");
+				return false;
+			}
+			pageTable[i].ppn = ((UserKernel)Kernel.kernel).getFreePage();
+		}*/
 		//Start Initializing the pageTable
 		// load sections
+
 		for (int s=0; s<coff.getNumSections(); s++) {
 			CoffSection section = coff.getSection(s);
 
 			Lib.debug(dbgProcess, "\tinitializing " + section.getName()
 					+ " section (" + section.getLength() + " pages)");
 
+			System.out.println("Sections Num: " + section.getLength()+" numPages: " + numPages);
 			for (int i=0; i<section.getLength(); i++) {
 				int vpn = section.getFirstVPN()+i;
+				System.out.println("Virtual Page Number: " + Integer.toBinaryString(vpn)+" - " + vpn + " PageTable VPN: " + Integer.toBinaryString(pageTable[vpn].vpn));
 				//checks if the CoffSection is read only.
+				if(((UserKernel)Kernel.kernel).getNumPages() == 0){
+					System.out.println("There are no free Physical pages");
+					return false;
+				}
+				pageTable[vpn].ppn = ((UserKernel)Kernel.kernel).getFreePage();
 				pageTable[vpn].readOnly = section.isReadOnly();
-				pageTable[vpn].vpn = vpn;
-				pageTable[vpn].used = false;
-				pageTable[vpn].ppn = ((UserKernel)Kernel.kernel).freePhysicalPages.removeFirst();
-				// for now, just assume virtual addresses=physical addresses
 				section.loadPage(i, pageTable[vpn].ppn);
 			}
 		}
@@ -370,13 +393,85 @@ public class UserProcess {
 	 * Release any resources allocated by <tt>loadSections()</tt>.
 	 */
 	protected void unloadSections() {
+		/*
+		 * Will go through the current page table and find all those that are being used an set them to false
+		 * than free them by adding them to the free physical pages.
+		 */
+		System.out.println("Starting to unloadSections");
 		for(int i = 0; i < pageTable.length; i++){
 			if(pageTable[i].used == true){
 				pageTable[i].used = false;
-				((UserKernel)Kernel.kernel).freePhysicalPages.add(pageTable[i].ppn);
+				//Do I need to resort them?
 			}
+			((UserKernel)Kernel.kernel).add(pageTable[i].ppn);
 		}
 	}    
+
+	public static void selfTest(){
+		boolean pass = true;
+		
+		//Dodge up a page table and try doing a read/write on it's memory:
+		UserProcess dummy = new UserProcess();
+		dummy.pageTable = new TranslationEntry[2];
+		dummy.pageTable[0] = new TranslationEntry(0,1,true,false,false,false);
+		dummy.pageTable[1] = new TranslationEntry(1,0,true,false,false,false);
+		
+		//Now try a read/write on this stuff over the boundary of the pages:
+		int vaddr = Processor.makeAddress(1,0) - 1;
+		int wint = 0x012345678;
+		int rint = 0;
+		byte[] wbuffer = new byte[4];
+		byte[] rbuffer = new byte[4];
+		
+		Lib.bytesFromInt(wbuffer,0,wint);
+		dummy.writeVirtualMemory(vaddr, wbuffer);
+		dummy.readVirtualMemory(vaddr, rbuffer);
+		
+		rint = Lib.bytesToInt(rbuffer, 0);
+		if(rint!=wint){
+			pass = false;
+			System.err.println("FAIL: Read/Write failed to virtual memory!");
+		}
+		
+		//Check that the information was written to the correct places!
+		byte[] memory = Machine.processor().getMemory();
+		rbuffer[0] = memory[Processor.makeAddress(2,0)-1];
+		rbuffer[1] = memory[Processor.makeAddress(0,0)];
+		rbuffer[2] = memory[Processor.makeAddress(0,1)];
+		rbuffer[3] = memory[Processor.makeAddress(0,2)];
+		
+		rint = Lib.bytesToInt(rbuffer, 0);
+		if(rint!=wint){
+			pass = false;
+			System.err.println("FAIL: Read/Write performed on wrong physical memory!");
+		}
+		
+		//Test loading a certain number of pages:
+		int pagesBefore = ((UserKernel)UserKernel.kernel).getNumPages(); 
+		dummy.load("halt.coff",new String[]{});
+		int pagesAfter = ((UserKernel)UserKernel.kernel).getNumPages();
+		
+		if(pagesAfter != pagesBefore - dummy.numPages){		   
+			pass = false;
+			System.err.println("FAIL: Failed to load the correct number of pages from Coff!");
+		}
+		
+		//Test loading a huge process (should fail):
+		if(dummy.load("huge.coff",new String[]{})){
+			pass = false;
+			System.err.println("FAIL: Reported successfull load of a HUGE coff file");
+		}
+		
+		if(pass){
+			System.out.println("->UserProcess tests completed successfully!");
+		}else{
+			System.err.println("Overall Failure of user process tests");
+		}
+	}
+	
+		
+		
+	
 	/*JAMES ENDS*/  
 
 	/**
