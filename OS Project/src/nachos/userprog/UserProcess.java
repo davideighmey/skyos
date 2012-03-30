@@ -621,6 +621,7 @@ public class UserProcess {
 	syscallWrite = 7,
 	syscallClose = 8,
 	syscallUnlink = 9;
+	
 	/** Juan */
 	protected static int processID;
 	protected int status; 
@@ -638,7 +639,7 @@ public class UserProcess {
 	 * @param argvAddr -- the arguments virtual address
 	 * @return returns -1 if there is a problem otherwise returns the new process's ID if everything went ok
 	 */
-	int exec(String filename, int argc, int argvAddr)
+	int handleExec(String filename, int argc, int argvAddr)
 	{
 		// need to create the new process
 		UserProcess new_process = newUserProcess();
@@ -648,7 +649,8 @@ public class UserProcess {
 		// get argument information
 		String[] arguments = new String[argc]; // make an array to hold the arguments needed
 		byte[] arguAddr = new byte[argc*int_size];
-		int bytes_transferred = readVirtualMemory(argvAddr,arguAddr); // need to call readVirtualMemroy to transfer, might not need the number returned though
+		//int bytes_transferred = 
+		readVirtualMemory(argvAddr,arguAddr); // need to call readVirtualMemroy to transfer, might not need the number returned though
 		for(int i=0; i<argc; i++) // fill in the arguments array
 		{
 			arguments[i] = readVirtualMemoryString(Lib.bytesToInt(arguAddr,  i*int_size), 256); // int_size  = 4 
@@ -671,7 +673,7 @@ public class UserProcess {
 	 * @param stat
 	 * @return
 	 */
-	int join(int childID, int stat)
+	int handleJoin(int childID, int stat)
 	{
 		// check for a valid child id
 		if(UserKernel.getKernel().processManager.exists(childID) == false)
@@ -695,7 +697,7 @@ public class UserProcess {
 		int status  = UserKernel.getKernel().processManager.getReturn(childID);
 		writeVirtualMemory(stat,Lib.bytesFromInt(status));
 
-		return -1;
+		return 1;
 	}
 
 	/**
@@ -703,7 +705,7 @@ public class UserProcess {
 	 * @param status
 	 * @return
 	 */
-	int exit(int status)
+	int handleExit(int status)
 	{
 		unloadSections();
 
@@ -770,11 +772,11 @@ public class UserProcess {
 		case syscallHalt:
 			return handleHalt();
 		case syscallExec: // juan
-			return exec(readVirtualMemoryString(a0,256),a1,a2);
+			return handleExec(readVirtualMemoryString(a0,256),a1,a2);
 		case syscallJoin: // juan
-			return join(a0,a1);
+			return handleJoin(a0,a1);
 		case syscallExit: // juan
-			return exit(a0);
+			return handleExit(a0);
 
 
 
