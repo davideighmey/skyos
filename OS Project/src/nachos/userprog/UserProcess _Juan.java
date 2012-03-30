@@ -439,7 +439,7 @@ public class UserProcess {
 		int status  = UserKernel.getKernel().processManager.getReturn(childID);
 		writeVirtualMemory(stat,Lib.bytesFromInt(status));
 
-		return -1;
+		return 1;
 	}
 
 	/**
