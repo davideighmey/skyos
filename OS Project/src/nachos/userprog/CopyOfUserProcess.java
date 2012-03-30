@@ -29,8 +29,7 @@ public class CopyOfUserProcess {
 	for (int i=0; i<numPhysPages; i++)
 	    pageTable[i] = new TranslationEntry(i,i, true,false,false,false);
 	
-	descriptorTable.add(0, stdin);
-    descriptorTable.add(1, stdout);
+	
 	
     }
     
@@ -356,17 +355,17 @@ public class CopyOfUserProcess {
 
     private int handleCreate (int a0){
     	System.out.println("creating started");
-    	String filename = readVirtualMemoryString(a0,256);
-    	if (filename != null){
-    		OpenFile createdFile = UserKernel.fileSystem.open(filename, true);
-    		if (createdFile == null){
+    	String filename = readVirtualMemoryString(a0,256); //reading file
+    	if (filename != null){ 	//checking if file is there
+    		OpenFile createdFile = UserKernel.fileSystem.open(filename, true); //true makes it create the file if doesnt exist
+    		if (createdFile == null){ 	//check if file is there
        			System.out.println("creating the file was unsuccesful");
     			return -1;}
     		else 
     			System.out.println("creating file");
-    			descriptorTable.add(createdFile);
+    			descriptorTable.add(createdFile); 	//adding file to table
     			System.out.println("creating ended");
-    			return descriptorTable.indexOf(createdFile);}
+    			return descriptorTable.indexOf(createdFile);} 	//returning the file
        else
    			System.out.println("creating the file was unsuccesful");
     	   return -1;
@@ -376,17 +375,17 @@ public class CopyOfUserProcess {
     
     private int handleOpen (int a0){
     	System.out.println("starting open");
-    	String filename =readVirtualMemoryString(a0, 256);  //address to 256
-    	if( filename != null){
-    		OpenFile openedFile = UserKernel.fileSystem.open(filename, false);
-    			if (openedFile == null){
+    	String filename =readVirtualMemoryString(a0, 256);  //reading address to 256
+    	if( filename != null){	//checking if file is there
+    		OpenFile openedFile = UserKernel.fileSystem.open(filename, false); //false means opeinging a file not creating
+    			if (openedFile == null){	// making sure file is there
     				System.out.println("open unsuccesful");
     				return -1;}
     			else
     				System.out.println("opening file");
-    				descriptorTable.add(openedFile);
+    				descriptorTable.add(openedFile);	//adding file on table
     				System.out.println("opened file succesfully");
-    				return descriptorTable.indexOf(openedFile);}
+    				return descriptorTable.indexOf(openedFile);} //return the opened file
     	else
 			System.out.println("open unsuccesful");
     		return -1;
@@ -394,70 +393,73 @@ public class CopyOfUserProcess {
     
     private int handleRead(int a0, int a1, int a2){
     	System.out.println("read");
-        if(a0 >= 0 && a0 < descriptorTable.size() &&descriptorTable.get(a0) != null && a2 > 0){
-                OpenFile file = descriptorTable.get(a0);
-                byte[] data = new byte[a2];
-                int bytesRead = file.read(data, 0, a2);
-                if(bytesRead <0){
+    	if(a0 >= 0 && a0 < descriptorTable.size() &&descriptorTable.get(a0) != null && a2 > 0){ //checks!
+                OpenFile file = descriptorTable.get(a0); //gets the file
+                byte[] data = new byte[a2]; //make the count
+                int bytesRead = file.read(data, 0, a2); // read the data from the file
+                if(bytesRead <0){ //check if data is there
                         return -1;
                 }
-                int bytesWritten = writeVirtualMemory(a1, data);
-                if(bytesWritten < 0){
+                int bytesWrt = writeVirtualMemory(a1, data); //transfer bytes
+                if(bytesWrt < 0){ //make sure we did if not error
                         return -1; }
-                	return bytesRead;}
-        else
+                else{
+                return bytesRead;} //return the bytes read
+                	}
+    	else
                 return -1;
         
     }
 
     private int handleWrite(int a0, int a1, int a2){
         System.out.println("write");
-        if(a0 >= 0 && a0 < descriptorTable.size() && descriptorTable.get(a0) != null && a2 > 0){
-                OpenFile file = descriptorTable.get(a0);
-                String data = readVirtualMemoryString(a1, 256);
-                if(data == null){
+        if(a0 >= 0 && a0 < descriptorTable.size() && descriptorTable.get(a0) != null && a2 > 0){ //checks
+                OpenFile file = descriptorTable.get(a0); //get file from table
+                String data = readVirtualMemoryString(a1, 256); //get the data
+                if(data == null){ //check there is data
                         return -1;}
                 else{
-                        int bytesWritten = file.write(data.getBytes(), 0, a2);
+                        int bytesWritten = file.write(data.getBytes(), 0, a2); //gets the actual writing of bytes
                         if(bytesWritten < a2){
                                 return -1;
                         }else{
-                                return bytesWritten;}
+                                return bytesWritten;//returns the bytes written 
+                                } 
                         }
-                }
-        else{
+                }	
+        else
                 return -1;
-        }
 	}
     
     private int handleClose(int a0){
-        if(a0 < descriptorTable.size() && a0 >= 0 && descriptorTable.get(a0) != null){
+        if(a0 < descriptorTable.size() && a0 >= 0 && descriptorTable.get(a0) != null){ //checks
         	System.out.println("close succesful");
-                descriptorTable.get(a0).close();
-                descriptorTable.set(a0, null);
-                return 0;
+                descriptorTable.get(a0).close(); //get the file then close it
+                descriptorTable.set(a0, null); //set the file to null
+                return 0; //Successful
         }
-        else{
+        else
         	System.out.println("close unsuccesful");
-        	return -1;}
+        	return -1; //error
     }
 
     private int handleUnlink(int a0){
-        String filename = readVirtualMemoryString(a0, 256);
-        if(filename == null){
+        String filename = readVirtualMemoryString(a0, 256);	//reading the address
+        if(filename == null){ 	//make sure there is a file
         	 	System.out.println("unlink unsuccesful");
                 return -1;
-        }else{
-                if(!UserKernel.fileSystem.remove(filename)){
+        }else
+                if(!UserKernel.fileSystem.remove(filename)){ 	//check if it has been removed
                 		System.out.println("unlink unsuccesful");
                         return -1;
                 }else{
             	 		System.out.println("unlink succesful");
                         return 0;
                 }
-        }
     }
 
+
+    
     private static final int
     syscallHalt = 0,
 	syscallExit = 1,
@@ -514,7 +516,7 @@ public class CopyOfUserProcess {
 		return handleClose(a0);
 	case syscallUnlink:
 		return handleUnlink(a0);
-		
+
 
 
 	default:
@@ -572,7 +574,5 @@ public class CopyOfUserProcess {
 	
     private static final int pageSize = Processor.pageSize;
     private static final char dbgProcess = 'a';
-    
-    private static final OpenFile stdout = UserKernel.console.openForWriting();
-    private static final OpenFile stdin = UserKernel.console.openForReading();
+   
 }
