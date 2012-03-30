@@ -25,6 +25,7 @@ public class UserProcess {
 	 * Allocate a new process.
 	 */
 	public UserProcess() {
+		//Don't Need
 		/*int numPhysPages = Machine.processor().getNumPhysPages();
 		pageTable = new TranslationEntry[numPhysPages];
 		for (int i=0; i<numPhysPages; i++)
@@ -238,18 +239,19 @@ public class UserProcess {
 		/*Need to write to the virtual memory now, so find the virtual page number for
 		 * the correct index at which you are writing the data to.
 		 */
-		int Offset = Processor.offsetFromAddress(vaddr);
 		int vPageNum = Processor.pageFromAddress(vaddr);
 		System.out.println("vPageNum: " + Integer.toBinaryString(vPageNum));
-		
+
 		TranslationEntry pageIndex = wtf(vPageNum);
-		
-		/*if(pageIndex.readOnly == true){
+		if(pageIndex == null){
+			return 0;
+		}
+		if(pageIndex.readOnly == true){
 			System.out.println("Cannot write to current page table index, as it is read-only");
 			//pageTableIndex.used = false; //As it was an unsuccessful write, used will be set to false.
 			return 0; //Can not return error, instead will return zero bits
-		}*/
-		
+		}
+
 		int paddr = vaddrTranslation(vaddr);
 		if(paddr == -1){
 			return 0;
@@ -260,7 +262,7 @@ public class UserProcess {
 		if(paddr < 0 || paddr >= memory.length){
 			return 0;
 		}
-		
+
 		System.out.println("memory.length: " + memory.length + " Physical Addr " + paddr);
 		System.out.println("Physical Address: " + Integer.toBinaryString(paddr));
 		int amount = Math.min(length, memory.length-paddr);
@@ -338,7 +340,7 @@ public class UserProcess {
 
 		// and finally reserve 1 page for arguments
 		numPages++;
-		
+
 		CreatePageTable();
 		if((pageTable[0].vpn == -1) || (pageTable[0].ppn) == -1){
 			return false;
@@ -370,14 +372,16 @@ public class UserProcess {
 	}
 
 	public void CreatePageTable(){
+		boolean status = Machine.interrupt().disable();
 		//int numPhysPages = Machine.processor().getNumPhysPages();
 		pageTable = new TranslationEntry[numPages];
-		int[] ppnList = ((UserKernel)Kernel.kernel).getFreePage(numPages);
+		int[] ppnList = UserKernel.getFreePage(numPages);
 		if(ppnList == null){
 			System.out.println("Not enough free space");
 			pageTable = new TranslationEntry[0];
 			TranslationEntry Table = new TranslationEntry(-1, -1, false,false,false,false);
 			pageTable[0] = Table;
+			Machine.interrupt().setStatus(status);
 		}
 		else{
 			for (int i=0; i<numPages; i++){
@@ -386,6 +390,7 @@ public class UserProcess {
 				TranslationEntry Table = new TranslationEntry(vpn, ppn, true,false,false,false);
 				pageTable[i] = Table;
 			}
+			Machine.interrupt().setStatus(status);
 		}
 	}
 	/**
@@ -455,10 +460,9 @@ public class UserProcess {
 				pageTable[i].used = false;
 				//Do I need to resort them?
 			}
-			((UserKernel)Kernel.kernel).add(pageTable[i].ppn);
-			
+			UserKernel.add(pageTable[i].ppn);
+
 		}
-		System.out.println("Size of FreePhysicalPages list is 64, Size of the list is: " + ((UserKernel)Kernel.kernel).getNumPages());
 		System.out.println("Finished Unloading Sections");
 	}    
 
@@ -617,7 +621,7 @@ public class UserProcess {
 	syscallWrite = 7,
 	syscallClose = 8,
 	syscallUnlink = 9;
-
+	/** Juan */
 	protected static int processID;
 	protected int status; 
 	List<UserProcess> parents;
@@ -634,7 +638,7 @@ public class UserProcess {
 	 * @param argvAddr -- the arguments virtual address
 	 * @return returns -1 if there is a problem otherwise returns the new process's ID if everything went ok
 	 */
-	int handleExec(String filename, int argc, int argvAddr)
+	int exec(String filename, int argc, int argvAddr)
 	{
 		// need to create the new process
 		UserProcess new_process = newUserProcess();
@@ -667,15 +671,15 @@ public class UserProcess {
 	 * @param stat
 	 * @return
 	 */
-	int handleJoin(int childID, int stat)
+	int join(int childID, int stat)
 	{
 		// check for a valid child id
 		if(UserKernel.getKernel().processManager.exists(childID) == false)
 			return -1;
 
 		// only parent can join the child process. check
-		//	if(UserKernel.getKernel().processManager.getParent(childID) != processID)
-		//		return -1;
+		if(UserKernel.getKernel().processManager.getParent(childID) != processID)
+			return -1;
 
 		// if child running then join
 		if(UserKernel.getKernel().processManager.isRunning(childID))
@@ -685,7 +689,7 @@ public class UserProcess {
 		if(UserKernel.getKernel().processManager.checkError(childID))
 			return 0;
 
-		// keep parent from calling join a second time on same child by removing parent
+		// keep parent from calling join a second time on same child
 		UserKernel.getKernel().processManager.changeParent(childID, -1);
 
 		int status  = UserKernel.getKernel().processManager.getReturn(childID);
@@ -699,7 +703,7 @@ public class UserProcess {
 	 * @param status
 	 * @return
 	 */
-	int handleExit(int status)
+	int exit(int status)
 	{
 		unloadSections();
 
@@ -765,24 +769,12 @@ public class UserProcess {
 		switch (syscall) {
 		case syscallHalt:
 			return handleHalt();
-		case syscallOpen:
-			return handleOpen(a0);
-		case syscallCreate:
-			return handleCreate(a0);
-		case syscallRead:
-			return handleRead(a0,a1,a2);
-		case syscallWrite:
-			return handleWrite(a0,a1,a2);
-		case syscallClose:
-			return handleClose(a0);
-		case syscallUnlink:
-			return handleUnlink(a0);
 		case syscallExec: // juan
-			return handleExec(readVirtualMemoryString(a0,256),a1,a2);
+			return exec(readVirtualMemoryString(a0,256),a1,a2);
 		case syscallJoin: // juan
-			return handleJoin(a0,a1);
+			return join(a0,a1);
 		case syscallExit: // juan
-			return handleExit(a0);
+			return exit(a0);
 
 
 
@@ -792,7 +784,6 @@ public class UserProcess {
 		}
 		return 0;
 	}
-
 	/**
 	 * Handle a user exception. Called by
 	 * <tt>UserKernel.exceptionHandler()</tt>. The

@@ -32,12 +32,13 @@ public class UserKernel extends ThreadedKernel {
 		Machine.processor().setExceptionHandler(new Runnable() {
 			public void run() { exceptionHandler(); }
 		});
-		
+		/*JAMES START #####*/
 		freePhysicalPages = new LinkedList<Integer>();
 		pLock = new Lock();
 		for(int i = 0; i < Machine.processor().getNumPhysPages(); i++){
 			freePhysicalPages.add(i);
 		}
+		/*James END #####*/
 		
 	}
 	/*
@@ -58,40 +59,60 @@ public class UserKernel extends ThreadedKernel {
 	 * required by the process that is requesting it
 	 * @return a list of free page or returns null, indicating no free pages or not enough
 	 */
-	public int[] getFreePage(int PageRequest){
-		pLock.acquire();
+	public static int[] getFreePage(int PageRequest){
+		boolean status = Machine.interrupt().disable();
 		//Check if there are free pages
 		if(freePhysicalPages.size() < PageRequest){
-			pLock.release();
+			Machine.interrupt().restore(status);
 			return null;
 		}
 		int[] page = new int[PageRequest];
 		for(int i = 0; i < page.length; i++){
 			page[i] = freePhysicalPages.removeLast();
 		}
-		pLock.release();
+		Machine.interrupt().restore(status);
+		return page;
+	}
+	public static int getFreePage(){
+		boolean status = Machine.interrupt().disable();
+		int page = -1;
+		if(freePhysicalPages.size() == 0){
+			Machine.interrupt().setStatus(status);
+			return -1;
+		}
+		page = freePhysicalPages.removeLast();
+		Machine.interrupt().setStatus(status);
 		return page;
 	}
 	/**
 	 * Will Get the current number of avaliable free pages
 	 * @return the size of the list (The number of free pages)
 	 */
-	public int getNumPages(){
-		pLock.acquire();
+	public static int getNumPages(){
+		boolean status = Machine.interrupt().disable();
 		int size = freePhysicalPages.size();
-		pLock.release();
+		Machine.interrupt().restore(status);
 		return size;
 	}
 	/**
 	 * will free the page table's unused physical pages.
 	 * @param pageNum
 	 */
-	public void add(int pageNum){
-		pLock.acquire();
+	public static void add(int pageNum){
+		boolean status = Machine.interrupt().disable();
 		if(!freePhysicalPages.contains(pageNum)){
 			freePhysicalPages.add(pageNum);
 		}
-		pLock.release();
+		Machine.interrupt().restore(status);
+	}
+	
+	public static Lock getPLock(){
+		boolean status = Machine.interrupt().disable();
+		if(pLock == null){
+			pLock = new Lock();
+		}
+		Machine.interrupt().restore(status);
+		return pLock;
 	}
 	/*
 	 * JAMES ENDS###########################
@@ -376,6 +397,8 @@ public class UserKernel extends ThreadedKernel {
 	 // dummy variables to make javac smarter
 	 private static Coff dummy1 = null;
 	 //Synchronization!!! Needed Locks
-	 private static Lock pLock;
+	 /*JAMES START #####*/
+	 private static Lock pLock = null;
 	 private static LinkedList<Integer> freePhysicalPages;
+	 /*JAMES END #####*/
 }
