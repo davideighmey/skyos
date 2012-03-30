@@ -6,6 +6,7 @@ import nachos.userprog.*;
 
 import java.io.EOFException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Encapsulates the state of a user process that is not contained in its
@@ -24,10 +25,10 @@ public class UserProcess {
 	 * Allocate a new process.
 	 */
 	public UserProcess() {
-		int numPhysPages = Machine.processor().getNumPhysPages();
+		/*int numPhysPages = Machine.processor().getNumPhysPages();
 		pageTable = new TranslationEntry[numPhysPages];
 		for (int i=0; i<numPhysPages; i++)
-			pageTable[i] = new TranslationEntry(i,i, true,false,false,false);
+			pageTable[i] = new TranslationEntry(i,i, true,false,false,false);*/
 	}
 
 	/**
@@ -53,7 +54,9 @@ public class UserProcess {
 		if (!load(name, args))
 			return false;
 
-		new UThread(this).setName(name).fork();
+		//new UThread(this).setName(name).fork();
+		curThread = new UThread(this); // current thread
+		curThread.setName(name).fork();
 
 		return true;
 	}
@@ -102,7 +105,6 @@ public class UserProcess {
 		return null;
 	}
 	/*@JAMES START*/
-
 	/*
 	 * Takes in a virtual address vaddr, which will than calculate the offset and virtual page number from the given address provided
 	 * it will than calculate the physical address from the virtual page number and frame number, i.e. the physical page number
@@ -119,6 +121,10 @@ public class UserProcess {
 		/*
 		 * Check if the Virtual page number is on the page table, where the Page Table length is the max number of entries within that page table
 		 */
+		if(pageTable == null){
+			System.out.println("pageTable has not been initialized");
+			return -1;
+		}
 		System.out.println("Page Table Size is: " + pageTable.length + " Binary of it: " +Integer.toBinaryString(pageTable.length));
 		if(vPageNum >= pageTable.length || vPageNum < 0){
 			System.out.println("Virtual Address may not be mapped" + Integer.toBinaryString(vPageNum) + "out of bounds");
@@ -127,17 +133,24 @@ public class UserProcess {
 		System.out.println("Page Size is: " + Processor.pageSize);
 		/*Since each virtual address are being translated individually the virtual page number will be mapped to the page table as indexes on the
 		page table which than will determine the frame number to determine the physical address.*/
-		//TranslationEntry pageTableIndex = pageTable[vPageNum]; 
-		int frameNum =  pageTable[vPageNum].ppn;
+		TranslationEntry pageTableIndex = pageTable[vPageNum]; 
+		if(pageTableIndex == null){
+			System.out.println("Can't be mapped to pageTable, vPageNum non-existent");
+			return -1;
+		}
+		int frameNum =  pageTableIndex.ppn;
 		System.out.println("frameNum is: " + Integer.toBinaryString(pageTable[vPageNum].ppn) +" pageTable[vPageNum].valid is: "+ pageTable[vPageNum].valid);
-		if(pageTable[vPageNum].valid == false){
+		if(pageTableIndex.valid == false){
 			System.out.println("Page Fault");
 			System.out.println("Invalid - Not in physical memory");
 			return -1; //Return error
 		}
-		System.out.println("Setting vPageNum: " + Integer.toBinaryString(vPageNum)+ " to true.");
-		pageTable[vPageNum].used = true;
+		if(Offset < 0 || Offset >= Processor.pageSize){
+			System.out.println("Offset greater than page size, has passed the bounds.");
+			return -1;
+		}
 		int paddr = Processor.makeAddress(frameNum, Offset);
+		//int paddr = (frameNum*Processor.pageSize)+Offset; 
 		return paddr;
 	}
 
@@ -176,6 +189,7 @@ public class UserProcess {
 		if(paddr == -1){
 			return 0;
 		}
+		int vpn = Processor.pageFromAddress(vaddr);
 		//Get physical memory
 		byte[] memory = Machine.processor().getMemory();
 		int amount = Math.min(length, memory.length-paddr);
@@ -183,9 +197,10 @@ public class UserProcess {
 		/*
 		 * Transfering and amount of data to physical main memory by starting at the physical address, than by offset. 
 		 */
-		System.out.println("vPageNum: " + Integer.toBinaryString(paddr));
+		System.out.println("Physical Address: " + Integer.toBinaryString(paddr));
 		System.arraycopy(memory, paddr, data, offset, amount);
-
+		System.out.println("Setting vPageNum: " + Integer.toBinaryString(vpn)+ " to true.");
+		pageTable[vpn].used = true;
 		return amount;
 	}
 
@@ -223,36 +238,43 @@ public class UserProcess {
 		/*Need to write to the virtual memory now, so find the virtual page number for
 		 * the correct index at which you are writing the data to.
 		 */
-		byte[] memory = Machine.processor().getMemory();
-		if(vaddr < 0 || vaddr >= memory.length){
-			System.out.println("vaddr Out of Bounds!!!");
-			return 0;
-		}
+		int Offset = Processor.offsetFromAddress(vaddr);
 		int vPageNum = Processor.pageFromAddress(vaddr);
 		System.out.println("vPageNum: " + Integer.toBinaryString(vPageNum));
+		
+		TranslationEntry pageIndex = wtf(vPageNum);
+		
+		/*if(pageIndex.readOnly == true){
+			System.out.println("Cannot write to current page table index, as it is read-only");
+			//pageTableIndex.used = false; //As it was an unsuccessful write, used will be set to false.
+			return 0; //Can not return error, instead will return zero bits
+		}*/
 		
 		int paddr = vaddrTranslation(vaddr);
 		if(paddr == -1){
 			return 0;
 		}
-		System.out.println("memory.length: " + memory.length + " Physical Addr " + paddr);
-		int amount = Math.min(length, memory.length-paddr);
-		if(pageTable[vPageNum].readOnly == true){
-			System.out.println("Cannot write to current page table index, as it is read-only");
-			//pageTableIndex.used = false; //As it was an unsuccessful write, used will be set to false.
-			return 0; //Can not return error, instead will return zero bits
-		}
 
+
+		byte[] memory = Machine.processor().getMemory();
+		if(paddr < 0 || paddr >= memory.length){
+			return 0;
+		}
+		
+		System.out.println("memory.length: " + memory.length + " Physical Addr " + paddr);
 		System.out.println("Physical Address: " + Integer.toBinaryString(paddr));
-		/*
-		arraycopy(Object source, int sourcePosition, Object destination, int destinationPosition, int numberOfElements)
-		 */
+		int amount = Math.min(length, memory.length-paddr);
+
+
 		System.arraycopy(data, offset, memory, paddr, amount);
-		pageTable[vPageNum].dirty = true;
+		pageIndex.dirty = true;
+		pageIndex.used = true;
 		System.out.println("Amount: " + amount);
 		return amount;
 	}
-
+	protected TranslationEntry wtf(int vpn){
+		return pageTable[vpn];
+	}
 	/**
 	 * Load the executable with the specified name into this process, and
 	 * prepare to pass it the specified arguments. Opens the executable, reads
@@ -265,7 +287,7 @@ public class UserProcess {
 	 */
 	private boolean load(String name, String[] args) {
 		Lib.debug(dbgProcess, "UserProcess.load(\"" + name + "\")");
-
+		System.out.println("UserProcess.load(\"" + name + "\")");
 		OpenFile executable = ThreadedKernel.fileSystem.open(name, false);
 		if (executable == null) {
 			Lib.debug(dbgProcess, "\topen failed");
@@ -299,7 +321,7 @@ public class UserProcess {
 		for (int i=0; i<args.length; i++) {
 			argv[i] = args[i].getBytes();
 			// 4 bytes for argv[] pointer; then string plus one for null byte
-			argsSize += 4 + argv[i].length + 1;
+			argsSize += (4 + argv[i].length + 1);
 		}
 		if (argsSize > pageSize) {
 			coff.close();
@@ -316,9 +338,15 @@ public class UserProcess {
 
 		// and finally reserve 1 page for arguments
 		numPages++;
-
-		if (!loadSections())
+		
+		CreatePageTable();
+		if((pageTable[0].vpn == -1) || (pageTable[0].ppn) == -1){
 			return false;
+		}
+
+		if (!loadSections()){
+			return false;
+		}
 
 		// store arguments in last page
 		int entryOffset = (numPages-1)*pageSize;
@@ -341,6 +369,25 @@ public class UserProcess {
 		return true;
 	}
 
+	public void CreatePageTable(){
+		//int numPhysPages = Machine.processor().getNumPhysPages();
+		pageTable = new TranslationEntry[numPages];
+		int[] ppnList = ((UserKernel)Kernel.kernel).getFreePage(numPages);
+		if(ppnList == null){
+			System.out.println("Not enough free space");
+			pageTable = new TranslationEntry[0];
+			TranslationEntry Table = new TranslationEntry(-1, -1, false,false,false,false);
+			pageTable[0] = Table;
+		}
+		else{
+			for (int i=0; i<numPages; i++){
+				int ppn = ppnList[i];
+				int vpn = i;
+				TranslationEntry Table = new TranslationEntry(vpn, ppn, true,false,false,false);
+				pageTable[i] = Table;
+			}
+		}
+	}
 	/**
 	 * Allocates memory for this process, and loads the COFF sections into
 	 * memory. If this returns successfully, the process will definitely be
@@ -353,22 +400,22 @@ public class UserProcess {
 			coff.close();
 			Lib.debug(dbgProcess, "\tinsufficient physical memory");
 			return false;
-		}
-		//Start Initializing the pageTable for this process, give it only what it needs
-		pageTable = new TranslationEntry[numPages];
-		//the number pages occupied by the process, load all free physical pages into table
-		for (int i=0; i < pageTable.length; i++){
-			if(((UserKernel)Kernel.kernel).getNumPages() == 0){
-				System.out.println("There are no free Physical pages");
-				return false;
-			}
-			int ppn = ((UserKernel)Kernel.kernel).getFreePage();
-			pageTable[i] = new TranslationEntry(i,ppn, true,false,false,false);
 		} 
-		
+		//the number pages occupied by the process, load all free physical pages into table
+		//pageTable = new TranslationEntry[numPages];
+		//Start Initializing the pageTable for this process, give it only what it needs
+		//	for(int i = 0; i < numPages; i++){
+		//	int ppn = ((UserKernel)Kernel.kernel).getFreePage();
+		//		if(ppn == -1){
+		//			return false;
+		//		}
+		//		pageTable[i] = new TranslationEntry(i,ppn, true,false,false,false);
+		//	}
 		// load sections
 		for (int s=0; s<coff.getNumSections(); s++) {
 			CoffSection section = coff.getSection(s);
+			System.out.println("\tinitializing " + section.getName()
+					+ " section (" + section.getLength() + " pages)");
 
 			Lib.debug(dbgProcess, "\tinitializing " + section.getName()
 					+ " section (" + section.getLength() + " pages)");
@@ -376,11 +423,15 @@ public class UserProcess {
 			System.out.println("Sections Num: " + section.getLength()+" numPages: " + numPages);
 			for (int i=0; i<section.getLength(); i++) {
 				int vpn = section.getFirstVPN()+i;
+				TranslationEntry pageIndex = pageTable[vpn];
+				if (pageIndex == null){
+					System.out.println("PageTable was never created");
+					return false;
+				}
 				System.out.println("Virtual Page Number: " + Integer.toBinaryString(vpn)+" - " + vpn + " PageTable VPN: " + Integer.toBinaryString(pageTable[vpn].vpn));
 				//checks if the CoffSection is read only.
-				
-				pageTable[vpn].readOnly = section.isReadOnly();
-				section.loadPage(i, pageTable[vpn].ppn);
+				pageIndex.readOnly = section.isReadOnly();
+				section.loadPage(i, pageIndex.ppn);
 			}
 		}
 
@@ -396,80 +447,25 @@ public class UserProcess {
 		 * than free them by adding them to the free physical pages.
 		 */
 		System.out.println("Starting to unloadSections");
+		//for (TranslationEntry page : pageTable) {
+		//	((UserKernel)Kernel.kernel).add(page.ppn);
+		//}
 		for(int i = 0; i < pageTable.length; i++){
 			if(pageTable[i].used == true){
 				pageTable[i].used = false;
 				//Do I need to resort them?
 			}
 			((UserKernel)Kernel.kernel).add(pageTable[i].ppn);
+			
 		}
+		System.out.println("Size of FreePhysicalPages list is 64, Size of the list is: " + ((UserKernel)Kernel.kernel).getNumPages());
+		System.out.println("Finished Unloading Sections");
 	}    
 
-	public static void selfTest(){
-		boolean pass = true;
-		
-		//Dodge up a page table and try doing a read/write on it's memory:
-		UserProcess dummy = new UserProcess();
-		dummy.pageTable = new TranslationEntry[2];
-		dummy.pageTable[0] = new TranslationEntry(0,1,true,false,false,false);
-		dummy.pageTable[1] = new TranslationEntry(1,0,true,false,false,false);
-		
-		//Now try a read/write on this stuff over the boundary of the pages:
-		int vaddr = Processor.makeAddress(1,0) - 1;
-		int wint = 0x012345678;
-		int rint = 0;
-		byte[] wbuffer = new byte[4];
-		byte[] rbuffer = new byte[4];
-		
-		Lib.bytesFromInt(wbuffer,0,wint);
-		dummy.writeVirtualMemory(vaddr, wbuffer);
-		dummy.readVirtualMemory(vaddr, rbuffer);
-		
-		rint = Lib.bytesToInt(rbuffer, 0);
-		if(rint!=wint){
-			pass = false;
-			System.err.println("FAIL: Read/Write failed to virtual memory!");
-		}
-		
-		//Check that the information was written to the correct places!
-		byte[] memory = Machine.processor().getMemory();
-		rbuffer[0] = memory[Processor.makeAddress(2,0)-1];
-		rbuffer[1] = memory[Processor.makeAddress(0,0)];
-		rbuffer[2] = memory[Processor.makeAddress(0,1)];
-		rbuffer[3] = memory[Processor.makeAddress(0,2)];
-		
-		rint = Lib.bytesToInt(rbuffer, 0);
-		if(rint!=wint){
-			pass = false;
-			System.err.println("FAIL: Read/Write performed on wrong physical memory!");
-		}
-		
-		//Test loading a certain number of pages:
-		int pagesBefore = ((UserKernel)UserKernel.kernel).getNumPages(); 
-		dummy.load("halt.coff",new String[]{});
-		int pagesAfter = ((UserKernel)UserKernel.kernel).getNumPages();
-		
-		if(pagesAfter != pagesBefore - dummy.numPages){		   
-			pass = false;
-			System.err.println("FAIL: Failed to load the correct number of pages from Coff!");
-		}
-		
-		//Test loading a huge process (should fail):
-		if(dummy.load("huge.coff",new String[]{})){
-			pass = false;
-			System.err.println("FAIL: Reported successfull load of a HUGE coff file");
-		}
-		
-		if(pass){
-			System.out.println("->UserProcess tests completed successfully!");
-		}else{
-			System.err.println("Overall Failure of user process tests");
-		}
-	}
-	
-		
-		
-	
+
+
+
+
 	/*JAMES ENDS*/  
 
 	/**
@@ -622,6 +618,121 @@ public class UserProcess {
 	syscallClose = 8,
 	syscallUnlink = 9;
 
+	protected static int processID;
+	protected int status; 
+	List<UserProcess> parents;
+	List<UserProcess> children = new ArrayList<UserProcess>();
+	final int int_size = 4; // size of an integer in bytes
+	protected UThread curThread;
+	protected int maxFiles = 16;
+
+	//int exec(char *fileName, int argc, char *argv[])
+	/**
+	 *  juan
+	 * @param filename
+	 * @param argc -- argument count, the number of arguments that will be given to the new process.
+	 * @param argvAddr -- the arguments virtual address
+	 * @return returns -1 if there is a problem otherwise returns the new process's ID if everything went ok
+	 */
+	int handleExec(String filename, int argc, int argvAddr)
+	{
+		// need to create the new process
+		UserProcess new_process = newUserProcess();
+
+		UserKernel.getKernel().processManager.changeParent(new_process.processID, processID); // change parent id
+
+		// get argument information
+		String[] arguments = new String[argc]; // make an array to hold the arguments needed
+		byte[] arguAddr = new byte[argc*int_size];
+		int bytes_transferred = readVirtualMemory(argvAddr,arguAddr); // need to call readVirtualMemroy to transfer, might not need the number returned though
+		for(int i=0; i<argc; i++) // fill in the arguments array
+		{
+			arguments[i] = readVirtualMemoryString(Lib.bytesToInt(arguAddr,  i*int_size), 256); // int_size  = 4 
+		}
+		if(new_process.execute(filename,arguments) == false) // execute
+		{
+			UserKernel.getKernel().processManager.setFinished(new_process.processID);
+			UserKernel.getKernel().processManager.setError(processID);
+			UserKernel.getKernel().processManager.setReturn(processID, -1);
+			return -1;    		
+		}
+
+		return new_process.processID; // return the process id
+	}
+
+	//int join(int processID, int *status)
+	/**
+	 *  juan
+	 * @param pID
+	 * @param stat
+	 * @return
+	 */
+	int handleJoin(int childID, int stat)
+	{
+		// check for a valid child id
+		if(UserKernel.getKernel().processManager.exists(childID) == false)
+			return -1;
+
+		// only parent can join the child process. check
+		//	if(UserKernel.getKernel().processManager.getParent(childID) != processID)
+		//		return -1;
+
+		// if child running then join
+		if(UserKernel.getKernel().processManager.isRunning(childID))
+			UserKernel.getKernel().processManager.getProcess(childID).curThread.join();
+
+		// check for return error
+		if(UserKernel.getKernel().processManager.checkError(childID))
+			return 0;
+
+		// keep parent from calling join a second time on same child by removing parent
+		UserKernel.getKernel().processManager.changeParent(childID, -1);
+
+		int status  = UserKernel.getKernel().processManager.getReturn(childID);
+		writeVirtualMemory(stat,Lib.bytesFromInt(status));
+
+		return -1;
+	}
+
+	/**
+	 * juan
+	 * @param status
+	 * @return
+	 */
+	int handleExit(int status)
+	{
+		unloadSections();
+
+		// check to see if there are any children
+		// if so then remove parent
+		UserKernel.getKernel().processManager.removeParent(processID);
+
+		//
+		/**
+    	// close open files
+    	for(int i = 0; i < maxFiles; i++)
+    	{
+    		if(openFileTable[i] != null)
+    			handleClose(i);
+    	}
+		 */
+		// exit status
+		UserKernel.getKernel().processManager.setReturn(processID, status);
+
+		// set process is finished/it has exited
+		UserKernel.getKernel().processManager.setFinished(processID);
+
+		// check if this is the last process
+		// if so then stop machine
+		if(UserKernel.getKernel().processManager.isLast(processID))
+			Kernel.kernel.terminate();
+		//else
+		KThread.currentThread().finish();
+
+		return 0;
+
+	}
+
 	/**
 	 * Handle a syscall exception. Called by <tt>handleException()</tt>. The
 	 * <i>syscall</i> argument identifies which syscall the user executed:
@@ -666,6 +777,12 @@ public class UserProcess {
 			return handleClose(a0);
 		case syscallUnlink:
 			return handleUnlink(a0);
+		case syscallExec: // juan
+			return handleExec(readVirtualMemoryString(a0,256),a1,a2);
+		case syscallJoin: // juan
+			return handleJoin(a0,a1);
+		case syscallExit: // juan
+			return handleExit(a0);
 
 
 
