@@ -695,6 +695,14 @@ public class UserProcess {
     			handleClose(i);
     	}
 		 */
+		System.out.println("Going to close all the open files");
+		//descriptorTable.clear();
+		for(int i = 0; i < descriptorTable.size(); i++)
+		{
+			if(descriptorTable.get(i) != null)
+				descriptorTable.get(i).close();
+		}
+		
 		// exit status
 		UserKernel.getKernel().processManager.setReturn(processID, status);
 
