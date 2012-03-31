@@ -695,7 +695,10 @@ public class UserProcess {
 		UserKernel.getKernel().processManager.changeParent(childID, -1);
 
 		int status  = UserKernel.getKernel().processManager.getReturn(childID);
-		writeVirtualMemory(stat,Lib.bytesFromInt(status));
+		byte[] ret_addr = new byte[int_size];
+		readVirtualMemory(stat, ret_addr);
+		writeVirtualMemory(Lib.bytesToInt(ret_addr, 0),Lib.bytesFromInt(stat));
+		//writeVirtualMemory(stat,Lib.bytesFromInt(status));
 
 		return 1;
 	}

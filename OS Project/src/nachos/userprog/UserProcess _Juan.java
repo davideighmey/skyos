@@ -22,7 +22,7 @@ import java.util.List;
  * @see	nachos.vm.VMProcess
  * @see	nachos.network.NetProcess
  */
-public class UserProcess {
+public class UserProcess_2 {
 	/**
 	 * Allocate a new process.
 	 */
