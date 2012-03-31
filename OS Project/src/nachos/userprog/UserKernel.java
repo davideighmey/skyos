@@ -40,6 +40,9 @@ public class UserKernel extends ThreadedKernel {
 		}
 		/*James END #####*/
 		
+		// j
+		processManager = new ProcessManager();
+		//
 	}
 	/*
 	 * When accessing the free memory list, make sure that all processes are able
@@ -125,7 +128,7 @@ public class UserKernel extends ThreadedKernel {
 		 super.selfTest();
 		 
 		 //juan
-	processManager = new ProcessManager();
+	//processManager = new ProcessManager();
 	//
 		 
 		 
@@ -208,8 +211,9 @@ public class UserKernel extends ThreadedKernel {
      */
     public class ProcessManager
     {
-    	protected int nextProcessID = 0; // where to give the next process id from
-    	protected TreeMap<Integer, ProcessNode> processList;
+    	// changed from protected to private types
+    	private int nextProcessID = 0; // where to give the next process id from
+    	private TreeMap<Integer, ProcessNode> processList;
     	
     	public ProcessManager()
     	{
@@ -233,8 +237,7 @@ public class UserKernel extends ThreadedKernel {
     	 */
     	public boolean exists(int pid) // pid = process id
     	{
-    		boolean valid = false;
-    		valid = processList.containsKey(pid); // is the pid for a valid id? if so true
+    		boolean valid = processList.containsKey(pid); // is the pid for a valid id? if so true
     		return valid;
     	}
     	
@@ -319,13 +322,14 @@ public class UserKernel extends ThreadedKernel {
     	// checks to see if a process is currently running
     	public boolean isRunning(int pid)
     	{
-    		return processList.get(pid).running;
+    		boolean running = processList.get(pid).running;
+    		return running;
     	}
     	
     	// called if error on exit
     	public void setError(int pid)
     	{
-    		processList.get(pid).error = true;
+    		processList.get(pid).error = true; // set error flag
     	}
     	
     	// check for errors on exit
@@ -360,7 +364,7 @@ public class UserKernel extends ThreadedKernel {
     		int pid;
     		int parent;
     		int exitStatus;
-    		//boolean joined;
+    		boolean joined;
     		boolean running;
     		boolean error;
     		UserProcess process;
@@ -371,7 +375,7 @@ public class UserKernel extends ThreadedKernel {
     			this.parent = parent; // get & set the parent
     			this.process = process; // 
     			this.running = true; // the process is being run
-    			//this.joined = false; //
+    			this.joined = false; //
     			this.error = false; // is there an error?
     			
     			//this.exitStatus =  // what should this be initialized as?
