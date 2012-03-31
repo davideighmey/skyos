@@ -341,11 +341,6 @@ public class UserProcess {
 		// and finally reserve 1 page for arguments
 		numPages++;
 
-		CreatePageTable();
-		if((pageTable[0].vpn == -1) || (pageTable[0].ppn) == -1){
-			return false;
-		}
-
 		if (!loadSections()){
 			return false;
 		}
@@ -373,25 +368,9 @@ public class UserProcess {
 
 	public void CreatePageTable(){
 		boolean status = Machine.interrupt().disable();
-		//int numPhysPages = Machine.processor().getNumPhysPages();
 		pageTable = new TranslationEntry[numPages];
-		int[] ppnList = UserKernel.getFreePage(numPages);
-		if(ppnList == null){
-			System.out.println("Not enough free space");
-			pageTable = new TranslationEntry[0];
-			TranslationEntry Table = new TranslationEntry(-1, -1, false,false,false,false);
-			pageTable[0] = Table;
-			Machine.interrupt().setStatus(status);
-		}
-		else{
-			for (int i=0; i<numPages; i++){
-				int ppn = ppnList[i];
-				int vpn = i;
-				TranslationEntry Table = new TranslationEntry(vpn, ppn, true,false,false,false);
-				pageTable[i] = Table;
-			}
-			Machine.interrupt().setStatus(status);
-		}
+		Machine.interrupt().restore(status);
+
 	}
 	/**
 	 * Allocates memory for this process, and loads the COFF sections into
@@ -406,40 +385,33 @@ public class UserProcess {
 			Lib.debug(dbgProcess, "\tinsufficient physical memory");
 			return false;
 		} 
-		//the number pages occupied by the process, load all free physical pages into table
-		//pageTable = new TranslationEntry[numPages];
-		//Start Initializing the pageTable for this process, give it only what it needs
-		//	for(int i = 0; i < numPages; i++){
-		//	int ppn = ((UserKernel)Kernel.kernel).getFreePage();
-		//		if(ppn == -1){
-		//			return false;
-		//		}
-		//		pageTable[i] = new TranslationEntry(i,ppn, true,false,false,false);
-		//	}
+		CreatePageTable();
+		//Will get a list of Free Pages available that is reserved for this process
+		int[] ppnList = UserKernel.getFreePage(numPages);
+		int vpn = 0;
 		// load sections
 		for (int s=0; s<coff.getNumSections(); s++) {
 			CoffSection section = coff.getSection(s);
-			System.out.println("\tinitializing " + section.getName()
-					+ " section (" + section.getLength() + " pages)");
-
 			Lib.debug(dbgProcess, "\tinitializing " + section.getName()
 					+ " section (" + section.getLength() + " pages)");
-
-			System.out.println("Sections Num: " + section.getLength()+" numPages: " + numPages);
+			
 			for (int i=0; i<section.getLength(); i++) {
-				int vpn = section.getFirstVPN()+i;
-				TranslationEntry pageIndex = pageTable[vpn];
-				if (pageIndex == null){
-					System.out.println("PageTable was never created");
-					return false;
-				}
-				System.out.println("Virtual Page Number: " + Integer.toBinaryString(vpn)+" - " + vpn + " PageTable VPN: " + Integer.toBinaryString(pageTable[vpn].vpn));
-				//checks if the CoffSection is read only.
-				pageIndex.readOnly = section.isReadOnly();
-				section.loadPage(i, pageIndex.ppn);
+				vpn = section.getFirstVPN()+i;
+				
+				int ppn = ppnList[vpn];
+				pageTable[vpn] = new TranslationEntry(vpn, ppn, true, section.isReadOnly(), false, false);
+				
+				section.loadPage(i, ppn);
 			}
 		}
-
+		//Since it has put all the required data into the page table, now for user information
+		//continue where last left off, now assign remaining free pages to the stack
+		vpn++;
+		for(int i = 0; i <= this.stackPages; i++){
+			int ppn = ppnList[vpn];
+			pageTable[vpn] = new TranslationEntry(vpn, ppn, true, false, false, false);
+			vpn++;
+		}
 		return true;
 	}
 
@@ -452,9 +424,6 @@ public class UserProcess {
 		 * than free them by adding them to the free physical pages.
 		 */
 		System.out.println("Starting to unloadSections");
-		//for (TranslationEntry page : pageTable) {
-		//	((UserKernel)Kernel.kernel).add(page.ppn);
-		//}
 		for(int i = 0; i < pageTable.length; i++){
 			if(pageTable[i].used == true){
 				pageTable[i].used = false;
@@ -471,6 +440,7 @@ public class UserProcess {
 
 
 	/*JAMES ENDS*/  
+ 
 
 	/**
 	 * Initialize the processor's registers in preparation for running the
