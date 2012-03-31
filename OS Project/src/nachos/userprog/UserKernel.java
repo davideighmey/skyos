@@ -80,11 +80,11 @@ public class UserKernel extends ThreadedKernel {
 		boolean status = Machine.interrupt().disable();
 		int page = -1;
 		if(freePhysicalPages.size() == 0){
-			Machine.interrupt().setStatus(status);
+			Machine.interrupt().restore(status);
 			return -1;
 		}
 		page = freePhysicalPages.removeLast();
-		Machine.interrupt().setStatus(status);
+		Machine.interrupt().restore(status);
 		return page;
 	}
 	/**
