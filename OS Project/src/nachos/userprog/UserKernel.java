@@ -34,12 +34,10 @@ public class UserKernel extends ThreadedKernel {
 		});
 		/*JAMES START #####*/
 		freePhysicalPages = new LinkedList<Integer>();
-		pLock = new Lock();
 		for(int i = 0; i < Machine.processor().getNumPhysPages(); i++){
 			freePhysicalPages.add(i);
 		}
 		/*James END #####*/
-		
 		// j
 		processManager = new ProcessManager();
 		//
@@ -57,10 +55,11 @@ public class UserKernel extends ThreadedKernel {
 	/*
 	 * JAMES START################################
 	 */
+	//Go learn more about statics....
 	/**
 	 * Will return a list of free pages from the physical memory by requesting the number of pages
-	 * required by the process that is requesting it
-	 * @return a list of free page or returns null, indicating no free pages or not enough
+	 * required by the process that is requesting it, this will hopefully allow for contiguous blocks
+	 * @return a list of free page or returns null, indicating no free pages or not enough pages
 	 */
 	public static int[] getFreePage(int PageRequest){
 		boolean status = Machine.interrupt().disable();
@@ -76,6 +75,11 @@ public class UserKernel extends ThreadedKernel {
 		Machine.interrupt().restore(status);
 		return page;
 	}
+	
+	/**
+	 * Will allow one free physical page to be requested.
+	 * @return a free physical page
+	 */
 	public static int getFreePage(){
 		boolean status = Machine.interrupt().disable();
 		int page = -1;
@@ -108,15 +112,10 @@ public class UserKernel extends ThreadedKernel {
 		}
 		Machine.interrupt().restore(status);
 	}
-	
-	public static Lock getPLock(){
-		boolean status = Machine.interrupt().disable();
-		if(pLock == null){
-			pLock = new Lock();
-		}
-		Machine.interrupt().restore(status);
-		return pLock;
-	}
+	/**
+	 * Will make sure that the lock is not null, for some reason Locks become null
+	 * @return will return a lock
+	 */
 	/*
 	 * JAMES ENDS###########################
 	 */
@@ -402,7 +401,6 @@ public class UserKernel extends ThreadedKernel {
 	 private static Coff dummy1 = null;
 	 //Synchronization!!! Needed Locks
 	 /*JAMES START #####*/
-	 private static Lock pLock = null;
 	 private static LinkedList<Integer> freePhysicalPages;
 	 /*JAMES END #####*/
 }
