@@ -24,9 +24,12 @@ public class UserProcess {
 	/**
 	 * Allocate a new process.
 	 */
+	
 	public UserProcess() {
 		processID = UserKernel.getKernel().processManager.newProcess(this, -1);
 		
+		descriptorTable.add(0, UserKernel.console.openForReading());
+		descriptorTable.add(1, UserKernel.console.openForWriting());
 		//Don't Need
 		/*int numPhysPages = Machine.processor().getNumPhysPages();
 		pageTable = new TranslationEntry[numPhysPages];
@@ -114,26 +117,28 @@ public class UserProcess {
 	 */
 	public int vaddrTranslation(int vaddr){
 		System.out.println("Starting to convert vaddr: " + Integer.toBinaryString(vaddr));
-		int Offset = Processor.offsetFromAddress(vaddr);
-		System.out.println("Offset is: " + Integer.toBinaryString(Offset));
+		if(pageTable == null){
+			System.out.println("Page table has not been allocated");
+			return -1;
+		}
 		//vPageNum will be the index of the page table. 
 		int vPageNum = Processor.pageFromAddress(vaddr);
+		int Offset = Processor.offsetFromAddress(vaddr);
+		
+		System.out.println("Offset is: " + Integer.toBinaryString(Offset));
 		System.out.println("vPageNum is: " + Integer.toBinaryString(vPageNum));
 		System.out.println("vPageNum in pageTable is: " + Integer.toBinaryString(pageTable[vPageNum].vpn));
 		System.out.println("PPageNum is: " + Integer.toBinaryString(pageTable[vPageNum].ppn));
+		System.out.println("Page Table Size is: " + pageTable.length + " Binary of it: " +Integer.toBinaryString(pageTable.length));
+		System.out.println("Page Size is: " + Processor.pageSize);
 		/*
 		 * Check if the Virtual page number is on the page table, where the Page Table length is the max number of entries within that page table
 		 */
-		if(pageTable == null){
-			System.out.println("pageTable has not been initialized");
-			return -1;
-		}
-		System.out.println("Page Table Size is: " + pageTable.length + " Binary of it: " +Integer.toBinaryString(pageTable.length));
 		if(vPageNum >= pageTable.length || vPageNum < 0){
 			System.out.println("Virtual Address may not be mapped" + Integer.toBinaryString(vPageNum) + "out of bounds");
 			return -1;
 		}
-		System.out.println("Page Size is: " + Processor.pageSize);
+		
 		/*Since each virtual address are being translated individually the virtual page number will be mapped to the page table as indexes on the
 		page table which than will determine the frame number to determine the physical address.*/
 		TranslationEntry pageTableIndex = pageTable[vPageNum]; 
@@ -141,19 +146,20 @@ public class UserProcess {
 			System.out.println("Can't be mapped to pageTable, vPageNum non-existent");
 			return -1;
 		}
-		int frameNum =  pageTableIndex.ppn;
-		System.out.println("frameNum is: " + Integer.toBinaryString(pageTable[vPageNum].ppn) +" pageTable[vPageNum].valid is: "+ pageTable[vPageNum].valid);
+
 		if(pageTableIndex.valid == false){
 			System.out.println("Page Fault");
 			System.out.println("Invalid - Not in physical memory");
 			return -1; //Return error
 		}
+		
+		int frameNum =  pageTableIndex.ppn;
+
 		if(Offset < 0 || Offset >= Processor.pageSize){
-			System.out.println("Offset greater than page size, has passed the bounds.");
+			System.out.println("Offset greater than page size, has passed the bounds");
 			return -1;
 		}
 		int paddr = Processor.makeAddress(frameNum, Offset);
-		//int paddr = (frameNum*Processor.pageSize)+Offset; 
 		return paddr;
 	}
 
@@ -186,22 +192,26 @@ public class UserProcess {
 	public int readVirtualMemory(int vaddr, byte[] data, int offset,
 			int length) {
 		Lib.assertTrue(offset >= 0 && length >= 0 && offset+length <= data.length);
+		
 		System.out.println("Starting Read Virtual Memory");
+		//Get physical memory
 		int paddr = vaddrTranslation(vaddr);
-		System.out.println("paddr is: " + Integer.toBinaryString(paddr));
 		if(paddr == -1){
 			return 0;
 		}
+		
+		System.out.println("paddr is: " + Integer.toBinaryString(paddr));
 		int vpn = Processor.pageFromAddress(vaddr);
-		//Get physical memory
+		
 		byte[] memory = Machine.processor().getMemory();
 		int amount = Math.min(length, memory.length-paddr);
-		System.out.println("data length: " + Integer.toBinaryString(length) +" memory.length-paddr: " + Integer.toBinaryString(memory.length - paddr));
-		/*
-		 * Transfering and amount of data to physical main memory by starting at the physical address, than by offset. 
-		 */
+		
+		//Transfering and amount of data to physical main memory by starting at the physical address, than by offset. 
+		 
 		System.out.println("Physical Address: " + Integer.toBinaryString(paddr));
+		
 		System.arraycopy(memory, paddr, data, offset, amount);
+		
 		System.out.println("Setting vPageNum: " + Integer.toBinaryString(vpn)+ " to true.");
 		pageTable[vpn].used = true;
 		return amount;
@@ -238,13 +248,18 @@ public class UserProcess {
 			int length) {
 		Lib.assertTrue(offset >= 0 && length >= 0 && offset+length <= data.length);
 		System.out.println("Starting Write Virtual Memory");
+
+		int paddr = vaddrTranslation(vaddr);
+		if(paddr == -1){
+			return 0;
+		}
+		
 		/*Need to write to the virtual memory now, so find the virtual page number for
 		 * the correct index at which you are writing the data to.
 		 */
 		int vPageNum = Processor.pageFromAddress(vaddr);
+		TranslationEntry pageIndex = pageTable[vPageNum];
 		System.out.println("vPageNum: " + Integer.toBinaryString(vPageNum));
-
-		TranslationEntry pageIndex = wtf(vPageNum);
 		if(pageIndex == null){
 			return 0;
 		}
@@ -254,30 +269,23 @@ public class UserProcess {
 			return 0; //Can not return error, instead will return zero bits
 		}
 
-		int paddr = vaddrTranslation(vaddr);
-		if(paddr == -1){
-			return 0;
-		}
-
-
 		byte[] memory = Machine.processor().getMemory();
+		
 		if(paddr < 0 || paddr >= memory.length){
 			return 0;
 		}
 
 		System.out.println("memory.length: " + memory.length + " Physical Addr " + paddr);
 		System.out.println("Physical Address: " + Integer.toBinaryString(paddr));
+		
 		int amount = Math.min(length, memory.length-paddr);
-
-
 		System.arraycopy(data, offset, memory, paddr, amount);
+		
 		pageIndex.dirty = true;
 		pageIndex.used = true;
+		
 		System.out.println("Amount: " + amount);
 		return amount;
-	}
-	protected TranslationEntry wtf(int vpn){
-		return pageTable[vpn];
 	}
 	/**
 	 * Load the executable with the specified name into this process, and
@@ -368,11 +376,15 @@ public class UserProcess {
 		return true;
 	}
 
+	/**
+	 * Will create a pageTable based on the need of the process requesting it.
+	 * This will disable interrupts so that the page table can be properly 
+	 * initialized.
+	 */
 	public void CreatePageTable(){
 		boolean status = Machine.interrupt().disable();
 		pageTable = new TranslationEntry[numPages];
 		Machine.interrupt().restore(status);
-
 	}
 	/**
 	 * Allocates memory for this process, and loads the COFF sections into
@@ -390,6 +402,10 @@ public class UserProcess {
 		CreatePageTable();
 		//Will get a list of Free Pages available that is reserved for this process
 		int[] ppnList = UserKernel.getFreePage(numPages);
+		if(ppnList == null){
+			System.out.println("Not enough free physical memory for this process");
+			return false;
+		}
 		int vpn = 0;
 		// load sections
 		for (int s=0; s<coff.getNumSections(); s++) {
@@ -399,15 +415,15 @@ public class UserProcess {
 			
 			for (int i=0; i<section.getLength(); i++) {
 				vpn = section.getFirstVPN()+i;
-				
 				int ppn = ppnList[vpn];
+				
 				pageTable[vpn] = new TranslationEntry(vpn, ppn, true, section.isReadOnly(), false, false);
 				
 				section.loadPage(i, ppn);
 			}
 		}
-		//Since it has put all the required data into the page table, now for user information
-		//continue where last left off, now assign remaining free pages to the stack
+		//Since it has put all the required data into the page table.
+		//continue where last left off, now assign remaining free pages to the process's stack
 		vpn++;
 		for(int i = 0; i <= this.stackPages; i++){
 			int ppn = ppnList[vpn];
@@ -826,7 +842,6 @@ public class UserProcess {
 
 	private int initialPC, initialSP;
 	private int argc, argv;
-
 	private static final int pageSize = Processor.pageSize;
 	private static final char dbgProcess = 'a';
 }
