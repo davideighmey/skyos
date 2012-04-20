@@ -8,17 +8,28 @@ import nachos.vm.*;
 /**
  * A <tt>VMProcess</tt> that supports networking syscalls.
  */
-public class NetProcess extends VMProcess {
+public class NetProcess extends UserProcess {
     /**
      * Allocate a new process.
      */
     public NetProcess() {
 	super();
     }
-
+    
     private static final int
 	syscallConnect = 11,
 	syscallAccept = 12;
+    
+    
+    
+    private int connect(int host, int port){
+    	
+    	return 0; //Return 0 for now.
+    }
+    
+    private int accept(int port){
+    	return 0; //Return 0 for now.
+    }
     
     /**
      * Handle a syscall exception. Called by <tt>handleException()</tt>. The
@@ -39,6 +50,8 @@ public class NetProcess extends VMProcess {
      */
     public int handleSyscall(int syscall, int a0, int a1, int a2, int a3) {
 	switch (syscall) {
+	case(syscallConnect): return connect(a0, a1); //a0 is host number, a1 is port number
+	case(syscallAccept): return accept(a1);
 	default:
 	    return super.handleSyscall(syscall, a0, a1, a2, a3);
 	}
