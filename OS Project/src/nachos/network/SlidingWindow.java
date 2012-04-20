@@ -12,8 +12,14 @@ tells the sender what is the current buffer of TCP receiver, the second paramete
 flow may have in the network in any given time.
 */
 public class SlidingWindow extends UserProcess {
+	int Size = 0; //Size of the buffer
+	byte[] WindowBuffer; //Buffer size of the window
 	
-	
+	public SlidingWindow(Packet HeaderPacket){
+		this.Size = HeaderPacket.maxPacketLength;
+		WindowBuffer = new byte[Size];
+		
+	}
 	
 	
 }
