@@ -5,6 +5,9 @@ import nachos.threads.*;
 
 public class TransportLayer extends PostOffice {
 
+	public TransportLayer(){
+		
+	}
 	
 }
 
