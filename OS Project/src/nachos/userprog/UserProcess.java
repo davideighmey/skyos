@@ -125,12 +125,6 @@ public class UserProcess {
 		int vPageNum = Processor.pageFromAddress(vaddr);
 		int Offset = Processor.offsetFromAddress(vaddr);
 		
-		System.out.println("Offset is: " + Integer.toBinaryString(Offset));
-		System.out.println("vPageNum is: " + Integer.toBinaryString(vPageNum));
-		System.out.println("vPageNum in pageTable is: " + Integer.toBinaryString(pageTable[vPageNum].vpn));
-		System.out.println("PPageNum is: " + Integer.toBinaryString(pageTable[vPageNum].ppn));
-		System.out.println("Page Table Size is: " + pageTable.length + " Binary of it: " +Integer.toBinaryString(pageTable.length));
-		System.out.println("Page Size is: " + Processor.pageSize);
 		/*
 		 * Check if the Virtual page number is on the page table, where the Page Table length is the max number of entries within that page table
 		 */
@@ -199,20 +193,14 @@ public class UserProcess {
 		if(paddr == -1){
 			return 0;
 		}
-		
-		System.out.println("paddr is: " + Integer.toBinaryString(paddr));
 		int vpn = Processor.pageFromAddress(vaddr);
 		
 		byte[] memory = Machine.processor().getMemory();
 		int amount = Math.min(length, memory.length-paddr);
 		
 		//Transfering and amount of data to physical main memory by starting at the physical address, than by offset. 
-		 
-		System.out.println("Physical Address: " + Integer.toBinaryString(paddr));
 		
 		System.arraycopy(memory, paddr, data, offset, amount);
-		
-		System.out.println("Setting vPageNum: " + Integer.toBinaryString(vpn)+ " to true.");
 		pageTable[vpn].used = true;
 		return amount;
 	}
@@ -259,7 +247,6 @@ public class UserProcess {
 		 */
 		int vPageNum = Processor.pageFromAddress(vaddr);
 		TranslationEntry pageIndex = pageTable[vPageNum];
-		System.out.println("vPageNum: " + Integer.toBinaryString(vPageNum));
 		if(pageIndex == null){
 			return 0;
 		}
@@ -274,17 +261,13 @@ public class UserProcess {
 		if(paddr < 0 || paddr >= memory.length){
 			return 0;
 		}
-
-		System.out.println("memory.length: " + memory.length + " Physical Addr " + paddr);
-		System.out.println("Physical Address: " + Integer.toBinaryString(paddr));
 		
 		int amount = Math.min(length, memory.length-paddr);
 		System.arraycopy(data, offset, memory, paddr, amount);
 		
 		pageIndex.dirty = true;
 		pageIndex.used = true;
-		
-		System.out.println("Amount: " + amount);
+
 		return amount;
 	}
 	/**
