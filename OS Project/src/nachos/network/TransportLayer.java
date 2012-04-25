@@ -9,10 +9,13 @@ public class TransportLayer extends PostOffice {
 	//Set max retry here
 	public static int maxRetry = 3;
 	//Keep a track of ports and sockets that has been used
-	public int[] freePorts = new int[255];
+	public int[] freePorts = new int[128];
 	//public datastructure li 
 
 	public TransportLayer(){
+		for(int i=0;i < 128; i++){
+			freePorts[i] = 1;
+		}
 	}
 
 	/* Socket is a type of file descriptor
