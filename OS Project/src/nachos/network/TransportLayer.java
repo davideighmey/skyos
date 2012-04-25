@@ -11,22 +11,22 @@ public class TransportLayer extends PostOffice {
 	//Keep a track of ports and sockets that has been used
 	public int[] freePorts = new int[128];
 	//public datastructure li 
-
+	private Lock portLock = new Lock();
 	public TransportLayer(){
-		boolean status = Machine.interrupt().disable();
+		portLock.acquire();
 		for(int i=0;i < 128; i++){
 			freePorts[i] = 1;
 		}
-		Machine.interrupt().restore(status);
+		portLock.release();
 	}
 
 	public boolean getFreePort(int port){
-		boolean status = Machine.interrupt().disable();
+		portLock.acquire();
 		if(freePorts[port] == 1){
-			Machine.interrupt().restore(status);
+			portLock.release();
 			return true;
 		}
-		Machine.interrupt().restore(status);
+		portLock.release();
 		return false;
 	}
 
