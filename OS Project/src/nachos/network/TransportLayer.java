@@ -30,17 +30,7 @@ public class TransportLayer extends PostOffice {
 		return false;
 	}
 
-	/* Socket is a type of file descriptor
-	 * There are 3 domain: PF_INET (IPv4), PF_INET6 (IPv6), PF_UNIX (using a file)
-	 * Type is one of these: SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW
-	 * 
-	 */
-	//public enum  Domain{PF_INET, PF_INET6, PF_UNIX}
-	/*
-	 * Create socket much like you open a file
-	 * Once open, you can read from it and write
-	 * to it
-	 */
+
 	public class Packets extends MailMessage{
 
 		public Packets(int _dstLink, int _dstPort, int _srcLink, int _srcPort,
@@ -50,6 +40,15 @@ public class TransportLayer extends PostOffice {
 
 			// TODO Auto-generated constructor stub
 		}
+		//Total 64 bits available for header. 40 in use.
+		/***************************************************************
+		 * |8 bit dest port|8 bit host port|4 bit SYN|4 bit ACK| 
+		 * |4 bit DATA| 4 bit FIN|8 bit window size
+		 */
+
+
+
+
 		/**
 		 * Allocate a new packet message to be sent, using the specified parameters.
 		 *
@@ -63,6 +62,7 @@ public class TransportLayer extends PostOffice {
 		 * @param	_data			the flag for DATA packet
 		 * @param	_fin			the flag for FIN packet
 		 */
+
 		public Packets(int _dstLink, int _dstPort, int _srcLink, int _srcPort,
 				byte[] _contents, boolean _syn, boolean _ack, boolean _data, boolean _fin) throws MalformedPacketException {
 
@@ -77,7 +77,7 @@ public class TransportLayer extends PostOffice {
 			this.data = _data;
 			this.fin = _fin;
 			this.contents = _contents;
-			byte[] packetContents = new byte[newHeaderLength + contents.length];
+			byte[] packetContents = new byte[headerLength + contents.length];
 			//
 			packetContents[0] = (byte) dstPort;
 			packetContents[1] = (byte) srcPort;
@@ -104,8 +104,6 @@ public class TransportLayer extends PostOffice {
 		public boolean ack;
 		public boolean data;
 		public boolean fin;
-		//header size must change
-		public static final int newHeaderLength = 4;
 	}
 	public class Socket extends OpenFile{
 		/****************************************************************
