@@ -75,7 +75,7 @@ public class TransportLayer extends PostOffice {
 				packetContents[2] = (byte) (packetContents[2]^0x4);
 			if(fin)
 				packetContents[2] = (byte) (packetContents[2]^0x8);
-
+			packetContents[3] = (byte) packetID;
 			System.arraycopy(contents, 0, packetContents, headerLength,
 					contents.length);
 
