@@ -13,9 +13,21 @@ public class TransportLayer extends PostOffice {
 	//public datastructure li 
 
 	public TransportLayer(){
+		boolean status = Machine.interrupt().disable();
 		for(int i=0;i < 128; i++){
 			freePorts[i] = 1;
 		}
+		Machine.interrupt().restore(status);
+	}
+
+	public boolean getFreePort(int port){
+		boolean status = Machine.interrupt().disable();
+		if(freePorts[port] == 1){
+			Machine.interrupt().restore(status);
+			return true;
+		}
+		Machine.interrupt().restore(status);
+		return false;
 	}
 
 	/* Socket is a type of file descriptor
