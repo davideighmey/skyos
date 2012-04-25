@@ -34,26 +34,26 @@ public class TransportLayer extends PostOffice {
 
 			// TODO Auto-generated constructor stub
 		}
-		 /**
-	     * Allocate a new packet message to be sent, using the specified parameters.
-	     *
-	     * @param	_dstLink		the destination link address.
-	     * @param	_dstPort		the destination port.
-	     * @param	_srcLink		the source link address.
-	     * @param	_srcPort		the source port.
-	     * @param	_contents		the contents of the packet.
-	     * @param 	syn				the flag for SYN packet
-	     * @param	ack				the flag for ACK packet
-	     * @param	data			the flag for DATA packet
-	     * @param	fin				the flag for FIN packet
-	     */
+		/**
+		 * Allocate a new packet message to be sent, using the specified parameters.
+		 *
+		 * @param	_dstLink		the destination link address.
+		 * @param	_dstPort		the destination port.
+		 * @param	_srcLink		the source link address.
+		 * @param	_srcPort		the source port.
+		 * @param	_contents		the contents of the packet.
+		 * @param 	syn				the flag for SYN packet
+		 * @param	ack				the flag for ACK packet
+		 * @param	data			the flag for DATA packet
+		 * @param	fin				the flag for FIN packet
+		 */
 		public Packets(int _dstLink, int _dstPort, int _srcLink, int _srcPort,
 				byte[] _contents, boolean _syn, boolean _ack, boolean _data, boolean _fin) throws MalformedPacketException {
-			
+
 			if (_dstPort < 0 || _dstPort >= portLimit ||
-				    _srcPort < 0 || _srcPort >= portLimit ||
-				    _contents.length > maxContentsLength)
-				    throw new MalformedPacketException();
+					_srcPort < 0 || _srcPort >= portLimit ||
+					_contents.length > maxContentsLength)
+				throw new MalformedPacketException();
 			this.dstPort = (byte) _dstPort;
 			this.srcPort = (byte) _srcPort;
 			this.ack = _ack;
@@ -67,21 +67,21 @@ public class TransportLayer extends PostOffice {
 			packetContents[1] = (byte) srcPort;
 			//packetContents[2] = ;
 			System.arraycopy(contents, 0, packetContents, headerLength,
-					 contents.length);
+					contents.length);
 
 			packet = new Packet(_dstLink, _srcLink, packetContents);
-		
+
 		}
 		//The id of the packet
 		public int packetID;
-	    //flags for packets
-        public boolean syn;
-        public boolean ack;
-        public boolean data;
-        public boolean fin;
-        //header size must change
-        public static final int newHeaderLength = 5;
-        }
+		//flags for packets that will be placed in header
+		public boolean syn;
+		public boolean ack;
+		public boolean data;
+		public boolean fin;
+		//header size must change
+		public static final int newHeaderLength = 5;
+	}
 	public class Socket extends OpenFile{
 		/****************************************************************
 		 *  Socket: a data structure containing connection information  *
