@@ -4,10 +4,12 @@ import nachos.machine.*;
 import nachos.threads.*;
 
 public class TransportLayer extends PostOffice {
-
-	public TransportLayer(){
-
-
+	//Set timeout length for each retry
+    public static int timeoutLength = 10000;
+    //Set max retry here
+    public static int maxRetry = 3;
+	
+    public TransportLayer(){
 	}
 	/* Socket is a type of file descriptor
 	 * There are 3 domain: PF_INET (IPv4), PF_INET6 (IPv6), PF_UNIX (using a file)
@@ -15,10 +17,28 @@ public class TransportLayer extends PostOffice {
 	 * 
 	 */
 	//public enum  Domain{PF_INET, PF_INET6, PF_UNIX}
+	/*
+	 * Create socket much like you open a file
+	 * Once open, you can read from it and write
+	 * to it
+	 */
 	protected class Socket extends OpenFile{
-		int port;
-		int address;
-		 
+		/****************************************************************
+		 *  Socket: a data structure containing connection information  *
+		 *	Connection identifying information:                         *
+		 *		- client IP (Internet Protocol) address                 *
+		 *		- client port number									*
+		 *		- source IP address										*
+		 *		- source port number									*
+		 ****************************************************************/
+		int destPort;
+		int destID;
+		int hostPort;
+		int hostID;
+		
+		
+		//need to make something to hold the message
+		
 		// public Domain  domain = null;
 		//create a socket at this port
 		//when making a socket, we return a socket descriptor
@@ -68,21 +88,37 @@ public class TransportLayer extends PostOffice {
 		}
 		
 		//Try to connect from the host to the dest
-		public int createConnection(int destHost, int destPort){
+		public int createConnection(int _destID, int _destPort){
+			destID = _destID;
+			_destPort = destPort;
 			
 			//have to send a syn packet
+			try {
+				//not a syn packet. Need to change the mail system to handle it
+				MailMessage a = new MailMessage(_destID,_destPort,hostID,hostPort, new byte[0]);
+			} catch (MalformedPacketException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return -1;
+			}
+			
 			//check if sent
 			//keep sending until either timeout is reached or connection 
 			//if  received an ack, connection is established, return with a value saying connected
 			//else return -1
 			return -1;
 		}
+		
 		//Try to accept the connection from the sender
-		public int acceptConnection(){
+		public int acceptConnection(int _hostID){
 			
 			
 			
 			return -1;
+		}
+		//attempt to close the socket
+		public void closeSocket(){
+			
 		}
 
 	}
