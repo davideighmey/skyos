@@ -18,6 +18,7 @@ public class MailMessage {
      * @param	srcPort		the source port.
      * @param	contents	the contents of the packet.
      */
+	public MailMessage (){};
     public MailMessage(int dstLink, int dstPort, int srcLink, int srcPort,
 		       byte[] contents) throws MalformedPacketException {
 	// make sure the paramters are valid
@@ -89,7 +90,7 @@ public class MailMessage {
      * <tr><td>offset</td><td>size</td><td>value</td></tr>
      * <tr><td>0</td><td>1</td><td>destination port</td></tr>
      * <tr><td>1</td><td>1</td><td>source port</td></tr>
-     * </table>
+     * 	</table>
      */
     public static final int headerLength = 2;
 

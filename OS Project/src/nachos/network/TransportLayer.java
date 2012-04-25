@@ -5,12 +5,15 @@ import nachos.threads.*;
 
 public class TransportLayer extends PostOffice {
 	//Set timeout length for each retry
-    public static int timeoutLength = 10000;
-    //Set max retry here
-    public static int maxRetry = 3;
-	
-    public TransportLayer(){
+	public static int timeoutLength = 10000;
+	//Set max retry here
+	public static int maxRetry = 3;
+	//Keep a track of ports and sockets that has been used
+	//public datastructure li 
+
+	public TransportLayer(){
 	}
+
 	/* Socket is a type of file descriptor
 	 * There are 3 domain: PF_INET (IPv4), PF_INET6 (IPv6), PF_UNIX (using a file)
 	 * Type is one of these: SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW
@@ -22,7 +25,64 @@ public class TransportLayer extends PostOffice {
 	 * Once open, you can read from it and write
 	 * to it
 	 */
-	protected class Socket extends OpenFile{
+	public class Packets extends MailMessage{
+
+		public Packets(int _dstLink, int _dstPort, int _srcLink, int _srcPort,
+				byte[] _contents) throws MalformedPacketException {
+			super(_dstLink, _dstPort, _srcLink, _srcPort, _contents);
+
+
+			// TODO Auto-generated constructor stub
+		}
+		 /**
+	     * Allocate a new packet message to be sent, using the specified parameters.
+	     *
+	     * @param	_dstLink		the destination link address.
+	     * @param	_dstPort		the destination port.
+	     * @param	_srcLink		the source link address.
+	     * @param	_srcPort		the source port.
+	     * @param	_contents		the contents of the packet.
+	     * @param 	syn				the flag for SYN packet
+	     * @param	ack				the flag for ACK packet
+	     * @param	data			the flag for DATA packet
+	     * @param	fin				the flag for FIN packet
+	     */
+		public Packets(int _dstLink, int _dstPort, int _srcLink, int _srcPort,
+				byte[] _contents, boolean _syn, boolean _ack, boolean _data, boolean _fin) throws MalformedPacketException {
+			
+			if (_dstPort < 0 || _dstPort >= portLimit ||
+				    _srcPort < 0 || _srcPort >= portLimit ||
+				    _contents.length > maxContentsLength)
+				    throw new MalformedPacketException();
+			this.dstPort = (byte) _dstPort;
+			this.srcPort = (byte) _srcPort;
+			this.ack = _ack;
+			this.syn = _syn;
+			this.data = _data;
+			this.fin = _fin;
+			this.contents = _contents;
+			byte[] packetContents = new byte[newHeaderLength + contents.length];
+			//
+			packetContents[0] = (byte) dstPort;
+			packetContents[1] = (byte) srcPort;
+			//packetContents[2] = ;
+			System.arraycopy(contents, 0, packetContents, headerLength,
+					 contents.length);
+
+			packet = new Packet(_dstLink, _srcLink, packetContents);
+		
+		}
+		//The id of the packet
+		public int packetID;
+	    //flags for packets
+        public boolean syn;
+        public boolean ack;
+        public boolean data;
+        public boolean fin;
+        //header size must change
+        public static final int newHeaderLength = 5;
+        }
+	public class Socket extends OpenFile{
 		/****************************************************************
 		 *  Socket: a data structure containing connection information  *
 		 *	Connection identifying information:                         *
@@ -35,38 +95,38 @@ public class TransportLayer extends PostOffice {
 		int destID;
 		int hostPort;
 		int hostID;
-		
-		
+
+
 		//need to make something to hold the message
-		
+
 		// public Domain  domain = null;
 		//create a socket at this port
 		//when making a socket, we return a socket descriptor
-		
+
 		//Socket Descriptor: similar to a file descriptor, but linked to a socket instead of a file, 
 		//can be used in low level commands such as read() and write()
-		
+
 		//dont think we need this
-		
+
 		//Socket(int domain, int type ){}
-		
+
 		//attempt to bind the socket to the selected port
 		int bindSocket(int port){
-			
+
 			return -1;
 		}
-		
-	    /**
-	     * Read this file starting at the specified position and return the number
-	     * of bytes successfully read. If no bytes were read because of a fatal
-	     * error, returns -1
-	     *
-	     * @param	pos	the offset in the file at which to start reading.
-	     * @param	buf	the buffer to store the bytes in.
-	     * @param	offset	the offset in the buffer to start storing bytes.
-	     * @param	length	the number of bytes to read.
-	     * @return	the actual number of bytes successfully read, or -1 on failure.
-	     */   
+
+		/**
+		 * Read this file starting at the specified position and return the number
+		 * of bytes successfully read. If no bytes were read because of a fatal
+		 * error, returns -1
+		 *
+		 * @param	pos	the offset in the file at which to start reading.
+		 * @param	buf	the buffer to store the bytes in.
+		 * @param	offset	the offset in the buffer to start storing bytes.
+		 * @param	length	the number of bytes to read.
+		 * @return	the actual number of bytes successfully read, or -1 on failure.
+		 */   
 		public int read(int pos, byte[] buf, int offset, int length) {
 			return -1;
 		}
@@ -86,12 +146,12 @@ public class TransportLayer extends PostOffice {
 		public int write(int pos, byte[] buf, int offset, int length) {
 			return -1;
 		}
-		
+
 		//Try to connect from the host to the dest
 		public int createConnection(int _destID, int _destPort){
 			destID = _destID;
 			destPort = _destPort;
-			
+
 			//have to send a syn packet
 			try {
 				//not a syn packet. Need to change the mail system to handle it
@@ -102,23 +162,23 @@ public class TransportLayer extends PostOffice {
 				//e.printStackTrace();
 				return -1;
 			}
-			
+
 			//check if sent
 			//keep sending until either timeout is reached or connection 
 			//if  received an ack, connection is established, return with a value saying connected
 			//else return -1
 			return -1;
 		}
-		
+
 		//Try to accept the connection from the sender
 		public int acceptConnection(int _hostID){
-		hostID = _hostID;	
-		
+			hostID = _hostID;	
+
 			return -1;
 		}
 		//attempt to close the socket
 		public void closeSocket(){
-			
+
 		}
 
 	}
