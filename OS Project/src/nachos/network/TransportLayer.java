@@ -118,8 +118,11 @@ public class TransportLayer extends PostOffice {
 		int destID;
 		int hostPort;
 		int hostID;
-
-
+		
+		//The receiver advertised window(adwn) is the buffer size sent in each ACK
+		Window adwn;	
+		//Congestion Window(cwnd) controls the number of packets a TCP flow may have in the network in a given time 
+		Window cwnd;
 		//need to make something to hold the message
 
 		// public Domain  domain = null;
@@ -206,11 +209,12 @@ public class TransportLayer extends PostOffice {
 
 	}
 
-	protected class SlidingWindow {
+	protected class Window {
+		//window size is fixed 16 packets
 		int Size = 0; //Size of the buffer
 		byte[] WindowBuffer = new byte[Size]; //Buffer size of the window
 
-		SlidingWindow(){
+		Window(){
 		}
 		//public class SlidingWindow(Packet HeaderPacket){
 		//this.Size = HeaderPacket.maxPacketLength;
