@@ -90,7 +90,7 @@ public class TransportLayer extends PostOffice {
 		//Try to connect from the host to the dest
 		public int createConnection(int _destID, int _destPort){
 			destID = _destID;
-			_destPort = destPort;
+			destPort = _destPort;
 			
 			//have to send a syn packet
 			try {
@@ -98,7 +98,8 @@ public class TransportLayer extends PostOffice {
 				MailMessage a = new MailMessage(_destID,_destPort,hostID,hostPort, new byte[0]);
 			} catch (MalformedPacketException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				System.out.println("Malformed Packet has been detected");
+				//e.printStackTrace();
 				return -1;
 			}
 			
@@ -111,9 +112,8 @@ public class TransportLayer extends PostOffice {
 		
 		//Try to accept the connection from the sender
 		public int acceptConnection(int _hostID){
-			
-			
-			
+		hostID = _hostID;	
+		
 			return -1;
 		}
 		//attempt to close the socket
