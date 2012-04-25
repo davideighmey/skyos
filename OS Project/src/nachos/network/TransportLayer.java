@@ -43,7 +43,7 @@ public class TransportLayer extends PostOffice {
 		//Total 64 bits available for header. 40 in use.
 		/***************************************************************
 		 * |8 bit dest port|8 bit host port|4 bit SYN|4 bit ACK| 
-		 * |4 bit DATA| 4 bit FIN|8 bit window size
+		 * |4 bit DATA| 4 bit FIN|8 bit window size|8 bit packetID
 		 */
 
 
@@ -64,11 +64,12 @@ public class TransportLayer extends PostOffice {
 		 */
 
 		public Packets(int _dstLink, int _dstPort, int _srcLink, int _srcPort,
-				byte[] _contents, boolean _syn, boolean _ack, boolean _data, boolean _fin) throws MalformedPacketException {
+				byte[] _contents, boolean _syn, boolean _ack, boolean _data, boolean _fin, int _packetID, int _adwn) throws MalformedPacketException {
 
 			if (_dstPort < 0 || _dstPort >= portLimit ||
 					_srcPort < 0 || _srcPort >= portLimit ||
-					_contents.length > maxContentsLength)
+					_contents.length > maxContentsLength||
+					_packetID < 0||_adwn < 0 ||_adwn > 16)
 				throw new MalformedPacketException();
 			this.dstPort = (byte) _dstPort;
 			this.srcPort = (byte) _srcPort;
@@ -76,6 +77,8 @@ public class TransportLayer extends PostOffice {
 			this.ack = _ack;
 			this.data = _data;
 			this.fin = _fin;
+			this.adwn = _adwn;
+			this.packetID = _packetID;
 			this.contents = _contents;
 			byte[] packetContents = new byte[headerLength + contents.length];
 			//
@@ -84,13 +87,17 @@ public class TransportLayer extends PostOffice {
 			packetContents[2] = 0;
 			if(syn)
 				packetContents[2] = (byte) (packetContents[2]^0x1);
-			if(ack)
+			if(ack){
 				packetContents[2] = (byte) (packetContents[2]^0x2);
+				packetContents[4] = (byte) adwn;
+			}
 			if(data)
-				packetContents[2] = (byte) (packetContents[2]^0x4);
+				packetContents[3] = (byte) (packetContents[2]^0x4);
+				
 			if(fin)
-				packetContents[2] = (byte) (packetContents[2]^0x8);
+				packetContents[3] = (byte) (packetContents[2]^0x8);
 			packetContents[3] = (byte) packetID;
+	
 			System.arraycopy(contents, 0, packetContents, headerLength,
 					contents.length);
 
@@ -99,12 +106,18 @@ public class TransportLayer extends PostOffice {
 		}
 		//The id of the packet
 		public int packetID;
+		//The advertisement window size
+		public int adwn;
 		//flags for packets that will be placed in header
 		public boolean syn;
 		public boolean ack;
 		public boolean data;
 		public boolean fin;
+		
 	}
+
+	//Socket Descriptor: similar to a file descriptor, but linked to a socket instead of a file, 
+	//can be used in low level commands such as read() and write()
 	public class Socket extends OpenFile{
 		/****************************************************************
 		 *  Socket: a data structure containing connection information  *
@@ -125,22 +138,12 @@ public class TransportLayer extends PostOffice {
 		Window cwnd;
 		//need to make something to hold the message
 
-		// public Domain  domain = null;
-		//create a socket at this port
-		//when making a socket, we return a socket descriptor
-
-		//Socket Descriptor: similar to a file descriptor, but linked to a socket instead of a file, 
-		//can be used in low level commands such as read() and write()
-
-		//dont think we need this
-
-		//Socket(int domain, int type ){}
-
+		
 		//attempt to bind the socket to the selected port
-		int bindSocket(int port){
+		//int bindSocket(int port){
 
-			return -1;
-		}
+			//return -1;
+		//}
 
 		/**
 		 * Read this file starting at the specified position and return the number
