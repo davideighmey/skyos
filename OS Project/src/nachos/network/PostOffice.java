@@ -129,7 +129,6 @@ public class PostOffice {
     private Semaphore messageReceived;	// V'd when a message can be dequeued
     private Semaphore messageSent;	// V'd when a message can be queued
     private Lock sendLock;
-    //Keep a track of ports and sockets that has been used
-    //public datastructure list = new datastructure; 
+
     private static final char dbgNet = 'n';
 }
