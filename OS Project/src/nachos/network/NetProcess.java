@@ -23,12 +23,21 @@ public class NetProcess extends UserProcess {
     
     
     private int connect(int host, int port){
+    	//attempt to create new socket on the port
+    	//attempt to create a connection with the socket. 
+    	//if any errors return -1
+    	return -1; //Return -1 for now.
     	
-    	return 0; //Return 0 for now.
+    	//if successful, grab the socket descriptor and return it 
     }
     
     private int accept(int port){
-    	return 0; //Return 0 for now.
+    	//attempt to create new socket on the port
+    	//attempt to accept the connection with teh socket
+    	//if any errors returns -1
+    	return -1; //Return -1 for now.
+    	
+    	//if successful, grab the socket descriptor and return it
     }
     
     /**
