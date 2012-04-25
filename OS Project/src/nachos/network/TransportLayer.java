@@ -9,6 +9,7 @@ public class TransportLayer extends PostOffice {
 	//Set max retry here
 	public static int maxRetry = 3;
 	//Keep a track of ports and sockets that has been used
+	public int[] freePorts = new int[255];
 	//public datastructure li 
 
 	public TransportLayer(){
@@ -56,8 +57,8 @@ public class TransportLayer extends PostOffice {
 				throw new MalformedPacketException();
 			this.dstPort = (byte) _dstPort;
 			this.srcPort = (byte) _srcPort;
-			this.ack = _ack;
 			this.syn = _syn;
+			this.ack = _ack;
 			this.data = _data;
 			this.fin = _fin;
 			this.contents = _contents;
@@ -65,7 +66,16 @@ public class TransportLayer extends PostOffice {
 			//
 			packetContents[0] = (byte) dstPort;
 			packetContents[1] = (byte) srcPort;
-			//packetContents[2] = ;
+			packetContents[2] = 0;
+			if(syn)
+				packetContents[2] = (byte) (packetContents[2]^0x1);
+			if(ack)
+				packetContents[2] = (byte) (packetContents[2]^0x2);
+			if(data)
+				packetContents[2] = (byte) (packetContents[2]^0x4);
+			if(fin)
+				packetContents[2] = (byte) (packetContents[2]^0x8);
+
 			System.arraycopy(contents, 0, packetContents, headerLength,
 					contents.length);
 
@@ -155,7 +165,7 @@ public class TransportLayer extends PostOffice {
 			//have to send a syn packet
 			try {
 				//not a syn packet. Need to change the mail system to handle it
-				MailMessage a = new MailMessage(_destID,_destPort,hostID,hostPort, new byte[0]);
+				Packets a = new Packets(_destID,_destPort,hostID,hostPort, new byte[0]);
 			} catch (MalformedPacketException e) {
 				// TODO Auto-generated catch block
 				System.out.println("Malformed Packet has been detected");
