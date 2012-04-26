@@ -9,8 +9,8 @@ import nachos.threads.Alarm;
 import nachos.threads.Lock;
 	
 public class Sockets extends OpenFile {
-	public enum socketStates{LISTENING, SYNSENT, SYNRECEIVED, ESTABLISHED, 
-		FINWAIT1, FINWAIT2, CLOSEWAIT, LASTACK, TIMEWAIT, CLOSED }
+	public enum socketStates{CLOSED, SYNSENT, SYNRECEIVED, ESTABLISHED, 
+		FINWAIT1, FINWAIT2, CLOSEWAIT}
 	
 	/****************************************************************
 	 *  Socket: a data structure containing connection information  *
@@ -39,7 +39,7 @@ public class Sockets extends OpenFile {
 	
 	//attempt to bind the socket to the selected port
 	int bindSocket(int port){
-		states = socketStates.LISTENING;
+		//states = socketStates.LISTENING;
 		return -1;
 	}
 
@@ -59,7 +59,7 @@ public class Sockets extends OpenFile {
 		cwnd = new Window();
 		//Setting up buffer
 		writeBuffer = new TCPpackets[100];
-		readBuffer = new TCPpackets[100];
+		readBuffer = new TCPpackets[16];
 		
 		states = socketStates.CLOSED;
 	}
@@ -113,7 +113,7 @@ public class Sockets extends OpenFile {
 
 		//have to send a syn packet
 		try {
-			TCPpackets syn = new TCPpackets(destID,destPort,hostID,hostPort, new byte[0],true,false,false,false,0,0,netID);
+			TCPpackets syn = new TCPpackets(destID,destPort,hostID,hostPort, new byte[0],true,false,false,false,0);
 			states = socketStates.SYNSENT;
 		} catch (MalformedPacketException e) {
 			// TODO Auto-generated catch block
@@ -123,8 +123,7 @@ public class Sockets extends OpenFile {
 		}
 		int count = 0;
 		Alarm alarm = new Alarm();
-		states = socketStates.TIMEWAIT;
-		while(states == socketStates.TIMEWAIT && count < TransportLayer.maxRetry){
+		while(states== socketStates.SYNSENT && count < TransportLayer.maxRetry){
 			try {
 				alarm.wait(TransportLayer.timeoutLength);
 			} catch (InterruptedException e) {
