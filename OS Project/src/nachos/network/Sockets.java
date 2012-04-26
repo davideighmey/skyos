@@ -1,6 +1,7 @@
 package nachos.network;
 
 import java.util.LinkedList;
+import java.util.Queue;
 
 import nachos.machine.*;
 //Socket Descriptor: similar to a file descriptor, but linked to a socket instead of a file, 
@@ -25,8 +26,8 @@ public class Sockets extends OpenFile {
 	public int hostPort;
 	public int hostID;
 	public int netID;
-	public TCPpackets[] writeBuffer;
-	public TCPpackets[] readBuffer;
+	public Queue<TCPpackets> wBuffer; // write buffer
+	public Queue<TCPpackets>  rBuffer; // read buffer
 	public socketStates states;
 	//The receiver advertised window(adwn) is the buffer size sent in each ACK
 	public final int adwn = 16;	
@@ -34,13 +35,6 @@ public class Sockets extends OpenFile {
 	public int cwnd;
 	//need to make something to hold the message
 	
-	
-	//attempt to bind the socket to the selected port
-	int bindSocket(int port){
-		//states = socketStates.LISTENING;
-		return -1;
-	}
-
 	public Sockets(int _hostPort) {
 		// TODO Auto-generated constructor stub
 		//Connection info
@@ -50,8 +44,8 @@ public class Sockets extends OpenFile {
 		destPort = -1;
 		destID = -1;
 		//Setting up buffer
-		writeBuffer = new TCPpackets[100];
-		readBuffer = new TCPpackets[16];
+		wBuffer = new LinkedList<TCPpackets>() ;
+		rBuffer = new LinkedList<TCPpackets>();
 		//Setting the state of the socket
 		states = socketStates.CLOSED;
 	}
