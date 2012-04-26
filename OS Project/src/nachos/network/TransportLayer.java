@@ -7,7 +7,7 @@ import nachos.machine.*;
 import nachos.network.Sockets.socketStates;
 import nachos.threads.*;
 
-public class TransportLayer extends PostOffice {
+public class TransportLayer  {
 	//Set timeout length for each retry 
 	public static int timeoutLength = 20000;
 	//Set max retry here
@@ -148,6 +148,13 @@ public class TransportLayer extends PostOffice {
 	public int acceptConnection(int _hostID, Sockets sckt){
 		sckt.hostID = _hostID;	
 
+		return -1;
+	}
+	
+	
+	//attempt to bind the socket to the selected port
+	int bindSocket(int port){
+		//states = socketStates.LISTENING;
 		return -1;
 	}
 	
