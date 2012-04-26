@@ -8,6 +8,7 @@ import nachos.machine.*;
  *
  * @see	nachos.machine.Packet
  */
+//testing
 public class MailMessage {
     /**
      * Allocate a new mail message to be sent, using the specified parameters.
@@ -21,7 +22,7 @@ public class MailMessage {
 	public MailMessage (){};
     public MailMessage(int dstLink, int dstPort, int srcLink, int srcPort,
 		       byte[] contents) throws MalformedPacketException {
-	// make sure the paramters are valid
+	// make sure the paramters are valid 
 	if (dstPort < 0 || dstPort >= portLimit ||
 	    srcPort < 0 || srcPort >= portLimit ||
 	    contents.length > maxContentsLength)
