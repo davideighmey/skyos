@@ -55,8 +55,10 @@ public class TCPpackets {
 		packetContents[0] = (byte) dstPort;
 		packetContents[1] = (byte) srcPort;
 		packetContents[2] = 0;
-		if(syn)
+		if(syn){
 			packetContents[2] = (byte) (packetContents[2]^0x1);
+			packetID = 0;
+		}
 		if(ack){
 			packetContents[2] = (byte) (packetContents[2]^0x2);
 			packetContents[4] = (byte) adwn;
