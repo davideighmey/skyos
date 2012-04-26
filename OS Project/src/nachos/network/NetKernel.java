@@ -82,9 +82,9 @@ public class NetKernel extends UserKernel {
 		}
 		byte[] bt = new byte["Hi There".length()];
 		String str = "Hi There";
-		System.out.println("Wrote "
-				+ scktSnd.write(str.getBytes(), 0, str.length())
-				+ " bytes");
+//		System.out.println("Wrote "
+	//			+ scktSnd.write(str.getBytes(), 0, str.length())
+		//		+ " bytes");
 		thr.join();
 		KThread.yield();
 		scktSnd.close();

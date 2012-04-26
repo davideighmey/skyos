@@ -8,11 +8,11 @@ import nachos.machine.*;
 //can be used in low level commands such as read() and write()
 import nachos.threads.Alarm;
 import nachos.threads.Lock;
-	
+
 public class Sockets extends OpenFile {
 	public enum socketStates{CLOSED, SYNSENT, SYNRECEIVED, ESTABLISHED, 
 		FINWAIT1, FINWAIT2, CLOSEWAIT}
-	
+
 	/****************************************************************
 	 *  Socket: a data structure containing connection information  *
 	 *	Connection identifying information:                         *
@@ -25,31 +25,37 @@ public class Sockets extends OpenFile {
 	public int destID;
 	public int hostPort;
 	public int hostID;
-	public int netID;
-	public Queue<TCPpackets> wBuffer; // write buffer
-	public Queue<TCPpackets>  rBuffer; // read buffer
+	public int packetID;
+	public Queue<TCPpackets> sBuffer; // send buffer
+	public Queue<TCPpackets>  rBuffer; // receive buffer
 	public socketStates states;
 	//The receiver advertised window(adwn) is the buffer size sent in each ACK
 	public final int adwn = 16;	
 	//Congestion Window(cwnd) controls the number of packets a TCP flow may have in the network in a given time **Credit Count**
 	public int cwnd;
 	//need to make something to hold the message
-	
+
 	public Sockets(int _hostPort) {
 		// TODO Auto-generated constructor stub
 		//Connection info
 		this.hostID = Machine.networkLink().getLinkAddress();
 		this.hostPort = _hostPort;
-		netID = 0;
 		destPort = -1;
 		destID = -1;
+		packetID = 0;
 		//Setting up buffer
-		wBuffer = new LinkedList<TCPpackets>() ;
+		sBuffer = new LinkedList<TCPpackets>() ;
 		rBuffer = new LinkedList<TCPpackets>();
+
+		//Setting credit count of socket
+		cwnd = adwn;
+
 		//Setting the state of the socket
 		states = socketStates.CLOSED;
 	}
-
+	public int increaseCount(){
+		return packetID++;
+	}
 	/**
 	 * Read this file starting at the specified position and return the number
 	 * of bytes successfully read. If no bytes were read because of a fatal
@@ -61,9 +67,9 @@ public class Sockets extends OpenFile {
 	 * @return	the actual number of bytes successfully read, or -1 on failure.
 	 */   
 	public int read(byte[] buf, int offset, int length) {
-	
-		
-		
+
+
+
 		return -1;
 	}
 
@@ -78,19 +84,40 @@ public class Sockets extends OpenFile {
 	 * @param	length	the number of bytes to write.
 	 * @return	the actual number of bytes successfully written, or -1 on
 	 *		failure.
+	 * @throws MalformedPacketException 
 	 */    
-	public int write(byte[] buf, int offset, int length) {
-		  //check that status of this socket before continuing
-        int bytesWriten = 0;
-        int credit = 0;
-        if(states == socketStates.ESTABLISHED){
-                for (bytesWriten = offset; bytesWriten < length - offset; bytesWriten++) {
-                        
-                	//readBuffer //.add(buf[bytesWriten]);
-                }
-                bytesWriten -= offset;
-        }
-        return bytesWriten;
-	}
+	public int write(byte[] buf, int offset, int length)  {
+		//check that status of this socket before continuing
+		int bytesWriten = 0;
+		//things in here will be translated into packets and placed on the send buffer
+		LinkedList<Byte> readyToWrite = new LinkedList<Byte>();
 
+		if(states == socketStates.ESTABLISHED){
+			for (bytesWriten = offset; bytesWriten < length - offset; bytesWriten++) {
+				readyToWrite.add(buf[bytesWriten]);
+			}
+			bytesWriten -= offset;
+			sendWrite(readyToWrite);
+		}
+		return bytesWriten;
+	}
+	public void sendWrite(LinkedList<Byte> writeMe){
+		byte[] array;
+		TCPpackets pckt;
+		if(!writeMe.isEmpty() && states == socketStates.ESTABLISHED){
+			array = new byte[java.lang.Math.min(writeMe.size(), TCPpackets.maxContentsLength)];
+			for (int i = 0; i < array.length; i++) {
+				array[i] = writeMe.removeFirst();
+				try {
+					pckt = new TCPpackets(destID,destPort,hostID,hostPort,array,false,false,false,false,increaseCount());
+					sBuffer.add(pckt);
+				} catch (MalformedPacketException e) {}	
+			}
+
+		}
+	}
+	public void send(TCPpackets pckt){
+		//if(states == socketStates.CLOSED)
+	
+	}
 }
