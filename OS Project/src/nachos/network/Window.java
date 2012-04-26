@@ -35,6 +35,10 @@ public class Window {
 	 * 
 	 * @return It will return the number of packets you may still send through the window
 	 */
+	
+	public int getSize(){
+		return MAXWINDOWSIZE;
+	}
 	public int recieveACK(){
 		if(MAXWINDOWSIZE == 16){
 			return MAXWINDOWSIZE;
