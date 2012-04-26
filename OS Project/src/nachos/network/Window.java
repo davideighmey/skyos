@@ -1,8 +1,8 @@
 package nachos.network;
 
 import nachos.machine.*;
-import nachos.network.TransportLayer.Window;
-public class SlidingWindow {
+
+public class Window {
 	
 	
 	//The receiver advertised window(adwn) is the buffer size sent in each ACK
@@ -17,7 +17,7 @@ public class SlidingWindow {
 	int awndSize = 16;
 	int cwndSize = 1;
 		
-	public SlidingWindow(){
+	public Window(){
 		
 	}
 	//public class SlidingWindow(Packet HeaderPacket){
