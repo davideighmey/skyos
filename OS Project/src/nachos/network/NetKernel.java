@@ -24,7 +24,7 @@ public class NetKernel extends UserKernel {
 	public void initialize(String[] args) {
 		super.initialize(args);
 		transport = new TransportLayer();
-		postOffice = new PostOffice();
+		//postOffice = new PostOffice();
 	}
 
 	/**
@@ -34,7 +34,7 @@ public class NetKernel extends UserKernel {
 	 * reliability is 1.0).
 	 */
 	public void selfTest() {
-		super.selfTest();
+		//super.selfTest();
 
 		KThread serverThread = new KThread(new Runnable() {
 			public void run() { pingServer(); }
@@ -109,21 +109,22 @@ public class NetKernel extends UserKernel {
 
 		long startTime = Machine.timer().getTime();
 
-		MailMessage ping;
+		TCPpackets ping;
 
 		try {
-			ping = new MailMessage(dstLink, 1,
-					Machine.networkLink().getLinkAddress(), 0,
-					new byte[0]);
+			//ping = new MailMessage(dstLink, 1,
+				//	Machine.networkLink().getLinkAddress(), 0,
+					//new byte[0]);
+			ping =  new TCPpackets(dstLink,1,Machine.networkLink().getLinkAddress(),0, new byte[0],true,false,false,false,0);
 		}
 		catch (MalformedPacketException e) {
 			Lib.assertNotReached();
 			return;
 		}
 
-		postOffice.send(ping);
+		transport.send(ping);
 
-		MailMessage ack = postOffice.receive(0);
+		TCPpackets ack = transport.receives(0);
 
 		long endTime = Machine.timer().getTime();
 
@@ -132,21 +133,22 @@ public class NetKernel extends UserKernel {
 
 	private void pingServer() {
 		while (true) {
-			MailMessage ping = postOffice.receive(1);
+			TCPpackets ping = transport.receives(1);
 
-			MailMessage ack;
+			TCPpackets ack;
 
 			try {
-				ack = new MailMessage(ping.packet.srcLink, ping.srcPort,
-						ping.packet.dstLink, ping.dstPort,
-						ping.contents);
+				//ack = new MailMessage(ping.packet.srcLink, ping.srcPort,
+					//	ping.packet.dstLink, ping.dstPort,
+						//ping.contents);
+				ack = new TCPpackets(ping.packet.srcLink,ping.srcPort,ping.packet.dstLink,ping.dstPort, new byte[0],false,true,false,false,0);
 			}
 			catch (MalformedPacketException e) {
 				// should never happen...
 				continue;
 			}
 
-			postOffice.send(ack);
+			transport.send(ack);
 		}	
 	}
 
