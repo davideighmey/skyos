@@ -1,5 +1,7 @@
 package nachos.network;
 
+import java.util.LinkedList;
+
 import nachos.machine.*;
 
 public class Window {
@@ -14,13 +16,55 @@ public class Window {
 		//return -1;
 	//}
 	//window size is fixed 16 packets
-	int awndSize = 16;
-	int cwndSize = 1;
-		
-	public Window(){
-		
+	
+	//Socket Takes care of that buffer.
+	//Actually no buffers in window, just checks for the flow, or amount of packets you may send right there
+	
+	private static int MAXWINDOWSIZE = 16;
+	
+	public Window(){}
+	
+	/*
+	 * Will return the amount of space left for the amount of packets to be sent based on the window size;
+	 * Each time it receives an ACK it should be incremented. It should never be incremented over 16.
+	 */
+	
+	/**
+	 * For every ACK recieved this function should be called to increase the amount of packets you can send through the window
+	 * the max size for this window is only a size of MAX 16.
+	 * 
+	 * @return It will return the number of packets you may still send through the window
+	 */
+	public int recieveACK(){
+		if(MAXWINDOWSIZE == 16){
+			return MAXWINDOWSIZE;
+		}
+		else{
+			if(MAXWINDOWSIZE > 16){
+				System.out.println("Something went terribly wrong, window size increased over 16 to " + MAXWINDOWSIZE);
+				return -1;
+			}
+		MAXWINDOWSIZE++;
+		return MAXWINDOWSIZE;
+		}
 	}
-	//public class SlidingWindow(Packet HeaderPacket){
-	//this.Size = HeaderPacket.maxPacketLength;
+	
+	/**
+	 * For every packet sent, the Window size will decrease by 1. If the size is 0, the packet needs to wait until the window size
+	 * has increased by receiving an ACK
+	 * @return	Will return the current Window Size 
+	 */
+	public int sentPacket(){
+		if(MAXWINDOWSIZE == 0){
+			return 0;
+		}
+		else{
+			MAXWINDOWSIZE--;
+		}
+		return MAXWINDOWSIZE;
+	}
+	
+	
+	
 	
 }
