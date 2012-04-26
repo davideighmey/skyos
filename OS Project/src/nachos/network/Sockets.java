@@ -3,6 +3,7 @@ package nachos.network;
 import nachos.machine.*;
 //Socket Descriptor: similar to a file descriptor, but linked to a socket instead of a file, 
 //can be used in low level commands such as read() and write()
+import nachos.threads.Alarm;
 	
 public class Sockets extends OpenFile {
 	public enum socketStates{LISTENING, SYNSENT, SYNRECEIVED, ESTABLISHED, 
@@ -79,15 +80,27 @@ public class Sockets extends OpenFile {
 
 		//have to send a syn packet
 		try {
-			//not a syn packet. Need to change the mail system to handle it
-			TCPpackets a = new TCPpackets(destID,destPort,hostID,hostPort, new byte[0],true,false,false,false,0,0);
+			TCPpackets syn = new TCPpackets(destID,destPort,hostID,hostPort, new byte[0],true,false,false,false,0,0);
+			states = socketStates.SYNSENT;
 		} catch (MalformedPacketException e) {
 			// TODO Auto-generated catch block
 			System.out.println("Malformed Packet has been detected");
 			//e.printStackTrace();
 			return false;
 		}
-
+		int count = 0;
+		Alarm alarm = new Alarm();
+		states = socketStates.TIMEWAIT;
+		while(states == socketStates.TIMEWAIT && count < TransportLayer.maxRetry){
+			try {
+				alarm.wait(TransportLayer.timeoutLength);
+			} catch (InterruptedException e) {
+				return false;
+			}
+			count++;
+		}
+		if(states == socketStates.SYNRECEIVED);
+			
 		//check if sent
 		//keep sending until either timeout is reached or connection 
 		//if  received an ack, connection is established, return with a value saying connected
