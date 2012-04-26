@@ -12,13 +12,7 @@ public class TCPpackets {
 
 		// TODO Auto-generated constructor stub
 	}
-	//Total 64 bits available for header. 56 in use.
-	/***************************************************************
-	 * |8 bit dest port|8 bit host port|4 bit SYN|4 bit ACK| 
-	 * |4 bit DATA| 4 bit FIN|8 bit window size|8 bit packetID
-	 * |8 bit network ID|
-	 */
-
+	
 	/**
 	 * Allocate a new packet message to be sent, using the specified parameters.
 	 *
