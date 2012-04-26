@@ -29,6 +29,8 @@ public class TCPpackets {
 	 * @param	_ack			the flag for ACK packet
 	 * @param	_data			the flag for DATA packet
 	 * @param	_fin			the flag for FIN packet
+	 * @param 	_packetID		the id of the packet
+	 * @param	_adwm			the advertisement window size
 	 */
 
 	public TCPpackets(int _dstLink, int _dstPort, int _srcLink, int _srcPort,
