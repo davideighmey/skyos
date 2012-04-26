@@ -6,6 +6,7 @@ import nachos.userprog.*;
 import nachos.vm.*;
 import nachos.network.*;
 
+
 /**
  * A kernel with network support.
  */
@@ -32,7 +33,7 @@ public class NetKernel extends UserKernel {
      * assumes that the network is reliable (i.e. that the network's
      * reliability is 1.0).
      */
-    public void selfTest() {
+    public void selfTest3() {
 	super.selfTest();
 
 	KThread serverThread = new KThread(new Runnable() {
@@ -53,6 +54,53 @@ public class NetKernel extends UserKernel {
 	if (local <= 1)
 	    ping(1-local);
     }
+    public void selfTest(){
+    	
+        final KThread test2 = new KThread(new Runnable() {
+                public void run(){
+                        socketTest2();
+                }
+        });
+        KThread test1 = new KThread(new Runnable() {
+                public void run(){
+                        socketTest(test2);
+                }
+        });
+
+        test1.fork();
+        test2.fork();
+
+        KThread.yield();
+
+}
+private void socketTest(KThread thr){
+	TransportLayer k = new TransportLayer();
+        Sockets scktSnd = new Sockets(1);
+        
+        if(!scktSnd.createConnection(Machine.networkLink().getLinkAddress(), 2)){
+                return;
+        }
+        byte[] bt = new byte["Hi There".length()];
+        String str = "Hi There";
+        System.out.println("Wrote "
+                + scktSnd.write(str.getBytes(), 0, str.length())
+                + " bytes");
+        thr.join();
+        KThread.yield();
+        scktSnd.close();
+}
+private void socketTest2(){
+        Sockets scktRcv = new Sockets(2);
+        scktRcv.acceptConnection(2);
+        byte[] bt = new byte["Hi There".length()];
+        KThread.yield();
+        timeout();
+        timeout();
+        System.out.println("read "
+                + scktRcv.read(bt, 0, bt.length)
+                + " bytes");
+        System.out.println(new String(bt));
+}
 
     private void ping(int dstLink) {
 	int srcLink = Machine.networkLink().getLinkAddress();
@@ -115,6 +163,9 @@ public class NetKernel extends UserKernel {
     public void terminate() {
 	super.terminate();
     }
+    public static void timeout(){
+        alarm.waitUntil(10000);
+}
 
     private PostOffice postOffice;
 
