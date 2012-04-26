@@ -17,9 +17,6 @@ public class TCPpackets {
 	 * |4 bit DATA| 4 bit FIN|8 bit window size|8 bit packetID
 	 */
 
-
-
-
 	/**
 	 * Allocate a new packet message to be sent, using the specified parameters.
 	 *
@@ -92,9 +89,11 @@ public class TCPpackets {
 		dstPort = packet.contents[0];
 		srcPort = packet.contents[1];
 		packetID  = packet.contents[3];
-           syn = ((packet.contents[2] & 0x1) == 0x1);//0001 & 0110 = 0000
-           fin = ((packet.contents[2] & 0x2) == 0x2);//0010 & 0110 = 0010
-           ack = ((packet.contents[2] & 0x4) == 0x4);//0100 & 0110 = 0100
+		syn = ((packet.contents[2] & 0x1) == 0x1);
+		fin = ((packet.contents[2] & 0x2) == 0x2);
+		ack = ((packet.contents[2] & 0x4) == 0x4);
+		if(ack)
+			adwn = packet.contents[4];
 
 		contents = new byte[packet.contents.length - headerLength];
 		System.arraycopy(packet.contents, headerLength, contents, 0,
