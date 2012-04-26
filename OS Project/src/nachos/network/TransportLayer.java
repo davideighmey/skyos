@@ -37,7 +37,7 @@ public class TransportLayer extends PostOffice {
 	public void rememberSocket(Sockets sckt, int portnum){
 
 	}
-	public TCPpackets receive(int port) {
+	public TCPpackets receives(int port) {
 		Lib.assertTrue(port >= 0 && port < queues.length);
 		TCPpackets mail = (TCPpackets) queues[port].removeFirst();
 
