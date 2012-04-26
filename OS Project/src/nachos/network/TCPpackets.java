@@ -102,8 +102,9 @@ public class TCPpackets {
 		
 		//grab the flags
 		syn = ((packet.contents[3] & 0x1) == 0x1);
-		fin = ((packet.contents[3] & 0x2) == 0x2);
-		ack = ((packet.contents[3] & 0x4) == 0x4);
+		ack = ((packet.contents[3] & 0x2) == 0x2);
+		stp = ((packet.contents[3] & 0x3) == 0x3);
+		fin = ((packet.contents[3] & 0x4) == 0x4);
 		
 		//grab the packet id
 		packetID = (packet.contents[4] << 24) + (packet.contents[5]<< 16) + (packet.contents[4] << 8) + (packet.contents[7]);
