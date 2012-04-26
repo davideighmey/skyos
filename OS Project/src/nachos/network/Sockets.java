@@ -106,45 +106,7 @@ public class Sockets extends OpenFile {
         return bytesWriten;
 	}
 
-	//Try to connect from the host to the dest
-	public boolean createConnection(int _destID, int _destPort){
-		destID = _destID;
-		destPort = _destPort;
-
-		//have to send a syn packet
-		try {
-			TCPpackets syn = new TCPpackets(destID,destPort,hostID,hostPort, new byte[0],true,false,false,false,0);
-			states = socketStates.SYNSENT;
-		} catch (MalformedPacketException e) {
-			// TODO Auto-generated catch block
-			System.out.println("Malformed Packet has been detected");
-			//e.printStackTrace();
-			return false;
-		}
-		int count = 0;
-		Alarm alarm = new Alarm();
-		while(states== socketStates.SYNSENT && count < TransportLayer.maxRetry){
-			try {
-				alarm.wait(TransportLayer.timeoutLength);
-			} catch (InterruptedException e) {
-				return false;
-			}
-			count++;
-		}
-		//if(states == socketStates.SYNRECEIVED)
-		//check if sent
-		//keep sending until either timeout is reached or connection 
-		//if  received an ack, connection is established, return with a value saying connected
-		//else return -1
-		return false;
-	}
-
-	//Try to accept the connection from the sender
-	public int acceptConnection(int _hostID){
-		hostID = _hostID;	
-
-		return -1;
-	}
+	
 	//attempt to close the socket
 	public void closeSocket(){
 

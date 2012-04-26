@@ -23,7 +23,7 @@ public class NetKernel extends UserKernel {
 	 */
 	public void initialize(String[] args) {
 		super.initialize(args);
-
+		transport = new TransportLayer();
 		postOffice = new PostOffice();
 	}
 
@@ -74,10 +74,10 @@ public class NetKernel extends UserKernel {
 
 	}
 	private void socketTest(KThread thr){
-		TransportLayer k = new TransportLayer();
+		
 		Sockets scktSnd = new Sockets(1);
 
-		if(!scktSnd.createConnection(Machine.networkLink().getLinkAddress(), 2)){
+		if(!transport.createConnection(Machine.networkLink().getLinkAddress(), 2,scktSnd)){
 			return;
 		}
 		byte[] bt = new byte["Hi There".length()];
@@ -91,7 +91,7 @@ public class NetKernel extends UserKernel {
 	}
 	private void socketTest2(){
 		Sockets scktRcv = new Sockets(2);
-		scktRcv.acceptConnection(2);
+		transport.acceptConnection(2,scktRcv);
 		byte[] bt = new byte["Hi There".length()];
 		KThread.yield();
 		timeout();
@@ -168,7 +168,7 @@ public class NetKernel extends UserKernel {
 	}
 
 	private PostOffice postOffice;
-
+	private TransportLayer transport;
 	// dummy variables to make javac smarter
 	private static NetProcess dummy1 = null;
 }
