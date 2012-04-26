@@ -4,6 +4,7 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 
 import nachos.machine.*;
+import nachos.network.Sockets.socketStates;
 import nachos.threads.*;
 
 public class TransportLayer extends PostOffice {
@@ -101,4 +102,56 @@ public class TransportLayer extends PostOffice {
 	private void receiveInterrupt() {
 		messageReceived.V();
 	}
+	/**
+	 * Read this file starting at the specified position and return the number
+	 * of bytes successfully read. If no bytes were read because of a fatal
+	 * error, returns -1
+	 *
+	 * @param	buf	the buffer to store the bytes in.
+	 * @param	offset	the offset in the buffer to start storing bytes.
+	 * @param	length	the number of bytes to read.
+	 * @return	the actual number of bytes successfully read, or -1 on failure.
+	 */   
+	
+
+	//Try to connect from the host to the dest
+	public boolean createConnection(int _destID, int _destPort, Sockets sckt){
+		sckt.destID = _destID;
+		sckt.destPort = _destPort;
+
+		//have to send a syn packet
+		try {
+			TCPpackets syn = new TCPpackets(sckt.destID,sckt.destPort,sckt.hostID,sckt.hostPort, new byte[0],true,false,false,false,0);
+			sckt.states = socketStates.SYNSENT;
+		} catch (MalformedPacketException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Malformed Packet has been detected");
+			//e.printStackTrace();
+			return false;
+		}
+		int count = 0;
+		Alarm alarm = new Alarm();
+		while(sckt.states== socketStates.SYNSENT && count < TransportLayer.maxRetry){
+			try {
+				alarm.wait(TransportLayer.timeoutLength);
+			} catch (InterruptedException e) {
+				return false;
+			}
+			count++;
+		}
+		//if(states == socketStates.SYNRECEIVED)
+		//check if sent
+		//keep sending until either timeout is reached or connection 
+		//if  received an ack, connection is established, return with a value saying connected
+		//else return -1
+		return false;
+	}
+
+	//Try to accept the connection from the sender
+	public int acceptConnection(int _hostID, Sockets sckt){
+		sckt.hostID = _hostID;	
+
+		return -1;
+	}
+	
 }
