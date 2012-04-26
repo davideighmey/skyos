@@ -83,7 +83,8 @@ public class TCPpackets {
 		// make sure we have a valid header
 		if (packet.contents.length < headerLength ||
 				packet.contents[0] < 0 || packet.contents[0] >= portLimit ||
-				packet.contents[1] < 0 || packet.contents[1] >= portLimit)
+				packet.contents[1] < 0 || packet.contents[1] >= portLimit||
+				packet.contents[3] < 0||packet.contents[4] < 0 ||packet.contents[4]> 16)
 			throw new MalformedPacketException();
 
 		dstPort = packet.contents[0];
