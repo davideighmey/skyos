@@ -29,55 +29,54 @@ public class TCPpackets {
 	 * @param	_contents		the contents of the packet.
 	 * @param 	_syn			the flag for SYN packet
 	 * @param	_ack			the flag for ACK packet
-	 * @param	_data			the flag for DATA packet
+	 * @param	_stp			the flag for STP packet
 	 * @param	_fin			the flag for FIN packet
 	 * @param 	_packetID		the id of the packet
-	 * @param	_adwm			the advertisement window size
 	 */
 
 	public TCPpackets(int _dstLink, int _dstPort, int _srcLink, int _srcPort,
-			byte[] _contents, boolean _syn, boolean _ack, boolean _data, boolean _fin, int _packetID, int _adwn, int _netID) throws MalformedPacketException {
+			byte[] _contents, boolean _syn, boolean _ack, boolean _stp, boolean _fin, int _packetID) throws MalformedPacketException {
 
 		if (_dstPort < 0 || _dstPort >= portLimit ||
 				_srcPort < 0 || _srcPort >= portLimit ||
 				_contents.length > maxContentsLength||
-				_packetID < 0||_adwn < 0 ||_adwn > 16||
-				_netID < 0)
+				_packetID < 0)
 			throw new MalformedPacketException();
 		this.dstPort = (byte) _dstPort;
 		this.srcPort = (byte) _srcPort;
 		this.syn = _syn;
 		this.ack = _ack;
-		this.data = _data;
 		this.fin = _fin;
-		this.adwn = _adwn;
+		this.stp = _stp;
 		this.packetID = _packetID;
 		this.contents = _contents;
-		this.netID = _netID;
+
 		byte[] packetContents = new byte[headerLength + contents.length];
-		//
+		
 		packetContents[0] = (byte) dstPort;
 		packetContents[1] = (byte) srcPort;
+		//byte 2 and 3 is MBZ
 		packetContents[2] = 0;
-		if(syn){
-			packetContents[2] = (byte) (packetContents[2]^0x1);
-			packetID = 0;
-		}
-		if(ack){
-			packetContents[2] = (byte) (packetContents[2]^0x2);
-			packetContents[4] = (byte) adwn;
-		}
-		if(data)
+		packetContents[3] = 0;
+		//packets flags
+		if(syn)
+			packetContents[3] = (byte) (packetContents[2]^0x1);
+		if(ack)
+			packetContents[3] = (byte) (packetContents[2]^0x2);
+		if(stp)
 			packetContents[3] = (byte) (packetContents[2]^0x4);
-
 		if(fin)
 			packetContents[3] = (byte) (packetContents[2]^0x8);
-		packetContents[3] = (byte) packetID;
-		packetContents[5] = (byte) netID;
+		
+		//storing the packetID
+		packetContents[4] = (byte) ((packetID >> 24) & 0xFF);
+		packetContents[5] = (byte) ((packetID >> 16) & 0xFF);
+		packetContents[6] = (byte) ((packetID >> 8) & 0xFF);
+		packetContents[7] = (byte) (packetID & 0xFF);
 		
 		System.arraycopy(contents, 0, packetContents, headerLength,
 				contents.length);
-
+		
 		packet = new Packet(_dstLink, _srcLink, packetContents);
 
 	}
@@ -96,16 +95,18 @@ public class TCPpackets {
 				packet.contents[3] < 0||packet.contents[4] < 0 ||packet.contents[4]> 16||
 				packet.contents[5]<0)
 			throw new MalformedPacketException();
-
+		
+		//grab the dst and src port
 		dstPort = packet.contents[0];
 		srcPort = packet.contents[1];
-		packetID  = packet.contents[3];
-		netID = packet.contents[5];
-		syn = ((packet.contents[2] & 0x1) == 0x1);
-		fin = ((packet.contents[2] & 0x2) == 0x2);
-		ack = ((packet.contents[2] & 0x4) == 0x4);
-		if(ack)
-			adwn = packet.contents[4];
+		
+		//grab the flags
+		syn = ((packet.contents[3] & 0x1) == 0x1);
+		fin = ((packet.contents[3] & 0x2) == 0x2);
+		ack = ((packet.contents[3] & 0x4) == 0x4);
+		
+		//grab the packet id
+		packetID = (packet.contents[4] << 24) + (packet.contents[5]<< 16) + (packet.contents[4] << 8) + (packet.contents[7]);
 
 		contents = new byte[packet.contents.length - headerLength];
 		System.arraycopy(packet.contents, headerLength, contents, 0,
@@ -118,39 +119,41 @@ public class TCPpackets {
 	public int dstPort;
 	/** The port used by this message on the source machine. */
 	public int srcPort;
-	/** The contents of this message, excluding the mail message header. */
+	/** The contents of this message, excluding the TCP message header. */
 	public byte[] contents;
 
 	/**
-	 * The number of bytes in a mail header. The header is formatted as
+	 * The number of bytes in a TCP header. The header is formatted as
 	 * follows:
 	 *
 	 * <table>
 	 * <tr><td>offset</td><td>size</td><td>value</td></tr>
 	 * <tr><td>0</td><td>1</td><td>destination port</td></tr>
 	 * <tr><td>1</td><td>1</td><td>source port</td></tr>
+	 * <tr><td>3</td><td>1</td><td>Must Be Zero</td></tr>
+	 * <tr><td>4</td><td>1</td><td>Must Be Zero with flags</td></tr>
+	 * <tr><td>5</td><td>1</td><td>Packet ID</td></tr>
+	 * <tr><td>6</td><td>1</td><td>Packet ID</td></tr>
+	 * <tr><td>7</td><td>1</td><td>Packet ID</td></tr>
 	 * 	</table>
 	 */
-	public static final int headerLength = 6;
+	public static final int headerLength = 8;
 
 	/** Maximum payload (real data) that can be included in a single mesage. */
 	public static final int maxContentsLength =
 			Packet.maxContentsLength - headerLength;
 
 	/**
-	 * The upper limit on mail ports. All ports fall between <tt>0</tt> and
+	 * The upper limit on TCP ports. All ports fall between <tt>0</tt> and
 	 * <tt>portLimit - 1</tt>.
 	 */    
 	public static final int portLimit = 128;
 	//The id of the packet
 	public int packetID;
-	//The advertisement window size
-	public int adwn;
 	//flags for packets that will be placed in header
 	public boolean syn;
 	public boolean ack;
-	public boolean data;
 	public boolean fin;
-	public int netID;
+	public boolean stp;
 
 }
