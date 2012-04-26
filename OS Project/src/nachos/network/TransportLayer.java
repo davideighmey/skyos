@@ -26,12 +26,28 @@ public class TransportLayer extends PostOffice {
 		messageSent = new Semaphore(0);
 		sendLock = new Lock();
 		portLock.acquire();
-
 		for(int i=0;i < 128; i++){
 			freePorts[i] = 1;
 		}
-
 		portLock.release();
+		queues = new SynchList[MailMessage.portLimit];
+		for (int i=0; i<queues.length; i++)
+			queues[i] = new SynchList();
+
+		Runnable receiveHandler = new Runnable() {
+			public void run() { receiveInterrupt(); }
+		};
+		Runnable sendHandler = new Runnable() {
+			public void run() { sendInterrupt(); }
+		};
+		Machine.networkLink().setInterruptHandlers(receiveHandler,
+				sendHandler);
+
+		KThread t = new KThread(new Runnable() {
+			public void run() { packetDelivery(); }
+		});
+
+		t.fork();
 	}
 
 	public void rememberSocket(Sockets sckt, int portnum){
@@ -59,9 +75,30 @@ public class TransportLayer extends PostOffice {
 		messageSent.P();
 		sendLock.release();
 	}
+	private void packetDelivery() {
+		while (true) {
+			messageReceived.P();
+
+			Packet p = Machine.networkLink().receive();
+
+			MailMessage mail;
+
+			try {
+				mail = new MailMessage(p);
+			}
+			catch (MalformedPacketException e) {
+				continue;
+			}
+
+			// atomically add message to the mailbox and wake a waiting thread
+			queues[mail.dstPort].add(mail);
+		}
+	}
 
 	private void sendInterrupt() {
 		messageSent.V();
 	}
-
+	private void receiveInterrupt() {
+		messageReceived.V();
+	}
 }

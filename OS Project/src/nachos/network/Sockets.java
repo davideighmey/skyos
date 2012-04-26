@@ -5,6 +5,9 @@ import nachos.machine.*;
 //can be used in low level commands such as read() and write()
 	
 public class Sockets extends OpenFile {
+	public enum socketStates{LISTENING, SYNSENT, SYNRECEIVED, ESTABLISHED, 
+		FINWAIT1, FINWAIT2, CLOSEWAIT, LASTACK, TIMEWAIT, CLOSED }
+	
 	/****************************************************************
 	 *  Socket: a data structure containing connection information  *
 	 *	Connection identifying information:                         *
@@ -17,7 +20,7 @@ public class Sockets extends OpenFile {
 	int destID;
 	int hostPort;
 	int hostID;
-	
+	socketStates states;
 	//The receiver advertised window(adwn) is the buffer size sent in each ACK
 	Window adwn;	
 	//Congestion Window(cwnd) controls the number of packets a TCP flow may have in the network in a given time 
@@ -26,14 +29,16 @@ public class Sockets extends OpenFile {
 
 	
 	//attempt to bind the socket to the selected port
-	//int bindSocket(int port){
+	int bindSocket(int port){
+		states = socketStates.LISTENING;
+		return -1;
+	}
 
-		//return -1;
-	//}
-
-	public Sockets(int _destPort) {
+	public Sockets(int _hostPort) {
 		// TODO Auto-generated constructor stub
-		this.destPort = _destPort;
+		this.hostID = Machine.networkLink().getLinkAddress();
+		this.hostPort = _hostPort;
+		states = socketStates.CLOSED;
 	}
 
 	/**
@@ -75,7 +80,7 @@ public class Sockets extends OpenFile {
 		//have to send a syn packet
 		try {
 			//not a syn packet. Need to change the mail system to handle it
-			TCPpackets a = new TCPpackets(_destID,_destPort,hostID,hostPort, new byte[0]);
+			TCPpackets a = new TCPpackets(destID,destPort,hostID,hostPort, new byte[0],true,false,false,false,0,0);
 		} catch (MalformedPacketException e) {
 			// TODO Auto-generated catch block
 			System.out.println("Malformed Packet has been detected");
