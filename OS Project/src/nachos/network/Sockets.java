@@ -1,9 +1,12 @@
 package nachos.network;
 
+import java.util.LinkedList;
+
 import nachos.machine.*;
 //Socket Descriptor: similar to a file descriptor, but linked to a socket instead of a file, 
 //can be used in low level commands such as read() and write()
 import nachos.threads.Alarm;
+import nachos.threads.Lock;
 	
 public class Sockets extends OpenFile {
 	public enum socketStates{LISTENING, SYNSENT, SYNRECEIVED, ESTABLISHED, 
@@ -17,17 +20,22 @@ public class Sockets extends OpenFile {
 	 *		- source IP address										*
 	 *		- source port number									*
 	 ****************************************************************/
-	int destPort;
-	int destID;
-	int hostPort;
-	int hostID;
-	socketStates states;
+	public int destPort;
+	public int destID;
+	public int hostPort;
+	public int hostID;
+	public int netID;
+	public TCPpackets[] writeBuffer;
+	public TCPpackets[] readBuffer;
+	public  Lock sendLock;
+	public  Lock recieveLock;
+	public socketStates states;
 	//The receiver advertised window(adwn) is the buffer size sent in each ACK
-	Window adwn;	
+	public Window adwn;	
 	//Congestion Window(cwnd) controls the number of packets a TCP flow may have in the network in a given time 
-	Window cwnd;
+	public Window cwnd;
 	//need to make something to hold the message
-
+	
 	
 	//attempt to bind the socket to the selected port
 	int bindSocket(int port){
@@ -37,8 +45,22 @@ public class Sockets extends OpenFile {
 
 	public Sockets(int _hostPort) {
 		// TODO Auto-generated constructor stub
+		//Connection info
 		this.hostID = Machine.networkLink().getLinkAddress();
 		this.hostPort = _hostPort;
+		netID = 0;
+		destPort = -1;
+		destID = -1;
+		//Thread control
+		sendLock = new Lock();
+		recieveLock = new Lock();
+		//Setting up window
+		adwn = new Window();
+		cwnd = new Window();
+		//Setting up buffer
+		writeBuffer = new TCPpackets[100];
+		readBuffer = new TCPpackets[100];
+		
 		states = socketStates.CLOSED;
 	}
 
@@ -47,13 +69,15 @@ public class Sockets extends OpenFile {
 	 * of bytes successfully read. If no bytes were read because of a fatal
 	 * error, returns -1
 	 *
-	 * @param	pos	the offset in the file at which to start reading.
 	 * @param	buf	the buffer to store the bytes in.
 	 * @param	offset	the offset in the buffer to start storing bytes.
 	 * @param	length	the number of bytes to read.
 	 * @return	the actual number of bytes successfully read, or -1 on failure.
 	 */   
-	public int read(int pos, byte[] buf, int offset, int length) {
+	public int read(byte[] buf, int offset, int length) {
+	
+		
+		
 		return -1;
 	}
 
@@ -69,8 +93,17 @@ public class Sockets extends OpenFile {
 	 * @return	the actual number of bytes successfully written, or -1 on
 	 *		failure.
 	 */    
-	public int write(int pos, byte[] buf, int offset, int length) {
-		return -1;
+	public int write(byte[] buf, int offset, int length) {
+		  //check that status of this socket before continuing
+        int bytesWriten = 0;
+        if(states == socketStates.ESTABLISHED){
+                for (bytesWriten = offset; bytesWriten < length - offset; bytesWriten++) {
+                        
+                	//readBuffer //.add(buf[bytesWriten]);
+                }
+                bytesWriten -= offset;
+        }
+        return bytesWriten;
 	}
 
 	//Try to connect from the host to the dest
@@ -80,7 +113,7 @@ public class Sockets extends OpenFile {
 
 		//have to send a syn packet
 		try {
-			TCPpackets syn = new TCPpackets(destID,destPort,hostID,hostPort, new byte[0],true,false,false,false,0,0);
+			TCPpackets syn = new TCPpackets(destID,destPort,hostID,hostPort, new byte[0],true,false,false,false,0,0,netID);
 			states = socketStates.SYNSENT;
 		} catch (MalformedPacketException e) {
 			// TODO Auto-generated catch block
@@ -99,8 +132,7 @@ public class Sockets extends OpenFile {
 			}
 			count++;
 		}
-		if(states == socketStates.SYNRECEIVED);
-			
+		//if(states == socketStates.SYNRECEIVED)
 		//check if sent
 		//keep sending until either timeout is reached or connection 
 		//if  received an ack, connection is established, return with a value saying connected

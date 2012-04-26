@@ -4,6 +4,7 @@ import nachos.machine.MalformedPacketException;
 import nachos.machine.Packet;
 
 public class TCPpackets {
+	
 	public TCPpackets(int _dstLink, int _dstPort, int _srcLink, int _srcPort,
 			byte[] _contents) throws MalformedPacketException {
 
@@ -11,10 +12,11 @@ public class TCPpackets {
 
 		// TODO Auto-generated constructor stub
 	}
-	//Total 64 bits available for header. 40 in use.
+	//Total 64 bits available for header. 56 in use.
 	/***************************************************************
 	 * |8 bit dest port|8 bit host port|4 bit SYN|4 bit ACK| 
 	 * |4 bit DATA| 4 bit FIN|8 bit window size|8 bit packetID
+	 * |8 bit network ID|
 	 */
 
 	/**
@@ -34,12 +36,13 @@ public class TCPpackets {
 	 */
 
 	public TCPpackets(int _dstLink, int _dstPort, int _srcLink, int _srcPort,
-			byte[] _contents, boolean _syn, boolean _ack, boolean _data, boolean _fin, int _packetID, int _adwn) throws MalformedPacketException {
+			byte[] _contents, boolean _syn, boolean _ack, boolean _data, boolean _fin, int _packetID, int _adwn, int _netID) throws MalformedPacketException {
 
 		if (_dstPort < 0 || _dstPort >= portLimit ||
 				_srcPort < 0 || _srcPort >= portLimit ||
 				_contents.length > maxContentsLength||
-				_packetID < 0||_adwn < 0 ||_adwn > 16)
+				_packetID < 0||_adwn < 0 ||_adwn > 16||
+				_netID < 0)
 			throw new MalformedPacketException();
 		this.dstPort = (byte) _dstPort;
 		this.srcPort = (byte) _srcPort;
@@ -50,6 +53,7 @@ public class TCPpackets {
 		this.adwn = _adwn;
 		this.packetID = _packetID;
 		this.contents = _contents;
+		this.netID = _netID;
 		byte[] packetContents = new byte[headerLength + contents.length];
 		//
 		packetContents[0] = (byte) dstPort;
@@ -69,7 +73,8 @@ public class TCPpackets {
 		if(fin)
 			packetContents[3] = (byte) (packetContents[2]^0x8);
 		packetContents[3] = (byte) packetID;
-
+		packetContents[5] = (byte) netID;
+		
 		System.arraycopy(contents, 0, packetContents, headerLength,
 				contents.length);
 
@@ -88,12 +93,14 @@ public class TCPpackets {
 		if (packet.contents.length < headerLength ||
 				packet.contents[0] < 0 || packet.contents[0] >= portLimit ||
 				packet.contents[1] < 0 || packet.contents[1] >= portLimit||
-				packet.contents[3] < 0||packet.contents[4] < 0 ||packet.contents[4]> 16)
+				packet.contents[3] < 0||packet.contents[4] < 0 ||packet.contents[4]> 16||
+				packet.contents[5]<0)
 			throw new MalformedPacketException();
 
 		dstPort = packet.contents[0];
 		srcPort = packet.contents[1];
 		packetID  = packet.contents[3];
+		netID = packet.contents[5];
 		syn = ((packet.contents[2] & 0x1) == 0x1);
 		fin = ((packet.contents[2] & 0x2) == 0x2);
 		ack = ((packet.contents[2] & 0x4) == 0x4);
@@ -124,7 +131,7 @@ public class TCPpackets {
 	 * <tr><td>1</td><td>1</td><td>source port</td></tr>
 	 * 	</table>
 	 */
-	public static final int headerLength = 2;
+	public static final int headerLength = 6;
 
 	/** Maximum payload (real data) that can be included in a single mesage. */
 	public static final int maxContentsLength =
@@ -144,5 +151,6 @@ public class TCPpackets {
 	public boolean ack;
 	public boolean data;
 	public boolean fin;
+	public int netID;
 
 }
