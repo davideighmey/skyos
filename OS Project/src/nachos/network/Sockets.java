@@ -27,13 +27,11 @@ public class Sockets extends OpenFile {
 	public int netID;
 	public TCPpackets[] writeBuffer;
 	public TCPpackets[] readBuffer;
-	public  Lock sendLock;
-	public  Lock recieveLock;
 	public socketStates states;
 	//The receiver advertised window(adwn) is the buffer size sent in each ACK
-	public Window adwn;	
-	//Congestion Window(cwnd) controls the number of packets a TCP flow may have in the network in a given time 
-	public Window cwnd;
+	public final int adwn = 16;	
+	//Congestion Window(cwnd) controls the number of packets a TCP flow may have in the network in a given time **Credit Count**
+	public int cwnd;
 	//need to make something to hold the message
 	
 	
@@ -51,16 +49,10 @@ public class Sockets extends OpenFile {
 		netID = 0;
 		destPort = -1;
 		destID = -1;
-		//Thread control
-		sendLock = new Lock();
-		recieveLock = new Lock();
-		//Setting up window
-		adwn = new Window();
-		cwnd = new Window();
 		//Setting up buffer
 		writeBuffer = new TCPpackets[100];
 		readBuffer = new TCPpackets[16];
-		
+		//Setting the state of the socket
 		states = socketStates.CLOSED;
 	}
 
@@ -96,6 +88,7 @@ public class Sockets extends OpenFile {
 	public int write(byte[] buf, int offset, int length) {
 		  //check that status of this socket before continuing
         int bytesWriten = 0;
+        int credit = 0;
         if(states == socketStates.ESTABLISHED){
                 for (bytesWriten = offset; bytesWriten < length - offset; bytesWriten++) {
                         
@@ -106,9 +99,4 @@ public class Sockets extends OpenFile {
         return bytesWriten;
 	}
 
-	
-	//attempt to close the socket
-	public void closeSocket(){
-
-	}
 }
