@@ -93,10 +93,10 @@ public class Sockets extends OpenFile {
 		LinkedList<Byte> readyToWrite = new LinkedList<Byte>();
 
 		if(states == socketStates.ESTABLISHED){
-			for (bytesWriten = offset; bytesWriten < length - offset; bytesWriten++) {
+			for (bytesWriten = 0; bytesWriten < length; bytesWriten += offset) {
 				readyToWrite.add(buf[bytesWriten]);
 			}
-			bytesWriten -= offset;
+			//bytesWriten -= offset;
 			sendWrite(readyToWrite);
 		}
 		return bytesWriten;
