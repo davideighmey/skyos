@@ -89,9 +89,11 @@ public class TransportLayer  {
 		
 	}
 	
+	Alarm sendagain = new Alarm();
+	
 	public void timeOut(){
 		while(true){
-
+			sendagain.waitUntil(reTransmission);
 		}
 	}
 
@@ -198,11 +200,7 @@ public class TransportLayer  {
 		int count = 0;
 		Alarm alarm = new Alarm();
 		while(sckt.states== socketStates.SYNSENT && count < TransportLayer.maxRetry){
-			try {
-				alarm.wait(TransportLayer.timeoutLength);
-			} catch (InterruptedException e) {
-				return false;
-			}
+			alarm.waitUntil(TransportLayer.timeoutLength);
 			count++;
 		}
 		//if(states == socketStates.SYNRECEIVED)
@@ -216,7 +214,7 @@ public class TransportLayer  {
 	//Try to accept the connection from the sender
 	public int acceptConnection(int _hostID, Sockets sckt){
 		sckt.hostID = _hostID;	
-
+		
 		return -1;
 	}
 
