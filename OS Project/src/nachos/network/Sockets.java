@@ -92,15 +92,17 @@ public class Sockets extends OpenFile {
 		LinkedList<Byte> readyToWrite = new LinkedList<Byte>();
 
 		if(states == socketStates.ESTABLISHED){
+			// go by offset sized blocks
 			for (bytesWriten = 0; bytesWriten < length; bytesWriten += offset) {
 				readyToWrite.add(buf[bytesWriten]);
 			}
 			//bytesWriten -= offset;
 			sendWrite(readyToWrite);
 		}
+		// return how many bytes were written
 		return bytesWriten;
 	}
-	public void thisDoNothing(){}
+	
 	public void sendWrite(LinkedList<Byte> writeMe){
 		byte[] array;
 		TCPpackets pckt;
