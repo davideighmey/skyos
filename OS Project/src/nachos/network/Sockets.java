@@ -26,6 +26,9 @@ public class Sockets extends OpenFile {
 	public int hostPort;
 	public int hostID;
 	public int packetID;
+	public LinkedList<Packet> receivedPackets;
+	public LinkedList<Packet> unacknowledgedPackets;
+	public LinkedList<Integer> receivedAcks;
 	public Queue<TCPpackets> sBuffer; // send buffer
 	public Queue<TCPpackets>  rBuffer; // receive buffer
 	public socketStates states;
@@ -34,6 +37,7 @@ public class Sockets extends OpenFile {
 	//Congestion Window(cwnd) controls the number of packets a TCP flow may have in the network in a given time **Credit Count**
 	public int cwnd;
 	//need to make something to hold the message
+	public Lock socketLock;
 
 	public Sockets(int _hostPort) {
 		//Connection info
@@ -42,15 +46,24 @@ public class Sockets extends OpenFile {
 		destPort = -1;
 		destID = -1;
 		packetID = 0;
+		
 		//Setting up buffer
 		sBuffer = new LinkedList<TCPpackets>() ;
 		rBuffer = new LinkedList<TCPpackets>();
-
+		
+		//Setting up List
+		receivedPackets = new LinkedList<Packet>();
+		unacknowledgedPackets = new LinkedList<Packet>();
+		receivedAcks = new LinkedList<Integer>();
+		
 		//Setting credit count of socket
 		cwnd = adwn;
 
 		//Setting the state of the socket
 		states = socketStates.CLOSED;
+		
+		//setting up lock
+		socketLock = new Lock();
 	}
 	public int increaseCount(){
 		return packetID++;
@@ -120,6 +133,21 @@ public class Sockets extends OpenFile {
 	}
 	public void send(TCPpackets pckt){
 		//if(states == socketStates.CLOSED)
-	
+
 	}
+	public void sendSYN(){
+		TCPpackets syn;
+		try {
+			syn = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,false,false,false,increaseCount());
+		} catch (MalformedPacketException e) {}
+
+	}
+	public void sendPacket(Packet p)
+	{
+		socketLock.acquire();
+		unacknowledgedPackets.add(p);
+		//NetKernel.transport.addMessage(p);
+		socketLock.release();
+	}
+
 }
