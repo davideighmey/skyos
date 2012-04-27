@@ -36,7 +36,6 @@ public class Sockets extends OpenFile {
 	//need to make something to hold the message
 
 	public Sockets(int _hostPort) {
-		// TODO Auto-generated constructor stub
 		//Connection info
 		this.hostID = Machine.networkLink().getLinkAddress();
 		this.hostPort = _hostPort;

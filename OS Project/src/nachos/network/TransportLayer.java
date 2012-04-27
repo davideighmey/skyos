@@ -49,8 +49,6 @@ public class TransportLayer  {
 		Machine.networkLink().setInterruptHandlers(receiveHandler,
 				sendHandler);
 
-
-
 		KThread RecieveGuy = new KThread(new Runnable() {
 			public void run() {packetReceive(); }
 		});
@@ -69,7 +67,6 @@ public class TransportLayer  {
 	}
 
 	public void packetReceive(){
-		
 		while(true){
 			messageReceived.P();
 			Packet p = Machine.networkLink().receive();
@@ -84,13 +81,11 @@ public class TransportLayer  {
 			
 			// atomically add message to the mailbox and wake a waiting thread
 			//queues[mail.dstPort].add(mail);
+			//Need to be kept somewhere on a type of list or something...
 		}
-
-		
 	}
 	
 	Alarm sendagain = new Alarm();
-	
 	public void timeOut(){
 		while(true){
 			sendagain.waitUntil(reTransmission);
@@ -99,7 +94,7 @@ public class TransportLayer  {
 
 	public void packetSend(){
 		while(true){
-
+			
 		}
 
 	}
@@ -190,16 +185,16 @@ public class TransportLayer  {
 		try {
 			TCPpackets syn = new TCPpackets(sckt.destID,sckt.destPort,sckt.hostID,sckt.hostPort, new byte[0],true,false,false,false,0);
 			sckt.states = socketStates.SYNSENT;
-			
 		} catch (MalformedPacketException e) {
 			// TODO Auto-generated catch block
 			System.out.println("Malformed Packet has been detected");
 			//e.printStackTrace();
 			return false;
 		}
+		
 		int count = 0;
 		Alarm alarm = new Alarm();
-		while(sckt.states== socketStates.SYNSENT && count < TransportLayer.maxRetry){
+		while(sckt.states == socketStates.SYNSENT && count < TransportLayer.maxRetry){
 			alarm.waitUntil(TransportLayer.timeoutLength);
 			count++;
 		}
@@ -214,6 +209,8 @@ public class TransportLayer  {
 	//Try to accept the connection from the sender
 	public int acceptConnection(int _hostID, Sockets sckt){
 		sckt.hostID = _hostID;	
+		
+		
 		
 		return -1;
 	}
@@ -241,11 +238,7 @@ public class TransportLayer  {
 		int count = 0;
 		Alarm alarm = new Alarm();
 		while(sckt.states== socketStates.SYNSENT && count < TransportLayer.maxRetry){
-			try {
-				alarm.wait(TransportLayer.timeoutLength);
-			} catch (InterruptedException e) {
-				return false;
-			}
+			alarm.waitUntil(TransportLayer.timeoutLength);
 			count++;
 		}
 		//if(states == socketStates.SYNRECEIVED)
