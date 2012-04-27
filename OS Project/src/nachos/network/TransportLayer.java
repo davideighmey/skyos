@@ -14,23 +14,28 @@ public class TransportLayer  {
 	public static int maxRetry = 3;
 	//Keep a track of ports and sockets that has been used
 	public int[] freePorts = new int[128];
-	
+
 	private SynchList[] queues;
 	private Semaphore messageReceived;	// V'd when a message can be dequeued
 	private Semaphore messageSent;	// V'd when a message can be queued
 	private Lock sendLock;
 	private Lock portLock = new Lock();
 	public Hashtable<Integer, LinkedList<Sockets>> activeSockets;
+	
+	Sockets ReadSocket;
+	Sockets WriteSocket;
+	final private int MAXWINDOWSIZE = 16;
+	private int reTransmission = 20000;//20,000 clock ticks.
 
 	public TransportLayer(){
 		messageReceived = new Semaphore(0);
 		messageSent = new Semaphore(0);
 		sendLock = new Lock();
-		
+
 		for(int i=0;i < 128; i++){
 			freePorts[i] = 1;
 		}
-		
+
 		queues = new SynchList[TCPpackets.portLimit];
 		for (int i=0; i<queues.length; i++)
 			queues[i] = new SynchList();
@@ -44,27 +49,87 @@ public class TransportLayer  {
 		Machine.networkLink().setInterruptHandlers(receiveHandler,
 				sendHandler);
 
-		KThread t = new KThread(new Runnable() {
-			public void run() { packetDelivery(); }
+
+
+		KThread RecieveGuy = new KThread(new Runnable() {
+			public void run() {packetReceive(); }
 		});
 
-		t.fork();
+		KThread SendGuy = new KThread(new Runnable(){
+			public void run() {packetSend();}
+		});
+
+		KThread TimeOutGuy = new KThread(new Runnable(){
+			public void run() {timeOut();}
+		});
+
+		RecieveGuy.fork();
+		SendGuy.fork();
+		TimeOutGuy.fork();
 	}
 
-	public void rememberSocket(Sockets sckt, int portnum){
+	public void packetReceive(){
+		
+		while(true){
+			messageReceived.P();
+			Packet p = Machine.networkLink().receive();
+			TCPpackets mail;
+			
+			try{
+				mail = new TCPpackets(p);
+			}
+			catch (MalformedPacketException e) {
+				continue;
+			}
+			
+			// atomically add message to the mailbox and wake a waiting thread
+			//queues[mail.dstPort].add(mail);
+		}
+
+		
+	}
+	
+	public void timeOut(){
+		while(true){
+
+		}
+	}
+
+	public void packetSend(){
+		while(true){
+
+		}
 
 	}
+
+	//Ports 0 to 127
+	public int findPort(){
+		int PORT = 0;
+		while(getFreePort(PORT) == false){
+			PORT++;
+			if(PORT >= 128){
+				PORT = -1;
+			}
+		}
+		return PORT;
+	}
+	
+	public boolean getFreePort(int port){
+		if(freePorts[port] == 1){
+			return true;	
+		}
+		return false;
+	}
+
+	
+	public void rememberSocket(LinkedList<Sockets> scktList, int portnum){
+		activeSockets.put(portnum, scktList); //Will need to pass along a list of the sockets beting used at that port
+	}
+
 	public TCPpackets receives(int port) {
 		Lib.assertTrue(port >= 0 && port < queues.length);
 		TCPpackets mail = (TCPpackets) queues[port].removeFirst();
-
 		return mail;
-	}
-	public boolean getFreePort(int port){
-		if(freePorts[port] == 1){
-			return true;
-		}
-		return false;
 	}
 
 	public void send(TCPpackets mail) {
@@ -73,7 +138,10 @@ public class TransportLayer  {
 		messageSent.P();
 		sendLock.release();
 	}
-	private void packetDelivery() {
+
+
+
+/*	private void packetDelivery() {
 		while (true) {
 			messageReceived.P();
 
@@ -91,7 +159,7 @@ public class TransportLayer  {
 			// atomically add message to the mailbox and wake a waiting thread
 			queues[mail.dstPort].add(mail);
 		}
-	}
+	}*/
 
 	private void sendInterrupt() {
 		messageSent.V();
@@ -109,17 +177,18 @@ public class TransportLayer  {
 	 * @param	length	the number of bytes to read.
 	 * @return	the actual number of bytes successfully read, or -1 on failure.
 	 */   
-	
+
 
 	//Try to connect from the host to the dest
 	public boolean createConnection(int _destID, int _destPort, Sockets sckt){
 		sckt.destID = _destID;
 		sckt.destPort = _destPort;
-
+		
 		//have to send a syn packet
 		try {
 			TCPpackets syn = new TCPpackets(sckt.destID,sckt.destPort,sckt.hostID,sckt.hostPort, new byte[0],true,false,false,false,0);
 			sckt.states = socketStates.SYNSENT;
+			
 		} catch (MalformedPacketException e) {
 			// TODO Auto-generated catch block
 			System.out.println("Malformed Packet has been detected");
@@ -150,12 +219,12 @@ public class TransportLayer  {
 
 		return -1;
 	}
-	
-	
+
+
 	//attempt to bind the socket to the selected port
 	int bindSocket(int port){
 		//states = socketStates.LISTENING;
 		return -1;
 	}
-	
+
 }
