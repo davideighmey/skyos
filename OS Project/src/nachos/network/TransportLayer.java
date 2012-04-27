@@ -93,10 +93,7 @@ public class TransportLayer  {
 	}
 
 	public void packetSend(){
-		while(true){
-			
-		}
-
+		
 	}
 
 	//Ports 0 to 127
@@ -127,6 +124,9 @@ public class TransportLayer  {
 		Lib.assertTrue(port >= 0 && port < queues.length);
 		TCPpackets mail = (TCPpackets) queues[port].removeFirst();
 		return mail;
+	}
+	public void send() {
+	
 	}
 
 	public void send(TCPpackets mail) {
