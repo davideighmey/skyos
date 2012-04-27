@@ -226,5 +226,36 @@ public class TransportLayer  {
 		//states = socketStates.LISTENING;
 		return -1;
 	}
+	public boolean closeConnection(int _destID, int _destPort, Sockets sckt){
+		sckt.destID = _destID;
+		sckt.destPort = _destPort;
+
+		//have to send a fin packet
+		try {
+			TCPpackets fin = new TCPpackets(sckt.destID,sckt.destPort,sckt.hostID,sckt.hostPort, new byte[0],false,false,false,true,0);
+			sckt.states = socketStates.SYNSENT;
+		} catch (MalformedPacketException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Malformed Packet has been detected");
+			//e.printStackTrace();
+			return false;
+		}
+		int count = 0;
+		Alarm alarm = new Alarm();
+		while(sckt.states== socketStates.SYNSENT && count < TransportLayer.maxRetry){
+			try {
+				alarm.wait(TransportLayer.timeoutLength);
+			} catch (InterruptedException e) {
+				return false;
+			}
+			count++;
+		}
+		//if(states == socketStates.SYNRECEIVED)
+		//check if sent
+		//keep sending until either timeout is reached or connection 
+		//if  received an ack, connection is established, return with a value saying connected
+		//else return -1
+		return false;
+	}
 
 }
