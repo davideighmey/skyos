@@ -32,13 +32,10 @@ public class NetProcess extends UserProcess {
 		}
 		return -1;
 	}
-
-		/*
-		 * Depending on which socket you want to use,
-		 */
 	TransportLayer TCP = new TransportLayer();
 	private int connect(int destID, int destPort){
 		int port = TCP.findPort();
+		int RegSocket = 0;
 		if(port == -1){
 			return -1;
 		}
@@ -50,16 +47,18 @@ public class NetProcess extends UserProcess {
 		if(TCP.createConnection(destID, destPort, socket) == false){
 			return -1;
 		}
-		int RegSocket = putOntoFileDiscriptorTable(socket);
+		else{
+			RegSocket = putOntoFileDiscriptorTable(socket);
+		}
 		//attempt to create a connection with the socket. 
-		
+
 		//if any errors return -1
 		return RegSocket;
 		//if successful, grab the socket descriptor and return it 
 	}
 
 	private int accept(int port){
-		Sockets socket = new Sockets(port);
+		
 		//attempt to create new socket on the port
 		//attempt to accept the connection with teh socket
 		//if any errors returns -1
