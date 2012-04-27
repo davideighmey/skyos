@@ -37,7 +37,6 @@ public class NetProcess extends UserProcess {
 		 * Depending on which socket you want to use,
 		 */
 	TransportLayer TCP = new TransportLayer();
-	
 	private int connect(int destID, int destPort){
 		int port = TCP.findPort();
 		if(port == -1){
@@ -48,10 +47,12 @@ public class NetProcess extends UserProcess {
 		if(socket.hostID != Machine.networkLink().getLinkAddress()){
 			return -1;
 		}
-
+		if(TCP.createConnection(destID, destPort, socket) == false){
+			return -1;
+		}
 		int RegSocket = putOntoFileDiscriptorTable(socket);
 		//attempt to create a connection with the socket. 
-		TCP.createConnection(destID, destPort, socket);
+		
 		//if any errors return -1
 		return RegSocket;
 		//if successful, grab the socket descriptor and return it 
