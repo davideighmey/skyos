@@ -53,12 +53,12 @@ public class PostOffice {
      *
      * @return	the message received.
      */
-    public MailMessage receive(int port) {
+    public TCPpackets receive(int port) {
 	Lib.assertTrue(port >= 0 && port < queues.length);
 
 	Lib.debug(dbgNet, "waiting for mail on port " + port);
 
-	MailMessage mail = (MailMessage) queues[port].removeFirst();
+	TCPpackets mail = (TCPpackets) queues[port].removeFirst();
 
 	if (Lib.test(dbgNet))
 	    System.out.println("got mail on port " + port + ": " + mail);
