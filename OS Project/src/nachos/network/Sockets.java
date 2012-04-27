@@ -101,6 +101,7 @@ public class Sockets extends OpenFile {
 		}
 		return bytesWriten;
 	}
+	public void thisDoNothing(){}
 	public void sendWrite(LinkedList<Byte> writeMe){
 		byte[] array;
 		TCPpackets pckt;
