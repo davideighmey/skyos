@@ -813,7 +813,7 @@ public class UserProcess {
 	/** The program being run by this process. */
 	protected Coff coff;
 
-	private ArrayList<OpenFile> descriptorTable = new ArrayList<OpenFile>(16);
+	public ArrayList<OpenFile> descriptorTable = new ArrayList<OpenFile>(16);
 
 	/** This process's page table. */
 	protected TranslationEntry[] pageTable;
