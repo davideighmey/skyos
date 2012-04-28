@@ -23,8 +23,8 @@ public class NetKernel extends UserKernel {
 	 */
 	public void initialize(String[] args) {
 		super.initialize(args);
-	//	transport = new TransportLayer();
-		postOffice = new PostOffice();
+		transport = new TransportLayer();
+		//postOffice = new PostOffice();
 	}
 
 	/**
@@ -133,8 +133,8 @@ public class NetKernel extends UserKernel {
 
 	private void pingServer() {
 		while (true) {
-			TCPpackets ping = postOffice.receive(1);
-			//TCPpackets ping = transport.receives(1);
+			//TCPpackets ping = postOffice.receive(1);
+			TCPpackets ping = transport.receives(1);
 			TCPpackets ack;
 
 			try {
@@ -169,7 +169,7 @@ public class NetKernel extends UserKernel {
 		alarm.waitUntil(20000);
 	}
 
-	private PostOffice postOffice;
+	//private PostOffice postOffice;
 	public static TransportLayer transport;
 	// dummy variables to make javac smarter
 	private static NetProcess dummy1 = null;
