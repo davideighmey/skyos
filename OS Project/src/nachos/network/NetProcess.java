@@ -32,32 +32,32 @@ public class NetProcess extends UserProcess {
 		}
 		return -1;
 	}
-	TransportLayer TCP = new TransportLayer();
+	
 	private int connect(int destID, int destPort){
-		int port = TCP.findPort();
-		int RegSocket = 0;
-		if(port == -1){
+		if (destPort < 0 || destPort > TCPpackets.portLimit){
+			return -1;
+		}
+		TransportLayer TCP = new TransportLayer();
+		int thisPort = TCP.findUnusedPort();
+		if(thisPort == -1){
 			return -1;
 		}
 		//attempt to create new socket on the port
-		Sockets socket = new Sockets(port);
-		if(socket.hostID != Machine.networkLink().getLinkAddress()){
-			return -1;
-		}
+		Sockets socket = new Sockets(thisPort);
+		//attempt to create a connection with the socket. 
+		//if successful, grab the socket descriptor and return it 
 		if(TCP.createConnection(destID, destPort, socket) == false){
 			return -1;
 		}
-		else{
-			RegSocket = putOntoFileDiscriptorTable(socket);
-		}
-		//attempt to create a connection with the socket. 
-
-		//if any errors return -1
-		return RegSocket;
-		//if successful, grab the socket descriptor and return it 
+		
+		return putOntoFileDiscriptorTable(socket);
 	}
 
 	private int accept(int port){
+		if (port < 0 || port > TCPpackets.portLimit){
+			return -1;
+		}
+		Sockets SockemBoppers = new Sockets(port);
 		
 		//attempt to create new socket on the port
 		//attempt to accept the connection with teh socket
