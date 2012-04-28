@@ -2,6 +2,7 @@ package nachos.network;
 
 import java.util.Hashtable;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 
 import nachos.machine.*;
 import nachos.network.Sockets.socketStates;
@@ -14,61 +15,63 @@ public class TransportLayer  {
 	public static int maxRetry = 3;
 	//Keep a track of ports and sockets that has been used
 	public int[] freePorts = new int[128];
-
+	LinkedList<TCPpackets> messageQueue ;
 	private SynchList[] queues;
 	private Semaphore messageReceived;	// V'd when a message can be dequeued
-	private Semaphore messageSent;	// V'd when a message can be queued
+	private Semaphore messageSent;	// V'd when a message can be queue
 	private Lock sendLock;
+	private Lock sendLock2;
 	private Lock portLock = new Lock();
-	public Hashtable<Integer, LinkedList<Sockets>> activeSockets;
+	public Condition[] packetSignal;
+	public Condition sendPacketSignal;
+	public Hashtable<Integer, Sockets> activeSockets;
+	LinkedList<Sockets>[] waitingSockets; 		//waiting for acceptance
 	public Hashtable<Integer, TCPpackets> RecievePacketTable;
-	
-	
+
+
 	Sockets ReadSocket;
 	Sockets WriteSocket;
 	final private int MAXWINDOWSIZE = 16;
 	private int reTransmission = 20000;//20,000 clock ticks.
 
 	public TransportLayer(){
+		//Setting up semaphores
 		messageReceived = new Semaphore(0);
 		messageSent = new Semaphore(0);
+
+		//Setting up Locks
 		sendLock = new Lock();
+		sendLock2 = new Lock();
+		sendPacketSignal = new Condition(sendLock);
+
+		//Setting up Queues and tables
+		messageQueue = new LinkedList<TCPpackets>();
 		RecievePacketTable =  new Hashtable<Integer, TCPpackets>(128);
-		for(int i=0;i < 128; i++){
-			freePorts[i] = 1;
-		}
-		
 		queues = new SynchList[TCPpackets.portLimit];
 		for (int i=0; i<queues.length; i++)
 			queues[i] = new SynchList();
 
-		
-		Runnable receiveHandler = new Runnable() {
-			public void run() { receiveInterrupt(); }
-		};
-		Runnable sendHandler = new Runnable() {
-			public void run() { sendInterrupt(); }
-		};
-		Machine.networkLink().setInterruptHandlers(receiveHandler,
-				sendHandler);
+		//Setting up ports
+		for(int i=0;i < TCPpackets.portLimit; i++){
+			freePorts[i] = 1;
+			waitingSockets[i]=new LinkedList<Sockets>();
+		}
 
-		KThread RecieveGuy = new KThread(new Runnable() {
-			public void run() {packetReceive(); }
-		});
+		//Setting up Handlers
+		Runnable receiveHandler = new Runnable(){ public void run() { receiveInterrupt(); }};
+		Runnable sendHandler = new Runnable() { public void run() { sendInterrupt(); }};
+		Machine.networkLink().setInterruptHandlers(receiveHandler,sendHandler);
 
-		KThread SendGuy = new KThread(new Runnable(){
-			public void run() {packetSend();}
-		});
-
-		KThread TimeOutGuy = new KThread(new Runnable(){
-			public void run() {timeOut();}
-		});
+		//Setting up threads
+		KThread RecieveGuy = new KThread(new Runnable() { public void run() {packetReceive(); }});
+		KThread SendGuy = new KThread(new Runnable(){ public void run() {packetSend();}});
+		KThread TimeOutGuy = new KThread(new Runnable(){ public void run() {timeOut();}});
 
 		RecieveGuy.fork();
 		SendGuy.fork();
-		//TimeOutGuy.fork();
+		TimeOutGuy.fork();
 	}
-	
+
 	/*
 	 * Recieves a packet and puts it onto the correct ports 
 	 */
@@ -77,7 +80,7 @@ public class TransportLayer  {
 			messageReceived.P();
 			Packet p = Machine.networkLink().receive();
 			TCPpackets mail;
-			
+
 			try{
 				mail = new TCPpackets(p);
 			}
@@ -89,27 +92,50 @@ public class TransportLayer  {
 			//Need to be kept somewhere on a type of list or something...
 		}
 	}
-	
-	Alarm sendagain = new Alarm();
+
+	//Alarm sendagain = new Alarm();
+
 	public void timeOut(){
 		while(true){
 			//sendagain.waitUntil(reTransmission);
+			NetKernel.alarm.waitUntil(reTransmission);
+			for(Entry<Integer, Sockets> e: activeSockets.entrySet()){
+				e.getValue().timeOutEvent();
+			}
 		}
 	}
 
 	public void packetSend(){
-		
+		sendLock.acquire();
+		while(true)
+		{
+
+			if (messageQueue.size() == 0)
+				sendPacketSignal.sleep();
+			TCPpackets sendPackets = messageQueue.removeFirst();
+			send(sendPackets);
+		}
+		//sendLock.release();
 	}
-	
+	/*
+	 * Add packets to the queue
+	 */
+	public void addMessage(TCPpackets mail)
+	{
+		sendLock.acquire();
+		messageQueue.add(mail);
+		sendPacketSignal.wakeAll();
+		sendLock.release();
+	}
 	/*
 	 * Retrieve a message on the specified port, waiting if necessary.
 	 */
-    public TCPpackets receive(int port) {
-	TCPpackets mail = (TCPpackets) queues[port].removeFirst();
-	return mail;
-    }
+	public TCPpackets receive(int port) {
+		TCPpackets mail = (TCPpackets) queues[port].removeFirst();
+		return mail;
+	}
 
-    
+
 	//Ports 0 to 127
 	public int findPort(){
 		int PORT = 0;
@@ -128,9 +154,9 @@ public class TransportLayer  {
 		return false;
 	}
 
-	
+
 	public void rememberSocket(LinkedList<Sockets> scktList, int portnum){
-		activeSockets.put(portnum, scktList); //Will need to pass along a list of the sockets beting used at that port
+		//activeSockets.put(portnum, scktList); //Will need to pass along a list of the sockets beting used at that port
 	}
 
 	public TCPpackets receives(int port) {
@@ -139,11 +165,11 @@ public class TransportLayer  {
 		return mail;
 	}
 	public void send() {
-	
+
 	}
 
 	public void send(TCPpackets mail) {
-		sendLock.acquire();
+		sendLock2.acquire();
 		Machine.networkLink().send(mail.packet);
 		messageSent.P();
 		sendLock.release();
@@ -171,26 +197,23 @@ public class TransportLayer  {
 	public boolean createConnection(int _destID, int _destPort, Sockets sckt){
 		sckt.destID = _destID;
 		sckt.destPort = _destPort;
-		
-		//have to send a syn packet
-		try {
-			TCPpackets syn = new TCPpackets(sckt.destID,sckt.destPort,sckt.hostID,sckt.hostPort, new byte[0],true,false,false,false,0);
+
+		if(sckt.states==socketStates.CLOSED){
+			//have to send a syn packet
+
+			//TCPpackets syn = new TCPpackets(sckt.destID,sckt.destPort,sckt.hostID,sckt.hostPort, new byte[0],true,false,false,false,0);
+			//send(syn);
+			sckt.sendSYN();
 			sckt.states = socketStates.SYNSENT;
-		} catch (MalformedPacketException e) {
-			// TODO Auto-generated catch block
-			System.out.println("Malformed Packet has been detected");
-			//e.printStackTrace();
-			return false;
+			activeSockets.put(sckt.getKey(), sckt);
+			int count = 0;
+			Alarm alarm = new Alarm();
+
+			while(sckt.states == socketStates.SYNSENT && count < TransportLayer.maxRetry){
+				alarm.waitUntil(TransportLayer.timeoutLength);
+				count++;
+			}
 		}
-		
-		int count = 0;
-		Alarm alarm = new Alarm();
-		
-		while(sckt.states == socketStates.SYNSENT && count < TransportLayer.maxRetry){
-			alarm.waitUntil(TransportLayer.timeoutLength);
-			count++;
-		}
-		
 		//if(states == socketStates.SYNRECEIVED)
 		//check if sent
 		//keep sending until either timeout is reached or connection 
@@ -202,9 +225,9 @@ public class TransportLayer  {
 	//Try to accept the connection from the sender
 	public int acceptConnection(int _hostID, Sockets sckt){
 		sckt.hostID = _hostID;	
-		
-		
-		
+
+
+
 		return -1;
 	}
 

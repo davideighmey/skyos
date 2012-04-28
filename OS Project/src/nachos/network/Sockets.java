@@ -26,8 +26,8 @@ public class Sockets extends OpenFile {
 	public int hostPort;
 	public int hostID;
 	public int packetID;
-	public LinkedList<Packet> receivedPackets;
-	public LinkedList<Packet> unacknowledgedPackets;
+	public LinkedList<TCPpackets> receivedPackets;
+	public LinkedList<TCPpackets> unacknowledgedPackets;
 	public LinkedList<Integer> receivedAcks;
 	public Queue<TCPpackets> sBuffer; // send buffer
 	public Queue<TCPpackets>  rBuffer; // receive buffer
@@ -52,8 +52,8 @@ public class Sockets extends OpenFile {
 		rBuffer = new LinkedList<TCPpackets>();
 		
 		//Setting up List
-		receivedPackets = new LinkedList<Packet>();
-		unacknowledgedPackets = new LinkedList<Packet>();
+		receivedPackets = new LinkedList<TCPpackets>();
+		unacknowledgedPackets = new LinkedList<TCPpackets>();
 		receivedAcks = new LinkedList<Integer>();
 		
 		//Setting credit count of socket
@@ -138,16 +138,43 @@ public class Sockets extends OpenFile {
 	public void sendSYN(){
 		TCPpackets syn;
 		try {
-			syn = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,false,false,false,increaseCount());
+			syn = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,false,false,false,increaseCount());
+			NetKernel.transport.send(syn);
 		} catch (MalformedPacketException e) {}
 
 	}
-	public void sendPacket(Packet p)
+	public void sendFIN(){
+		TCPpackets fin;
+		try {
+			fin = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,false,false,true,increaseCount());
+			NetKernel.transport.send(fin);
+		} catch (MalformedPacketException e) {}
+
+	}
+	public void sendACK(){
+		TCPpackets ack;
+		try {
+			ack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,true,false,false,increaseCount());
+			NetKernel.transport.send(ack);
+		} catch (MalformedPacketException e) {}
+
+	}
+	public void sendPacket(TCPpackets p)
 	{
 		socketLock.acquire();
 		unacknowledgedPackets.add(p);
-		//NetKernel.transport.addMessage(p);
+		NetKernel.transport.addMessage(p);
 		socketLock.release();
+	}
+	//This will uniquely id the socket....maybe
+	public int getKey(){
+		return destPort+destID+hostPort+hostID;
+		
+	}
+	public void timeOutEvent() {
+		// TODO Auto-generated method stub
+		//events to handle the different time outs.
+		//one for syn, fin and during regular packets transfer
 	}
 
 }
