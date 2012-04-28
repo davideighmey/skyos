@@ -1,5 +1,6 @@
 package nachos.network;
 
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.Map.Entry;
@@ -24,7 +25,7 @@ public class TransportLayer  {
 	private Lock portLock = new Lock();
 	public Condition[] packetSignal;
 	public Condition sendPacketSignal;
-	public Hashtable<Integer, Sockets> activeSockets;
+	public HashMap<Integer, Sockets> activeSockets;
 	LinkedList<Sockets>[] waitingSockets; 		//waiting for acceptance
 	public Hashtable<Integer, TCPpackets> RecievePacketTable;
 
@@ -47,6 +48,8 @@ public class TransportLayer  {
 		//Setting up Queues and tables
 		messageQueue = new LinkedList<TCPpackets>();
 		RecievePacketTable =  new Hashtable<Integer, TCPpackets>(128);
+		activeSockets = new HashMap<Integer,Sockets>();
+		waitingSockets  = new LinkedList[TCPpackets.portLimit];
 		queues = new SynchList[TCPpackets.portLimit];
 		for (int i=0; i<queues.length; i++)
 			queues[i] = new SynchList();
@@ -172,7 +175,7 @@ public class TransportLayer  {
 		sendLock2.acquire();
 		Machine.networkLink().send(mail.packet);
 		messageSent.P();
-		sendLock.release();
+		sendLock2.release();
 	}
 
 	private void sendInterrupt() {
