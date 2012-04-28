@@ -124,7 +124,7 @@ public class NetKernel extends UserKernel {
 
 		transport.send(ping);
 
-		TCPpackets ack = transport.receives(0);
+		TCPpackets ack = transport.receive(0);
 
 		long endTime = Machine.timer().getTime();
 
@@ -134,7 +134,7 @@ public class NetKernel extends UserKernel {
 	private void pingServer() {
 		while (true) {
 			//TCPpackets ping = postOffice.receive(1);
-			TCPpackets ping = transport.receives(1);
+			TCPpackets ping = transport.receive(1);
 			TCPpackets ack;
 
 			try {
