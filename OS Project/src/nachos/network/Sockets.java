@@ -4,13 +4,13 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import nachos.machine.*;
-//Socket Descriptor: similar to a file descriptor, but linked to a socket instead of a file, 
+//Socket Descriptor: similar to a file descriptor, but linked to a socket instead of a file,
 //can be used in low level commands such as read() and write()
 import nachos.threads.Alarm;
 import nachos.threads.Lock;
 
 public class Sockets extends OpenFile {
-        public enum socketStates{CLOSED, SYNSENT, SYNRECEIVED, ESTABLISHED, 
+        public enum socketStates{CLOSED, SYNSENT, SYNRECEIVED, ESTABLISHED,
                 FINWAIT1, FINWAIT2, CLOSEWAIT}
 
         /****************************************************************
@@ -26,14 +26,14 @@ public class Sockets extends OpenFile {
         public int hostPort;
         public int hostID;
         public int packetID;
-        public LinkedList<Packet> receivedPackets;
-        public LinkedList<Packet> unacknowledgedPackets;
+        public LinkedList<TCPpackets> receivedPackets;
+        public LinkedList<TCPpackets> unacknowledgedPackets;
         public LinkedList<Integer> receivedAcks;
         public Queue<TCPpackets> sBuffer; // send buffer
         public Queue<TCPpackets>  rBuffer; // receive buffer
         public socketStates states;
         //The receiver advertised window(adwn) is the buffer size sent in each ACK
-        public final int adwn = 16;     
+        public final int adwn = 16;    
         //Congestion Window(cwnd) controls the number of packets a TCP flow may have in the network in a given time **Credit Count**
         public int cwnd;
         //need to make something to hold the message
@@ -46,22 +46,22 @@ public class Sockets extends OpenFile {
                 destPort = -1;
                 destID = -1;
                 packetID = 0;
-                
+               
                 //Setting up buffer
                 sBuffer = new LinkedList<TCPpackets>() ;
                 rBuffer = new LinkedList<TCPpackets>();
-                
+               
                 //Setting up List
-                receivedPackets = new LinkedList<Packet>();
-                unacknowledgedPackets = new LinkedList<Packet>();
+                receivedPackets = new LinkedList<TCPpackets>();
+                unacknowledgedPackets = new LinkedList<TCPpackets>();
                 receivedAcks = new LinkedList<Integer>();
-                
+               
                 //Setting credit count of socket
                 cwnd = adwn;
 
                 //Setting the state of the socket
                 states = socketStates.CLOSED;
-                
+               
                 //setting up lock
                 socketLock = new Lock();
         }
@@ -77,7 +77,7 @@ public class Sockets extends OpenFile {
          * @param       offset  the offset in the buffer to start storing bytes.
          * @param       length  the number of bytes to read.
          * @return      the actual number of bytes successfully read, or -1 on failure.
-         */   
+         */  
         public int read(byte[] buf, int offset, int length) {
 
 
@@ -96,7 +96,7 @@ public class Sockets extends OpenFile {
          * @param       length  the number of bytes to write.
          * @return      the actual number of bytes successfully written, or -1 on
          *              failure.
-         * @throws MalformedPacketException 
+         * @throws MalformedPacketException
          */    
         public int write(byte[] buf, int offset, int length)  {
                 //check that status of this socket before continuing
@@ -115,7 +115,7 @@ public class Sockets extends OpenFile {
                 // return how many bytes were written
                 return bytesWriten;
         }
-        
+       
         public void sendWrite(LinkedList<Byte> writeMe){
                 byte[] array;
                 TCPpackets pckt;
@@ -126,7 +126,7 @@ public class Sockets extends OpenFile {
                                 try {
                                         pckt = new TCPpackets(destID,destPort,hostID,hostPort,array,false,false,false,false,increaseCount());
                                         sBuffer.add(pckt);
-                                } catch (MalformedPacketException e) {} 
+                                } catch (MalformedPacketException e) {}
                         }
 
                 }
@@ -138,17 +138,46 @@ public class Sockets extends OpenFile {
         public void sendSYN(){
                 TCPpackets syn;
                 try {
-                        syn = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,false,false,false,increaseCount());
+                        syn = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,false,false,false,increaseCount());
+                        NetKernel.transport.send(syn);
                 } catch (MalformedPacketException e) {}
 
         }
-        public void sendPacket(Packet p)
+        public void sendFIN(){
+                TCPpackets fin;
+                try {
+                        fin = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,false,false,true,increaseCount());
+                        NetKernel.transport.send(fin);
+                } catch (MalformedPacketException e) {}
+
+        }
+        public void sendACK(){
+                TCPpackets ack;
+                try {
+                        ack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,true,false,false,increaseCount());
+                        NetKernel.transport.send(ack);
+                } catch (MalformedPacketException e) {}
+
+        }
+        public void sendPacket(TCPpackets p)
         {
                 socketLock.acquire();
                 unacknowledgedPackets.add(p);
-                //NetKernel.transport.addMessage(p);
+                NetKernel.transport.addMessage(p);
                 socketLock.release();
+        }
+        //This will uniquely id the socket....maybe
+        public int getKey(){
+                return destPort+destID+hostPort+hostID;
+               
+        }
+        public void timeOutEvent() {
+                // TODO Auto-generated method stub
+                //events to handle the different time outs.
+                //one for syn, fin and during regular packets transfer
         }
 
 }
+
+
 
