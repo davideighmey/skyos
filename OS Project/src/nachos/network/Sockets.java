@@ -106,15 +106,17 @@ public class Sockets extends OpenFile {
 		//check that status of this socket before continuing
 		int bytesWriten = 0;
 		//things in here will be translated into packets and placed on the send buffer
-		LinkedList<Byte> readyToWrite = new LinkedList<Byte>();
-
+		//LinkedList<Byte> readyToWrite = new LinkedList<Byte>();
+		
+		// get how many blocks we are going to need to transfer
+		int numBlocks = (int)Math.ceil((float) length / (float)TCPpackets.maxContentsLength);
+		byte[] readyToWrite = new byte[numBlocks];
+		System.out.println("Do we queue the blocks or what???");
 		if(states == socketStates.ESTABLISHED){
-			// go by offset sized blocks
-			for (bytesWriten = 0; bytesWriten < offset; bytesWriten++) {
-				readyToWrite.add(buf[bytesWriten]);
+			for(int i = 0; i < numBlocks; i++)
+			{
+				
 			}
-			//bytesWriten -= offset;
-			sendWrite(readyToWrite);
 		}
 		// return how many bytes were written
 		return bytesWriten;
