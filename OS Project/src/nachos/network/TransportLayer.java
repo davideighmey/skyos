@@ -213,7 +213,8 @@ public class TransportLayer  {
 				count++;
 			}
 		}
-		//if(states == socketStates.SYNRECEIVED)
+		if(sckt.states == socketStates.SYNRECEIVED)
+			return true;
 		//check if sent
 		//keep sending until either timeout is reached or connection 
 		//if  received an ack, connection is established, return with a value saying connected
