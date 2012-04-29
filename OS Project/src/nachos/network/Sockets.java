@@ -98,7 +98,11 @@ public class Sockets extends OpenFile {
 	 *              failure.
 	 * @throws MalformedPacketException
 	 */    
-	public int write(byte[] buf, int offset, int length)  {
+	public int write(byte[] buf, int offset, int length)  
+	{
+		if(states == socketStates.CLOSED) // if there is not a connection return -1 "error"
+			return -1;
+		
 		//check that status of this socket before continuing
 		int bytesWriten = 0;
 		//things in here will be translated into packets and placed on the send buffer

@@ -135,8 +135,7 @@ public class TCPpackets {
 	public static final int headerLength = 8;
 
 	/** Maximum payload (real data) that can be included in a single mesage. */
-	public static final int maxContentsLength =
-			Packet.maxContentsLength - headerLength;
+	public static final int maxContentsLength =	Packet.maxContentsLength - headerLength;
 
 	/**
 	 * The upper limit on TCP ports. All ports fall between <tt>0</tt> and
