@@ -116,9 +116,13 @@ public class Sockets extends OpenFile {
 		return bytesWriten;
 	}
 
+	/*
+	 * 
+	 */
 	public void sendWrite(LinkedList<Byte> writeMe){
 		byte[] array;
 		TCPpackets pckt;
+		
 		if(!writeMe.isEmpty() && states == socketStates.ESTABLISHED){
 			array = new byte[java.lang.Math.min(writeMe.size(), TCPpackets.maxContentsLength)];
 			for (int i = 0; i < array.length; i++) {
