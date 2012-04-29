@@ -106,7 +106,7 @@ public class Sockets extends OpenFile {
 
 		if(states == socketStates.ESTABLISHED){
 			// go by offset sized blocks
-			for (bytesWriten = 0; bytesWriten < length; bytesWriten += offset) {
+			for (bytesWriten = 0; bytesWriten < offset; bytesWriten++) {
 				readyToWrite.add(buf[bytesWriten]);
 			}
 			//bytesWriten -= offset;
