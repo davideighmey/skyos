@@ -2,8 +2,6 @@
 //  chat.c
 //  
 //
-//  Created by David Eighmey on 4/28/12.
-//  Copyright (c) 2012 Uc Merced. All rights reserved.
 //
 
 #include "syscall.h"
