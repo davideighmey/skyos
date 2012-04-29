@@ -78,10 +78,17 @@ public class Sockets extends OpenFile {
 	 * @param       length  the number of bytes to read.
 	 * @return      the actual number of bytes successfully read, or -1 on failure.
 	 */  
-	public int read(byte[] buf, int offset, int length) {
-
-
-
+	public int read(byte[] buf, int offset, int length)
+	{
+		if(states == socketStates.CLOSED)
+			if(receivedPackets.isEmpty()) // make sure there are no packets that still need to be read
+				return -1;
+		if(receivedPackets.size() == 0) // if there is nothing to read then return 0
+			return 0;
+		else{ // do actually reading
+			
+		}
+		
 		return -1;
 	}
 
@@ -101,10 +108,14 @@ public class Sockets extends OpenFile {
 	public int write(byte[] buf, int offset, int length)  
 	{
 		if(states == socketStates.CLOSED) // if there is not a connection return -1 "error"
+		{
+			System.out.println("----sockets were closed----");
 			return -1;
+		}
 		
 		//check that status of this socket before continuing
 		int bytesWriten = 0;
+		
 		//things in here will be translated into packets and placed on the send buffer
 		//LinkedList<Byte> readyToWrite = new LinkedList<Byte>();
 		
@@ -115,7 +126,8 @@ public class Sockets extends OpenFile {
 		if(states == socketStates.ESTABLISHED){
 			for(int i = 0; i < numBlocks; i++)
 			{
-				
+				//byte[] toWrite = new byte[]; // what size
+				//TCPpackets pckt = new TCPpackets(destID,destPort,hostID,hostPort,buf,false,false,false,false,increaseCount());
 			}
 		}
 		// return how many bytes were written
@@ -145,6 +157,25 @@ public class Sockets extends OpenFile {
 		//if(states == socketStates.CLOSED)
 
 	}
+	
+	public void handlePacket( TCPpackets packet)
+	{
+		if(packet.syn) // if this is the syn packet
+			sendACK();
+		else if(packet.stp)
+		{
+			
+		}
+		else if(packet.fin)
+		{
+			
+		}
+		else if(packet.ack)
+		{
+			// do nothing
+		}
+	}
+	
 	public void sendSYN(){
 		TCPpackets syn;
 		try {

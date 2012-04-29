@@ -134,7 +134,7 @@ public class TCPpackets {
 	 */
 	public static final int headerLength = 8;
 
-	/** Maximum payload (real data) that can be included in a single mesage. */
+	/** Maximum payload (real data) that can be included in a single message. */
 	public static final int maxContentsLength =	Packet.maxContentsLength - headerLength;
 
 	/**
