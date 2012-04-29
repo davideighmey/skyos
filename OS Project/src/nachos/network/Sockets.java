@@ -85,9 +85,8 @@ public class Sockets extends OpenFile {
 				return -1;
 		if(receivedPackets.size() == 0) // if there is nothing to read then return 0
 			return 0;
-		else{ // do actually reading
-			
-		}
+		// actually do something
+		
 		
 		return -1;
 	}
