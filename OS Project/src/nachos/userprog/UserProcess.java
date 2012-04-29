@@ -116,7 +116,6 @@ public class UserProcess {
 	 * it will than calculate the physical address from the virtual page number and frame number, i.e. the physical page number
 	 */
 	public int vaddrTranslation(int vaddr){
-		System.out.println("Starting to convert vaddr: " + Integer.toBinaryString(vaddr));
 		if(pageTable == null){
 			System.out.println("Page table has not been allocated");
 			return -1;
@@ -187,7 +186,6 @@ public class UserProcess {
 			int length) {
 		Lib.assertTrue(offset >= 0 && length >= 0 && offset+length <= data.length);
 		
-		System.out.println("Starting Read Virtual Memory");
 		//Get physical memory
 		int paddr = vaddrTranslation(vaddr);
 		if(paddr == -1){
@@ -235,7 +233,6 @@ public class UserProcess {
 	public int writeVirtualMemory(int vaddr, byte[] data, int offset,
 			int length) {
 		Lib.assertTrue(offset >= 0 && length >= 0 && offset+length <= data.length);
-		System.out.println("Starting Write Virtual Memory");
 
 		int paddr = vaddrTranslation(vaddr);
 		if(paddr == -1){
