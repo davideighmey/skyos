@@ -28,25 +28,19 @@ int main (int argc, char *argv[]){
             }
             if(i = 0; i<14; i++){
                 if(clients != -1){
-                    int message = read(NewSocket, buffer, 50)
-                    
+                    int message = read(clients[i], &buffer, 1)// read message 
+                    if(message >0){
+                        int a = 0;
+                        for (a = 0; a <14; a++) { //write to other clients
+                            write(clients[i],buffer[i],strlen(buffer)+1); //writing messages
+                        }
+                    }
+                    else{
+                        clients[i] == -1;
+                    }   
                 }
-                
             }
-            
-               /*     
-                    
-                    //see if the connection is open;
-                    //open port;
-                    if(socket = -1){
-                        socket = null;
-                        return -1;}
-                if (new message received)
-                    //broadcast message;
-            }*/
-                    
-            }   
-
+        }   
     }
     return 0;
 }
