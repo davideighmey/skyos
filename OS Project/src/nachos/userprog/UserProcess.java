@@ -279,7 +279,7 @@ public class UserProcess {
 	 */
 	private boolean load(String name, String[] args) {
 		Lib.debug(dbgProcess, "UserProcess.load(\"" + name + "\")");
-		System.out.println("UserProcess.load(\"" + name + "\")");
+		//System.out.println("UserProcess.load(\"" + name + "\")");
 		OpenFile executable = ThreadedKernel.fileSystem.open(name, false);
 		if (executable == null) {
 			Lib.debug(dbgProcess, "\topen failed");
@@ -421,7 +421,7 @@ public class UserProcess {
 		 * Will go through the current page table and find all those that are being used an set them to false
 		 * than free them by adding them to the free physical pages.
 		 */
-		System.out.println("Starting to unloadSections");
+	//	System.out.println("Starting to unloadSections");
 		for(int i = 0; i < pageTable.length; i++){
 			if(pageTable[i].used == true){
 				pageTable[i].used = false;
@@ -430,7 +430,6 @@ public class UserProcess {
 			UserKernel.add(pageTable[i].ppn);
 
 		}
-		System.out.println("Finished Unloading Sections");
 	}    
 
 
