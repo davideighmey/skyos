@@ -65,6 +65,7 @@ public class Sockets extends OpenFile {
 		//setting up lock
 		socketLock = new Lock();
 	}
+	
 	public int increaseCount(){
 		return packetID++;
 	}
@@ -85,8 +86,18 @@ public class Sockets extends OpenFile {
 				return -1;
 		if(receivedPackets.size() == 0) // if there is nothing to read then return 0
 			return 0;
+		else if (length == 0)
+			return 0;
 		// actually do something
+		// make a new packet with the first packet that is the first one on the received linked list
+		TCPpackets packet = receivedPackets.getFirst();
 		
+		int copyBytes = length;
+		byte[] contents = packet.contents;
+		System.arraycopy(contents, 0, buf,0,copyBytes);
+		// have to remove the copied bytes from packet
+		// or remove packet from buffer
+		// still more stuff
 		
 		return -1;
 	}
@@ -113,20 +124,25 @@ public class Sockets extends OpenFile {
 		}
 		
 		//check that status of this socket before continuing
-		int bytesWriten = 0;
-		
-		//things in here will be translated into packets and placed on the send buffer
-		//LinkedList<Byte> readyToWrite = new LinkedList<Byte>();
+		int bytesWritten = 0;
 		
 		// get how many blocks we are going to need to transfer
 		int numBlocks = (int)Math.ceil((float) length / (float)TCPpackets.maxContentsLength);
-		byte[] readyToWrite = new byte[numBlocks];
-		System.out.println("Do we queue the blocks or what???");
+		
+		//byte[] readyToWrite = new byte[numBlocks];
+		
+		System.out.println("----Do we queue the blocks or what??----");
+		
 		if(states == socketStates.ESTABLISHED){
 			for(int i = 0; i < numBlocks; i++)
 			{
-				//byte[] toWrite = new byte[]; // what size
-				//TCPpackets pckt = new TCPpackets(destID,destPort,hostID,hostPort,buf,false,false,false,false,increaseCount());
+				byte[] toWrite = new byte[length]; // what size
+				// copy bytes from the buf[] that is given to the toWrite[] that we made
+				System.arraycopy(buf, bytesWritten, toWrite, 0, toWrite.length);
+				bytesWritten = bytesWritten + toWrite.length; // update number of bytes written
+				length = length - toWrite.length; // decrease (update) how much we still have to write
+				
+				// still more stuff
 			}
 		}
 		// return how many bytes were written
