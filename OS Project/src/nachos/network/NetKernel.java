@@ -78,13 +78,19 @@ public class NetKernel extends UserKernel {
         public void socketTest(KThread thr){
                 
                 Sockets scktSnd = new Sockets(1);
+                
+                // juan -- testing read and write
+                Sockets readWrite_test = new Sockets(1);
+                byte[] bt = new byte["Hi There".length()];
+                String str = "Hi There";
+                readWrite_test.write(str.getBytes(), 0, str.length());
 
                 if(transport.createConnection(Machine.networkLink().getLinkAddress(), 2,scktSnd) == false){
                 		System.out.println("Unable to connect");
                         return;
                 }
-                byte[] bt = new byte["Hi There".length()];
-                String str = "Hi There";
+                //byte[] bt = new byte["Hi There".length()];
+               // String str = "Hi There";
 //              System.out.println("Wrote "
         //                      + sckt  Snd.write(str.getBytes(), 0, str.length())
                 //              + " bytes");

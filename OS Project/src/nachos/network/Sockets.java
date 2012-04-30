@@ -81,6 +81,7 @@ public class Sockets extends OpenFile {
 	 */  
 	public int read(byte[] buf, int offset, int length)
 	{
+		System.out.println("----Read() being called----");
 		if(states == socketStates.CLOSED)
 			if(receivedPackets.isEmpty()) // make sure there are no packets that still need to be read
 				return -1;
@@ -88,18 +89,28 @@ public class Sockets extends OpenFile {
 			return 0;
 		else if (length == 0)
 			return 0;
+		System.out.println("--There is something to be read--");
 		// actually do something
 		// make a new packet with the first packet that is the first one on the received linked list
 		TCPpackets packet = receivedPackets.getFirst();
 		
-		int copyBytes = length;
+		//int copyBytes = length;
+		int copyBytes = Math.min(length, packet.contents.length);
 		byte[] contents = packet.contents;
 		System.arraycopy(contents, 0, buf,0,copyBytes);
 		// have to remove the copied bytes from packet
-		// or remove packet from buffer
-		// still more stuff
-		
-		return -1;
+		// or completely remove packet from buffer
+		byte[] contents2 = new byte[contents.length - copyBytes];
+		if(contents2.length == 0)
+			receivedPackets.remove(packet);
+		else
+		{
+			System.arraycopy(contents,  copyBytes, contents2, 0, contents2.length);
+			packet.contents = contents2;
+		}
+		System.out.println("--Read " + copyBytes + "--");
+		return copyBytes;
+		//return -1;
 	}
 
 	/**
@@ -117,12 +128,13 @@ public class Sockets extends OpenFile {
 	 */    
 	public int write(byte[] buf, int offset, int length)  
 	{
+		System.out.println("----write() being called----");
 		if(states == socketStates.CLOSED) // if there is not a connection return -1 "error"
 		{
 			System.out.println("----sockets were closed----");
 			return -1;
 		}
-		
+		System.out.println("---There is something to be written---");
 		//check that status of this socket before continuing
 		int bytesWritten = 0;
 		
@@ -131,7 +143,7 @@ public class Sockets extends OpenFile {
 		
 		//byte[] readyToWrite = new byte[numBlocks];
 		
-		System.out.println("----Do we queue the blocks or what??----");
+		System.out.println("---Do we queue the blocks or what??---");
 		
 		if(states == socketStates.ESTABLISHED){
 			for(int i = 0; i < numBlocks; i++)
@@ -146,6 +158,7 @@ public class Sockets extends OpenFile {
 			}
 		}
 		// return how many bytes were written
+		System.out.println("--Bytes Written " + bytesWritten + "---");
 		return bytesWritten; // or length??
 	}
 
