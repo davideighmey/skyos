@@ -146,7 +146,7 @@ public class Sockets extends OpenFile {
 			}
 		}
 		// return how many bytes were written
-		return bytesWriten; // or length??
+		return bytesWritten; // or length??
 	}
 
 	/*
