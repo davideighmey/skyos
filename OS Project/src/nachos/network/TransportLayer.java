@@ -11,29 +11,26 @@ import nachos.threads.*;
 
 public class TransportLayer  {
 	//Set timeout length for each retry 
-	public static int timeoutLength = 20000;
+	public static int reTransmission = 20000;
 	//Set max retry here
 	public static int maxRetry = 3;
 	//Keep a track of ports and sockets that has been used
 	public boolean[] freePorts = new boolean[128];
 	LinkedList<TCPpackets> messageQueue ;
-	//The unackknowledged Packets
-	private SynchList[] queues;
+	//Packet list for a specific port
+	private SynchList[] packetList;// socketQueues;
+	//Socket queues for the port
+	LinkedList<Sockets>[] socketQueues;
+	
 	private Semaphore messageReceived;      // V'd when a message can be dequeued
 	private Semaphore messageSent;  // V'd when a message can be queue
 	private Lock sendLock;
 	private Lock sendPacketLock;
-	private Lock portLock = new Lock();
+
 	public Condition[] packetSignal;
 	public Condition sendPacketSignal;
 	public HashMap<Integer, Sockets> activeSockets;
-	LinkedList<Sockets>[] waitingSockets;           //waiting for acceptance
-	public Hashtable<Integer, TCPpackets> RecievePacketTable;
 
-	Sockets ReadSocket;
-	Sockets WriteSocket;
-	final private int MAXWINDOWSIZE = 16;
-	private int reTransmission = 20000;//20,000 clock ticks.
 
 	public TransportLayer(){
 		//Setting up semaphores
@@ -45,30 +42,16 @@ public class TransportLayer  {
 		sendPacketLock = new Lock();
 		sendPacketSignal = new Condition(sendPacketLock);
 
-		//Setting up Queues and tables
 		//This list will store all packets ready to be sent
 		messageQueue = new LinkedList<TCPpackets>();
 		activeSockets = new HashMap<Integer,Sockets>();
-		waitingSockets  = new LinkedList[TCPpackets.portLimit];
-		queues = new SynchList[TCPpackets.portLimit];
-		int a = 0;
-		for (int i=0; i<queues.length; i++){
-			queues[i] = new SynchList();
-			queues[i].add(1);
-			queues[i].add(2);
-			queues[i].add(3);
-			queues[i].add(4);
-			queues[i].add(5);
-			queues[i].add(6);
-			a = (Integer) queues[i].removeFirst();
-		}
-
+		
 		//Setting up ports
-		for(int i=0;i < TCPpackets.portLimit; i++){
-			//  freePorts[i] = true;
-			waitingSockets[i]=new LinkedList<Sockets>();
+		packetList = new SynchList[TCPpackets.portLimit];
+		for (int i=0; i<socketQueues.length; i++){
+			packetList[i] = new SynchList();
+			socketQueues[i] = new LinkedList<Sockets>();
 		}
-
 		//Setting up Handlers
 		Runnable receiveHandler = new Runnable(){ public void run() { receiveInterrupt(); }};
 		Runnable sendHandler = new Runnable() { public void run() { sendInterrupt(); }};
@@ -91,6 +74,7 @@ public class TransportLayer  {
 	/*
 	 * Recieves a packet and puts it onto the correct ports 
 	 */
+	
 	public void packetReceive(){
 		while(true){
 			messageReceived.P();
@@ -103,14 +87,19 @@ public class TransportLayer  {
 			catch (MalformedPacketException e) {
 				continue;
 			}
+			if(activeSockets.containsKey(getPacketKey(mail)))
+				 activeSockets.get(getPacketKey(mail)).handlePacket(mail);
 			// atomically add message to the mailbox and wake a waiting thread		
 			//This is the first layer of the ports to hold the packets
-			queues[mail.dstPort].add(mail);
+			//queues[mail.dstPort].add(mail);
 			freePorts[mail.dstPort] = true;
 			//Need to be kept somewhere on a type of list or something...
 		}
 	}
-
+	public int getPacketKey(TCPpackets p)
+	{
+		return p.dstPort + p.packet.dstLink  + p.srcPort + p.packet.srcLink;
+	}
 	public void timeOut(){
 		while(true){
 			NetKernel.alarm.waitUntil(reTransmission);
@@ -147,8 +136,8 @@ public class TransportLayer  {
 	 * Retrieve a message on the specified port, waiting if necessary.
 	 */
 	public TCPpackets receive(int port) {
-		Lib.assertTrue(port >= 0 && port < queues.length);
-		TCPpackets mail = (TCPpackets) queues[port].removeFirst();
+		Lib.assertTrue(port >= 0 && port < packetList.length);
+		TCPpackets mail = (TCPpackets) packetList[port].removeFirst();
 		return mail;
 	}
 
@@ -214,7 +203,7 @@ public class TransportLayer  {
 			activeSockets.put(sckt.getKey(), sckt);
 			int count = 0;
 			while((sckt.states == socketStates.SYNSENT) && (count < TransportLayer.maxRetry)){
-				NetKernel.alarm.waitUntil(timeoutLength);
+				NetKernel.alarm.waitUntil(reTransmission);
 				count++;
 			}
 		}
@@ -228,7 +217,7 @@ public class TransportLayer  {
 	public boolean acceptConnection(Sockets sckt){
 		int port = sckt.hostPort;
 		//Should always assume first packet is a syn packet
-		TCPpackets p = (TCPpackets) queues[port].removeFirst();
+		TCPpackets p = (TCPpackets) packetList[port].removeFirst();
 		if(p.syn == true){
 			sckt.destID = p.packet.srcLink;
 			sckt.destPort = p.srcPort;
@@ -265,7 +254,7 @@ public class TransportLayer  {
 		int count = 0;
 		Alarm alarm = new Alarm();
 		while(sckt.states== socketStates.SYNSENT && count < TransportLayer.maxRetry){
-			alarm.waitUntil(TransportLayer.timeoutLength);
+			alarm.waitUntil(TransportLayer.reTransmission);
 			count++;
 		}
 		//if(states == socketStates.SYNRECEIVED)
