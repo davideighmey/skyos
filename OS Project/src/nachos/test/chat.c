@@ -1,5 +1,5 @@
 //
-//  chat.c
+//  chat.c -- create the chat clients.
 //  
 //
 //
@@ -9,22 +9,49 @@
 #include "stdlib.h"
 #include "stdarg.h"
 
-
-
 int main(int argc, const char* argv[]){
-   
-
-
-    int socket = connect(server, 15)
-    if socket == -1{
+    char readBuff[256];
+	char writeBuff[256];
+    int readPos=0;
+	int bytesRead=0;  
+    
+    host = atoi(argv[1]);
+    
+    if (argc == 0){
         return -1;}
-    while (1){
-        read the bytes
-        write the lines in a buffer
-        if (writebuffer > 0){
-            if (writebuffer == “.”){
-                break;}
-            write the buffer into the sever;}
+
+
+    int socket = connect(host, 15)
+    
+    if (socket == -1){
+        printf("You are not able to connect to the server\n");
+        return -1;}
+    else{
+        printf("You have connected to the server\n");
     }
-    close socket;
+    
+    //joined the server
+    while (1){
+        bytesRead = read(socket, readBuff+readPos, 1) //read initally
+        while( bytesRead > 0){
+            readPos += bytesRead;  //move the reading postion
+            if (readBuff[readPos -1] == '\0') // char = null then print messages that other users are sending
+			{
+				printf("User.%s\n", readBuff);
+				readPos=0;
+				
+			} 
+            bytesRead = read(socket,readBuff+readPos,1); //read
+           
+        }
+        readline(writeBuffer,256); //readline from stdio.h
+        if(strlen(writeBuff) > 0) //check if written anything
+        {
+            if(writeBuff[0] == '.') { //exit command
+                break;  
+            }
+            write(socket,writeBuff,strlen(writeBuff)+1); //write the buffer into the sever
+        }
+    }
+    close(socket);
 }
