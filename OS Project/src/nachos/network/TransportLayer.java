@@ -51,8 +51,16 @@ public class TransportLayer  {
 		activeSockets = new HashMap<Integer,Sockets>();
 		waitingSockets  = new LinkedList[TCPpackets.portLimit];
 		queues = new SynchList[TCPpackets.portLimit];
+		int a = 0;
 		for (int i=0; i<queues.length; i++){
 			queues[i] = new SynchList();
+			queues[i].add(1);
+			queues[i].add(2);
+			queues[i].add(3);
+			queues[i].add(4);
+			queues[i].add(5);
+			queues[i].add(6);
+			a = (Integer) queues[i].removeFirst();
 		}
 
 		//Setting up ports
@@ -197,7 +205,8 @@ public class TransportLayer  {
 	//Three-way-handshake: SYN, SYN-ACK, ACK
 	//Try to connect from the host to the dest
 	public boolean createConnection(int _destID, int _destPort, Sockets sckt){
-		sckt.destID = _destID; //Determine the IP
+		//Both the dest ID and Dest Port will determine the connection with that socket. As in, this socket must connect to that socket
+		sckt.destID = _destID; //The socket ID to connect to, 
 		sckt.destPort = _destPort; //The port where to send to
 		if(sckt.states == socketStates.CLOSED){
 			sckt.sendSYN();
@@ -218,6 +227,7 @@ public class TransportLayer  {
 	//Try to accept the connection from the sender
 	public boolean acceptConnection(Sockets sckt){
 		int port = sckt.hostPort;
+		//Should always assume first packet is a syn packet
 		TCPpackets p = (TCPpackets) queues[port].removeFirst();
 		if(p.syn == true){
 			sckt.destID = p.packet.srcLink;
@@ -225,6 +235,7 @@ public class TransportLayer  {
 			sckt.states = socketStates.SYNRECEIVED;
 			sckt.sendACK();
 			sckt.states = socketStates.ESTABLISHED;
+			activeSockets.put(sckt.getKey(), sckt);
 			return true;
 		}
 		else{
