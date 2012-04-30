@@ -87,11 +87,16 @@ public class TransportLayer  {
 			catch (MalformedPacketException e) {
 				continue;
 			}
-			if(activeSockets.containsKey(getPacketKey(mail)))
-				 activeSockets.get(getPacketKey(mail)).handlePacket(mail);
+			if(activeSockets.containsKey(getPacketKey(mail)) && !mail.syn){
+				Sockets sckt = activeSockets.get(getPacketKey(mail));
+				sckt.receivedPackets.add(mail);
+			}
+			else{
+				activeSockets.get(getPacketKey(mail)).handlePacket(mail);
+			}
 			// atomically add message to the mailbox and wake a waiting thread		
 			//This is the first layer of the ports to hold the packets
-			//queues[mail.dstPort].add(mail);
+		    //packetList[mail.dstPort].add(mail);
 			freePorts[mail.dstPort] = true;
 			//Need to be kept somewhere on a type of list or something...
 		}
@@ -215,21 +220,12 @@ public class TransportLayer  {
 
 	//Try to accept the connection from the sender
 	public boolean acceptConnection(Sockets sckt){
-		int port = sckt.hostPort;
+		//int port = sckt.hostPort;
 		//Should always assume first packet is a syn packet
-		TCPpackets p = (TCPpackets) packetList[port].removeFirst();
-		if(p.syn == true){
-			sckt.destID = p.packet.srcLink;
-			sckt.destPort = p.srcPort;
-			sckt.states = socketStates.SYNRECEIVED;
-			sckt.sendACK();
+		//TCPpackets p = (TCPpackets) packetList[port].removeFirst();
 			sckt.states = socketStates.ESTABLISHED;
 			activeSockets.put(sckt.getKey(), sckt);
 			return true;
-		}
-		else{
-			return false;
-		}
 	}
 
 	//attempt to bind the socket to the selected port
