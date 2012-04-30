@@ -21,7 +21,7 @@ public class TransportLayer  {
 	private Semaphore messageReceived;      // V'd when a message can be dequeued
 	private Semaphore messageSent;  // V'd when a message can be queue
 	private Lock sendLock;
-	private Lock sendLock2;
+	private Lock sendPacketLock;
 	private Lock portLock = new Lock();
 	public Condition[] packetSignal;
 	public Condition sendPacketSignal;
@@ -42,8 +42,8 @@ public class TransportLayer  {
 
 		//Setting up Locks
 		sendLock = new Lock();
-		sendLock2 = new Lock();
-		sendPacketSignal = new Condition(sendLock);
+		sendPacketLock = new Lock();
+		sendPacketSignal = new Condition(sendPacketLock);
 
 		//Setting up Queues and tables
 		//This list will store all packets ready to be sent
@@ -109,7 +109,7 @@ public class TransportLayer  {
 	}
 
 	public void packetSend(){
-		sendLock.acquire();
+		sendPacketLock.acquire();
 		while(true)
 		{
 			if (messageQueue.size() == 0)
@@ -124,10 +124,10 @@ public class TransportLayer  {
 	 */
 	public void addMessage(TCPpackets mail)
 	{
-		sendLock.acquire();
+		sendPacketLock.acquire();
 		messageQueue.add(mail);
 		sendPacketSignal.wakeAll();
-		sendLock.release();
+		sendPacketLock.release();
 	}
 
 	/*
@@ -144,10 +144,10 @@ public class TransportLayer  {
 		return mail;
 	}
 	public void send(TCPpackets mail) {
-		sendLock2.acquire();
+		sendLock.acquire();
 		Machine.networkLink().send(mail.packet);
 		messageSent.P();
-		sendLock2.release();
+		sendLock.release();
 	}
 
 	private void sendInterrupt() {
@@ -223,12 +223,13 @@ public class TransportLayer  {
 	}
 
 	//Try to accept the connection from the sender
-	public int acceptConnection(int _hostID, Sockets sckt){
+	public boolean acceptConnection(int _hostID, Sockets sckt){
 		sckt.hostID = _hostID;  
-		
+		sckt.states = socketStates.ESTABLISHED;
+		sckt.sendACK();
 
 
-		return -1;
+		return true;
 	}
 
 
