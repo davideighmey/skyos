@@ -35,10 +35,9 @@ public class NetProcess extends UserProcess {
 	
 	private int connect(int destID, int destPort){
 		if (destPort < 0 || destPort > TCPpackets.portLimit){
-			return -1;
-		}
-		TransportLayer TCP = new TransportLayer();
-		int thisPort = TCP.findUnusedPort();
+			return -1;}
+	
+		int thisPort = NetKernel.transport.findUnusedPort();
 		if(thisPort == -1){
 			return -1;
 		}
@@ -46,7 +45,7 @@ public class NetProcess extends UserProcess {
 		Sockets socket = new Sockets(thisPort);
 		//attempt to create a connection with the socket. 
 		//if successful, grab the socket descriptor and return it 
-		if(TCP.createConnection(destID, destPort, socket) == false){
+		if(NetKernel.transport.createConnection(destID, destPort, socket) == false){
 			return -1;
 		}
 		
@@ -57,12 +56,16 @@ public class NetProcess extends UserProcess {
 		if (port < 0 || port > TCPpackets.portLimit){
 			return -1;
 		}
+		//Create socket at your own port.
 		Sockets SockemBoppers = new Sockets(port);
 		
+		if(NetKernel.transport.acceptConnection(SockemBoppers) == false){
+			return -1;
+		}
 		//attempt to create new socket on the port
 		//attempt to accept the connection with teh socket
 		//if any errors returns -1
-		return -1; //Return -1 for now.
+		return putOntoFileDiscriptorTable(SockemBoppers); //Return -1 for now.
 
 		//if successful, grab the socket descriptor and return it
 	}

@@ -41,7 +41,7 @@ public class NetKernel extends UserKernel {
                 });
 
                 serverThread.fork();
-
+                
                 System.out.println("Press any key to start the network test...");
                 console.readByte(true);
 
@@ -66,18 +66,21 @@ public class NetKernel extends UserKernel {
                                 socketTest(test2);
                         }
                 });
-
-                test1.fork();
+                
                 test2.fork();
+                test1.fork();
+                
+                
 
-                KThread.yield();
+               // KThread.yield();
 
         }
-        private void socketTest(KThread thr){
+        public void socketTest(KThread thr){
                 
                 Sockets scktSnd = new Sockets(1);
 
-                if(!transport.createConnection(Machine.networkLink().getLinkAddress(), 2,scktSnd)){
+                if(transport.createConnection(Machine.networkLink().getLinkAddress(), 2,scktSnd) == false){
+                		System.out.println("Unable to connect");
                         return;
                 }
                 byte[] bt = new byte["Hi There".length()];
@@ -91,7 +94,7 @@ public class NetKernel extends UserKernel {
         }
         private void socketTest2(){
                 Sockets scktRcv = new Sockets(2);
-                transport.acceptConnection(2,scktRcv);
+                transport.acceptConnection(scktRcv);
                 byte[] bt = new byte["Hi There".length()];
                 KThread.yield();
                 timeout();
@@ -124,7 +127,7 @@ public class NetKernel extends UserKernel {
 
                 transport.send(ping);
 
-                TCPpackets ack = transport.receives(0);
+                TCPpackets ack = transport.receive(0);
 
                 long endTime = Machine.timer().getTime();
 
@@ -134,7 +137,7 @@ public class NetKernel extends UserKernel {
         private void pingServer() {
                 while (true) {
                         //TCPpackets ping = postOffice.receive(1);
-                        TCPpackets ping = transport.receives(1);
+                        TCPpackets ping = transport.receive(1);
                         TCPpackets ack;
 
                         try {
