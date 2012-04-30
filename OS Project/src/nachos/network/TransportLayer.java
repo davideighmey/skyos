@@ -17,6 +17,7 @@ public class TransportLayer  {
 	//Keep a track of ports and sockets that has been used
 	public boolean[] freePorts = new boolean[128];
 	LinkedList<TCPpackets> messageQueue ;
+	//The unackknowledged Packets
 	private SynchList[] queues;
 	private Semaphore messageReceived;      // V'd when a message can be dequeued
 	private Semaphore messageSent;  // V'd when a message can be queue
@@ -28,7 +29,6 @@ public class TransportLayer  {
 	public HashMap<Integer, Sockets> activeSockets;
 	LinkedList<Sockets>[] waitingSockets;           //waiting for acceptance
 	public Hashtable<Integer, TCPpackets> RecievePacketTable;
-
 
 	Sockets ReadSocket;
 	Sockets WriteSocket;
@@ -48,7 +48,6 @@ public class TransportLayer  {
 		//Setting up Queues and tables
 		//This list will store all packets ready to be sent
 		messageQueue = new LinkedList<TCPpackets>();
-		RecievePacketTable =  new Hashtable<Integer, TCPpackets>(128);
 		activeSockets = new HashMap<Integer,Sockets>();
 		waitingSockets  = new LinkedList[TCPpackets.portLimit];
 		queues = new SynchList[TCPpackets.portLimit];
@@ -72,6 +71,10 @@ public class TransportLayer  {
 		KThread SendGuy = new KThread(new Runnable(){ public void run() {packetSend();}});
 		KThread TimeOutGuy = new KThread(new Runnable(){ public void run() {timeOut();}});
 
+		RecieveGuy.setName("Recieving Thread");
+		SendGuy.setName("Sending thread");
+		TimeOutGuy.setName("TimeOut Thread");
+
 		RecieveGuy.fork();
 		SendGuy.fork();
 		TimeOutGuy.fork();
@@ -92,7 +95,8 @@ public class TransportLayer  {
 			catch (MalformedPacketException e) {
 				continue;
 			}
-			// atomically add message to the mailbox and wake a waiting thread
+			// atomically add message to the mailbox and wake a waiting thread		
+			//This is the first layer of the ports to hold the packets
 			queues[mail.dstPort].add(mail);
 			freePorts[mail.dstPort] = true;
 			//Need to be kept somewhere on a type of list or something...
@@ -112,8 +116,9 @@ public class TransportLayer  {
 		sendPacketLock.acquire();
 		while(true)
 		{
-			if (messageQueue.size() == 0)
+			if (messageQueue.size() == 0){
 				sendPacketSignal.sleep();
+			}
 			TCPpackets sendPackets = messageQueue.removeFirst();
 			send(sendPackets);
 		}
@@ -126,7 +131,7 @@ public class TransportLayer  {
 	{
 		sendPacketLock.acquire();
 		messageQueue.add(mail);
-		sendPacketSignal.wakeAll();
+		sendPacketSignal.wake();
 		sendPacketLock.release();
 	}
 
@@ -134,15 +139,11 @@ public class TransportLayer  {
 	 * Retrieve a message on the specified port, waiting if necessary.
 	 */
 	public TCPpackets receive(int port) {
-		TCPpackets mail = (TCPpackets) queues[port].removeFirst();
-		return mail;
-	}
-
-	public TCPpackets receives(int port) {
 		Lib.assertTrue(port >= 0 && port < queues.length);
 		TCPpackets mail = (TCPpackets) queues[port].removeFirst();
 		return mail;
 	}
+
 	public void send(TCPpackets mail) {
 		sendLock.acquire();
 		Machine.networkLink().send(mail.packet);
@@ -196,42 +197,40 @@ public class TransportLayer  {
 	//Three-way-handshake: SYN, SYN-ACK, ACK
 	//Try to connect from the host to the dest
 	public boolean createConnection(int _destID, int _destPort, Sockets sckt){
-		sckt.destID = _destID;
-		sckt.destPort = _destPort;
-
-		if(sckt.states==socketStates.CLOSED){
-			//have to send a syn packet
-
-			//TCPpackets syn = new TCPpackets(sckt.destID,sckt.destPort,sckt.hostID,sckt.hostPort, new byte[0],true,false,false,false,0);
-			//send(syn);
+		sckt.destID = _destID; //Determine the IP
+		sckt.destPort = _destPort; //The port where to send to
+		if(sckt.states == socketStates.CLOSED){
 			sckt.sendSYN();
 			sckt.states = socketStates.SYNSENT;
 			activeSockets.put(sckt.getKey(), sckt);
 			int count = 0;
-			while(sckt.states == socketStates.SYNSENT && count < TransportLayer.maxRetry){
-				NetKernel.alarm.waitUntil(TransportLayer.timeoutLength);
+			while((sckt.states == socketStates.SYNSENT) && (count < TransportLayer.maxRetry)){
+				NetKernel.alarm.waitUntil(timeoutLength);
 				count++;
 			}
 		}
-		if(sckt.states == socketStates.SYNRECEIVED)
+		if(sckt.states == socketStates.SYNRECEIVED){
 			return true;
-		//check if sent
-		//keep sending until either timeout is reached or connection 
-		//if  received an ack, connection is established, return with a value saying connected
-		//else return -1
+		}
 		return false;
 	}
 
 	//Try to accept the connection from the sender
-	public boolean acceptConnection(int _hostID, Sockets sckt){
-		sckt.hostID = _hostID;  
-		sckt.states = socketStates.ESTABLISHED;
-		sckt.sendACK();
-
-
-		return true;
+	public boolean acceptConnection(Sockets sckt){
+		int port = sckt.hostPort;
+		TCPpackets p = (TCPpackets) queues[port].removeFirst();
+		if(p.syn == true){
+			sckt.destID = p.packet.srcLink;
+			sckt.destPort = p.srcPort;
+			sckt.states = socketStates.SYNRECEIVED;
+			sckt.sendACK();
+			sckt.states = socketStates.ESTABLISHED;
+			return true;
+		}
+		else{
+			return false;
+		}
 	}
-
 
 	//attempt to bind the socket to the selected port
 	int bindSocket(int port){

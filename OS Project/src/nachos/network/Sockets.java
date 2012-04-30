@@ -195,7 +195,8 @@ public class Sockets extends OpenFile {
 		TCPpackets syn;
 		try {
 			syn = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,false,false,false,increaseCount());
-			NetKernel.transport.send(syn);
+			//NetKernel.transport.send(syn);
+			NetKernel.transport.addMessage(syn);
 		} catch (MalformedPacketException e) {}
 
 	}
@@ -203,7 +204,8 @@ public class Sockets extends OpenFile {
 		TCPpackets fin;
 		try {
 			fin = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,false,false,true,increaseCount());
-			NetKernel.transport.send(fin);
+			//NetKernel.transport.send(fin);
+			NetKernel.transport.addMessage(fin);
 		} catch (MalformedPacketException e) {}
 
 	}
@@ -211,7 +213,8 @@ public class Sockets extends OpenFile {
 		TCPpackets ack;
 		try {
 			ack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,true,false,false,increaseCount());
-			NetKernel.transport.send(ack);
+			//NetKernel.transport.send(ack);
+			NetKernel.transport.addMessage(ack);
 		} catch (MalformedPacketException e) {}
 
 	}

@@ -100,7 +100,7 @@ public class PostOffice {
     private void receiveInterrupt() {
 	messageReceived.V();
     }
-
+    
     /**
      * Send a message to a mailbox on a remote machine.
      */
