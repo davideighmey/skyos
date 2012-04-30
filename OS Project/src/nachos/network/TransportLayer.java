@@ -48,7 +48,8 @@ public class TransportLayer  {
 		
 		//Setting up ports
 		packetList = new SynchList[TCPpackets.portLimit];
-		for (int i=0; i<socketQueues.length; i++){
+		socketQueues = new LinkedList[TCPpackets.portLimit];
+		for (int i=0; i<packetList.length; i++){
 			packetList[i] = new SynchList();
 			socketQueues[i] = new LinkedList<Sockets>();
 		}
