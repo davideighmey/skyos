@@ -444,8 +444,8 @@ public class Sockets extends OpenFile {
 	}
 
 	//This will uniquely id the socket....maybe
-	public int getKey(){
-		return destPort+destID+hostPort+hostID;
+	public String getKey(){
+		return destPort+ "." +destID+ "." +hostPort + "." + hostID;
 
 	}
 	//closed event
