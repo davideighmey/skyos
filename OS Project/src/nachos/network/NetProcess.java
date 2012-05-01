@@ -43,6 +43,7 @@ public class NetProcess extends UserProcess {
 		}
 		//attempt to create new socket on the port
 		Sockets socket = new Sockets(thisPort);
+		
 		//attempt to create a connection with the socket. 
 		//if successful, grab the socket descriptor and return it 
 		if(NetKernel.transport.createConnection(destID, destPort, socket) == false){
@@ -56,11 +57,12 @@ public class NetProcess extends UserProcess {
 		if (port < 0 || port > TCPpackets.portLimit){
 			return -1;
 		}
-		//Create socket at your own port.
-		Sockets SockemBoppers = new Sockets(port);
-		if(!NetKernel.transport.acceptConnection(SockemBoppers)){
+		//Use the first passive socket
+		Sockets SockemBoppers = NetKernel.transport.socketQueues[port].pollFirst();
+		if(SockemBoppers==null)
 			return -1;
-		}
+		NetKernel.transport.acceptConnection(SockemBoppers);
+
 		//attempt to create new socket on the port
 		//attempt to accept the connection with teh socket
 		//if any errors returns -1
