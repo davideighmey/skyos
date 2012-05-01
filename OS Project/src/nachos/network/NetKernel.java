@@ -140,7 +140,12 @@ public class NetKernel extends UserKernel {
                         Lib.assertNotReached();
                         return;
                 }
-
+                Sockets pingSocket = new Sockets(0);
+                pingSocket.destID = dstLink;
+                pingSocket.destPort = 1;
+                pingSocket.states = socketStates.SYNSENT;
+                transport.activeSockets.put(pingSocket.getKey(), pingSocket);
+               System.out.println("Socket key: " + pingSocket.getKey());
                 transport.send(ping);
 
                 TCPpackets ack = transport.receive(1);
