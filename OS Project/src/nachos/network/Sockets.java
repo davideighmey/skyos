@@ -26,6 +26,8 @@ public class Sockets extends OpenFile {
 	public int hostPort;
 	public int hostID;
 	public int packetID;
+	public int highestSeqSeen;
+	public int highestSeqSent;
 	public LinkedList<TCPpackets> receivedPackets;
 	public LinkedList<TCPpackets> unacknowledgedPackets;
 	public LinkedList<Integer> receivedAcks;
@@ -47,7 +49,7 @@ public class Sockets extends OpenFile {
 		this.hostPort = _hostPort;
 		destPort = -1;
 		destID = -1;
-		packetID = 0;
+
 
 		//Setting up buffer
 		sBuffer = new LinkedList<TCPpackets>() ;
@@ -67,6 +69,11 @@ public class Sockets extends OpenFile {
 		//setting up lock
 		socketLock = new Lock();
 		connectBlock = new Condition(socketLock);
+
+		//etc
+		highestSeqSeen = 0;
+		highestSeqSent = 0;
+		packetID = 0;
 	}
 
 	public int increaseCount(){
@@ -116,7 +123,7 @@ public class Sockets extends OpenFile {
 		{
 			return 0;
 		}
-		
+
 		byte[] contents = packet.contents;
 		System.out.println("Copying...");
 		System.arraycopy(contents, 0, buf,0,copyBytes);
@@ -205,6 +212,14 @@ public class Sockets extends OpenFile {
 	/*
 	 * 
 	 */
+	public void setPacketID(byte[] contents)
+	{
+		byte[] temp = new byte[4];
+		Lib.bytesFromInt(temp, 0, 4, packetID++);
+		for (int i =0;i<4;i++)
+			contents[4+i]=temp[i];
+	}
+
 	public void sendWrite(LinkedList<Byte> writeMe){
 		byte[] array;
 		TCPpackets pckt;
@@ -271,11 +286,12 @@ public class Sockets extends OpenFile {
 				receivedPackets.add(pckt);
 				socketLock.release();
 				sendACK();
-				}
+			}
 			//if ack
 			if(!pckt.syn&&pckt.ack&&!pckt.stp&&!pckt.fin){
 				//shift send window
 				//send data
+				sendData(pckt);
 			}
 			//if stp
 			if(!pckt.syn&&!pckt.ack&&pckt.stp&&!pckt.fin){
@@ -313,16 +329,18 @@ public class Sockets extends OpenFile {
 			}
 			//ack
 			if(!pckt.syn&&pckt.ack&&!pckt.stp&&!pckt.fin){
+				//if send queue is empty , send fin and goto closing
 				if(sBuffer.isEmpty()){
 					sendFIN();
-					states = states.CLOSEWAIT;
+					states = socketStates.CLOSEWAIT;
 				}
 				else{
-					cwnd--;
-					
+					//shift send window and send data
+
+					sendData(pckt);
+
 				}
-				//shift send window and send data
-				//if send queue is empty , send fin and goto closing
+
 			}
 			//stp
 			if(!pckt.syn&&!pckt.ack&&pckt.stp&&!pckt.fin){
@@ -443,6 +461,46 @@ public class Sockets extends OpenFile {
 		}
 	}
 
+	public TCPpackets getNextPacket(){
+		System.out.println("SEQUENCE NUMBERS INCOMING: LF " + highestSeqSeen);
+		socketLock.acquire();
+		for (int i =0; i< receivedPackets.size(); i++)
+		{
+			//System.out.println("seqNo: " + Lib.bytesToInt(receivedPackets.get(i).contents, 4, 4) + "  to read:" + seqNoRead);
+			if (Lib.bytesToInt(receivedPackets.get(i).packet.contents, 4, 4)==highestSeqSeen)
+			{
+				highestSeqSeen++;
+				TCPpackets p = receivedPackets.remove(i);
+				socketLock.release();
+				return p;
+			}
+
+		}
+		socketLock.release();
+		return null;
+
+
+	}
+	public void sendData(TCPpackets pckt){
+		int seqNum = Lib.bytesToInt(pckt.packet.contents, 4, 4);
+		socketLock.acquire();
+		for (int i =0; i<unacknowledgedPackets.size(); i++)
+		{
+			TCPpackets temp = unacknowledgedPackets.get(i);
+			if (seqNum==Lib.bytesToInt(temp.contents, 4, 4) &&
+					temp.packet.dstLink == pckt.packet.srcLink &&
+					temp.packet.srcLink == pckt.packet.dstLink &&
+					temp.packet.contents[0] == pckt.packet.contents[1] &&
+					temp.packet.contents[1] == pckt.packet.contents[0])
+			{
+				unacknowledgedPackets.remove(i);
+				receivedAcks.add(seqNum);
+				break;
+			}			
+		}
+		socketLock.release();
+	}
+
 	public void timeOutEvent() {
 		// TODO Auto-generated method stub
 		//events to handle the different time outs.
@@ -467,7 +525,6 @@ public class Sockets extends OpenFile {
 			sendFIN();
 			break;
 		}
-
 	}
 
 }

@@ -12,7 +12,7 @@ import nachos.userprog.UserKernel;
 
 public class TransportLayer  {
 	//Set timeout length for each retry 
-	public static int reTransmission = 20000;
+	public static int reTransmission = 20;
 	//Set max retry here
 	public static int maxRetry = 3;
 	//Keep a track of ports and sockets that has been used
@@ -102,9 +102,13 @@ public class TransportLayer  {
 				int port = mail.dstPort;
 				Sockets pendSocket = new Sockets(port);
 				socketQueues[port].add(pendSocket);
-			//	activeSockets.get(getPacketKey(mail)).handlePacket(mail);
+				//	activeSockets.get(getPacketKey(mail)).handlePacket(mail);
 			}
-			else;
+			else{
+				packetList[mail.dstPort].add(p);
+				packetSignal[mail.dstPort].wakeAll();
+			}
+
 			//put onto message queue if it is a syn packet
 			// atomically add message to the mailbox and wake a waiting thread		
 			//This is the first layer of the ports to hold the packets
@@ -214,7 +218,7 @@ public class TransportLayer  {
 		//Both the dest ID and Dest Port will determine the connection with that socket. As in, this socket must connect to that socket
 		sckt.destID = _destID; //The socket ID to connect to, 
 		sckt.destPort = _destPort; //The port where to send to
-		
+
 		if(sckt.states == socketStates.CLOSED){
 			sckt.sendSYN();
 			sckt.states = socketStates.SYNSENT;
@@ -237,12 +241,18 @@ public class TransportLayer  {
 	//Try to accept the connection from the sender
 	public boolean acceptConnection(Sockets sckt){
 		//int port = sckt.hostPort;
+
 		//Should always assume first packet is a syn packet
 		//TCPpackets p = (TCPpackets) packetList[port].removeFirst();
+		if(sckt.states== socketStates.STPRCVD){
 			sckt.states = socketStates.ESTABLISHED;
 			sckt.sendSYNACK();
 			activeSockets.put(sckt.getKey(), sckt);
 			return true;
+		}
+		return false;
+
+
 	}
 
 	//attempt to bind the socket to the selected port
