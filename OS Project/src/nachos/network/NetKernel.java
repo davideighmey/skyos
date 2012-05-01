@@ -143,7 +143,7 @@ public class NetKernel extends UserKernel {
 
                 transport.send(ping);
 
-                TCPpackets ack = transport.receive(0);
+                TCPpackets ack = transport.receive(1);
 
                 long endTime = Machine.timer().getTime();
 
