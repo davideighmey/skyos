@@ -11,7 +11,7 @@ import nachos.threads.Lock;
 
 public class Sockets extends OpenFile {
 	public enum socketStates{CLOSED, SYNSENT, SYNRECEIVED, ESTABLISHED,
-		FINWAIT1, FINWAIT2, CLOSEWAIT}
+		STPRCVD, STPSENT, CLOSEWAIT}
 
 	/****************************************************************
 	 *  Socket: a data structure containing connection information  *
@@ -186,24 +186,78 @@ public class Sockets extends OpenFile {
 
 	}
 	
-	public void handlePacket( TCPpackets packet)
+	public void handlePacket( TCPpackets pckt)
 	{
-		if(packet.syn) // if this is the syn packet
-			sendACK();
-		else if(packet.stp)
-		{
-			
+		switch(states){
+		case CLOSED: //Do nothing
+		case SYNSENT:
+			//check if it recieved the syn/ack packet
+			if(pckt.syn&&pckt.ack&&!pckt.stp&&!pckt.fin){
+				states = socketStates.ESTABLISHED;
+				//wake thread waiting in connect()
+			}
+			//if it is just a syn--simultaneous connection
+			if(pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin)
+				sendACK();
+			//if data send syn;
+			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin)
+				sendSYN();
+			//stp
+			if(!pckt.syn&&!pckt.ack&&pckt.stp&&!pckt.fin)
+				sendSYN();
+			//fin
+			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&pckt.fin)
+			if(pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin)
+			break;
+		case SYNRECEIVED:
+		case ESTABLISHED:
+			//if syn, send synack
+			if(pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin)
+				sendSYNACK();
+			//if data
+			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin){
+				//queue data
+				sendACK();}
+			//if ack
+			if(!pckt.syn&&pckt.ack&&!pckt.stp&&!pckt.fin){
+				//shift send window
+				//send data
+			}
+			//if stp
+			if(!pckt.syn&&!pckt.ack&&pckt.stp&&!pckt.fin){
+				//clear send window
+				states = socketStates.STPRCVD;
+			}
+			//if fin
+			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&pckt.fin){
+				//clear send window
+				sendFINACK();
+				states = socketStates.CLOSED;
+			}
+		case STPRCVD:
+		case STPSENT:
+		case CLOSEWAIT:
 		}
-		else if(packet.fin)
-		{
-			
-		}
-		else if(packet.ack)
-		{
-			// do nothing
-		}
+		
 	}
-	
+	public void sendFINACK(){
+		TCPpackets synack;
+		try {
+			synack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,true,false,false,increaseCount());
+			//NetKernel.transport.send(syn);
+			NetKernel.transport.addMessage(synack);
+		} catch (MalformedPacketException e) {}
+
+	}
+	public void sendSYNACK(){
+		TCPpackets synack;
+		try {
+			synack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,true,false,false,increaseCount());
+			//NetKernel.transport.send(syn);
+			NetKernel.transport.addMessage(synack);
+		} catch (MalformedPacketException e) {}
+
+	}
 	public void sendSYN(){
 		TCPpackets syn;
 		try {
@@ -253,7 +307,7 @@ public class Sockets extends OpenFile {
 			sendSYN();
 			break;
 		case ESTABLISHED:
-		case FINWAIT1:
+		//case FINWAIT1:
 			socketLock.acquire();
 			for(TCPpackets p: unacknowledgedPackets)
 			{
