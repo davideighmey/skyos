@@ -101,6 +101,7 @@ public class TransportLayer  {
 				activeSockets.get(getPacketKey(mail)).handlePacket(mail);
 			}
 			else;
+			//put onto message queue if it is a syn packet
 			// atomically add message to the mailbox and wake a waiting thread		
 			//This is the first layer of the ports to hold the packets
 			//packetList[mail.dstPort].add(mail);
@@ -209,6 +210,7 @@ public class TransportLayer  {
 		//Both the dest ID and Dest Port will determine the connection with that socket. As in, this socket must connect to that socket
 		sckt.destID = _destID; //The socket ID to connect to, 
 		sckt.destPort = _destPort; //The port where to send to
+		
 		if(sckt.states == socketStates.CLOSED){
 			sckt.sendSYN();
 			sckt.states = socketStates.SYNSENT;
@@ -231,9 +233,10 @@ public class TransportLayer  {
 	//Try to accept the connection from the sender
 	public boolean acceptConnection(Sockets sckt){
 		//int port = sckt.hostPort;
+
 		//Should always assume first packet is a syn packet
 		//TCPpackets p = (TCPpackets) packetList[port].removeFirst();
-
+		
 			sckt.states = socketStates.ESTABLISHED;
 			sckt.sendSYNACK();
 			activeSockets.put(sckt.getKey(), sckt);
