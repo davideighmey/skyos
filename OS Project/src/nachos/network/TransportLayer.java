@@ -99,8 +99,10 @@ public class TransportLayer  {
 			}
 			//Imply a connection came in.
 			else if(mail.syn == true){
-				
-				activeSockets.get(getPacketKey(mail)).handlePacket(mail);
+				int port = mail.dstPort;
+				Sockets pendSocket = new Sockets(port);
+				socketQueues[port].add(pendSocket);
+			//	activeSockets.get(getPacketKey(mail)).handlePacket(mail);
 			}
 			else;
 			//put onto message queue if it is a syn packet
