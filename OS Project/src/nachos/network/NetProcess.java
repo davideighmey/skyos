@@ -58,7 +58,9 @@ public class NetProcess extends UserProcess {
 		}
 		//Create socket at your own port.
 		Sockets SockemBoppers = new Sockets(port);
-		
+		if(!NetKernel.transport.acceptConnection(SockemBoppers)){
+			return -1;
+		}
 		//attempt to create new socket on the port
 		//attempt to accept the connection with teh socket
 		//if any errors returns -1

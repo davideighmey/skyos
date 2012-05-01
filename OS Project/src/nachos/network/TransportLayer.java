@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import nachos.machine.*;
 import nachos.network.Sockets.socketStates;
 import nachos.threads.*;
+import nachos.userprog.UserKernel;
 
 public class TransportLayer  {
 	//Set timeout length for each retry 
@@ -88,17 +89,22 @@ public class TransportLayer  {
 			catch (MalformedPacketException e) {
 				continue;
 			}
+			/*
+			 * Check if the ID Hashmap list contains the current socket that the packet is trying to
+			 * be put on/ sent through. And make sure its not a syn packet.
+			 */
 			if(activeSockets.containsKey(getPacketKey(mail)) && !mail.syn){
 				Sockets sckt = activeSockets.get(getPacketKey(mail));
 				sckt.receivedPackets.add(mail);
 			}
-			else{
+			else if(mail.syn == true){
 				activeSockets.get(getPacketKey(mail)).handlePacket(mail);
 			}
+			else;
 			// atomically add message to the mailbox and wake a waiting thread		
 			//This is the first layer of the ports to hold the packets
 		    //packetList[mail.dstPort].add(mail);
-			freePorts[mail.dstPort] = true;
+			//freePorts[mail.dstPort] = true;
 			//Need to be kept somewhere on a type of list or something...
 		}
 	}
@@ -234,31 +240,35 @@ public class TransportLayer  {
 		//states = socketStates.LISTENING;
 		return -1;
 	}
+	
 	public boolean closeConnection(int _destID, int _destPort, Sockets sckt){
 		sckt.destID = _destID;
 		sckt.destPort = _destPort;
-
-		//have to send a fin packet
-		try {
-			TCPpackets fin = new TCPpackets(sckt.destID,sckt.destPort,sckt.hostID,sckt.hostPort, new byte[0],false,false,false,true,0);
-			sckt.states = socketStates.SYNSENT;
-		} catch (MalformedPacketException e) {
-			// TODO Auto-generated catch block
-			System.out.println("Malformed Packet has been detected");
-			//e.printStackTrace();
-			return false;
+		//Check if socket already closed
+		if(sckt.states == socketStates.CLOSED){
+			return true;
 		}
+		//I would like to Close now.
+		//if(sckt. some queueis Not Empty){
+		sckt.states = socketStates.CLOSEWAIT;
+		sckt.sendFIN();
+		//}
+		/*else{
+			sckt.sendSTP();
+			sckt.states = socketStates.STPSENT;
+			return false;
+		}*/
+		//I sent the FIN packet that I want to close, Now I am waiting for other socket to close
 		int count = 0;
-		Alarm alarm = new Alarm();
-		while(sckt.states== socketStates.SYNSENT && count < TransportLayer.maxRetry){
-			alarm.waitUntil(TransportLayer.reTransmission);
+		while(sckt.states== socketStates.CLOSEWAIT && count < TransportLayer.maxRetry){
+			UserKernel.alarm.waitUntil(TransportLayer.reTransmission);
 			count++;
 		}
-		//if(states == socketStates.SYNRECEIVED)
-		//check if sent
-		//keep sending until either timeout is reached or connection 
-		//if  received an ack, connection is established, return with a value saying connected
-		//else return -1
+		//Oh he sent back an ACK saying that he will close too. Now I'll wait for a FIN packet
+		if(sckt.states == socketStates.CLOSED){
+			return true;
+		}
+
 		return false;
 	}
 
