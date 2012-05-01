@@ -237,16 +237,12 @@ public class TransportLayer  {
 	//Try to accept the connection from the sender
 	public boolean acceptConnection(Sockets sckt){
 		//int port = sckt.hostPort;
-
 		//Should always assume first packet is a syn packet
 		//TCPpackets p = (TCPpackets) packetList[port].removeFirst();
-		
 			sckt.states = socketStates.ESTABLISHED;
 			sckt.sendSYNACK();
 			activeSockets.put(sckt.getKey(), sckt);
 			return true;
-
-
 	}
 
 	//attempt to bind the socket to the selected port
