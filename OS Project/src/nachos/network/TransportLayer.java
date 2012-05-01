@@ -30,7 +30,7 @@ public class TransportLayer  {
 
 	public Condition[] packetSignal;
 	public Condition sendPacketSignal;
-	public HashMap<Integer, Sockets> activeSockets;
+	public HashMap<String, Sockets> activeSockets;
 
 
 	public TransportLayer(){
@@ -45,7 +45,7 @@ public class TransportLayer  {
 
 		//This list will store all packets ready to be sent
 		messageQueue = new LinkedList<TCPpackets>();
-		activeSockets = new HashMap<Integer,Sockets>();
+		activeSockets = new HashMap<String,Sockets>();
 
 		//Setting up ports
 		packetList = new SynchList[TCPpackets.portLimit];
@@ -93,20 +93,34 @@ public class TransportLayer  {
 			 * Check if the ID Hashmap list contains the current socket that the packet is trying to
 			 * be put on/ sent through. And make sure its not a syn packet.
 			 */
+			System.out.println("Packet Key: " + getPacketKey(mail));
+			System.out.println("Packet Flag(SYN: " + mail.syn + " ACK: " + mail.ack + " STP: " + mail.stp + " FIN: " +mail.fin+ ")");
 			if(activeSockets.containsKey(getPacketKey(mail)) && !mail.syn){
 				Sockets sckt = activeSockets.get(getPacketKey(mail));
-				sckt.receivedPackets.add(mail);
+				//sckt.receivedPackets.add(mail);
 				sckt.handlePacket(mail);
 			}
 			//Imply a connection came in.
 			else if(mail.syn == true){
+				if(activeSockets.containsKey(getPacketKey(mail))){
+					Sockets sckt = activeSockets.get(getPacketKey(mail));
+					//sckt.receivedPackets.add(mail);
+					sckt.handlePacket(mail);
+				}
+				else{
+				//have to check if there was
 				int port = mail.dstPort;
 				Sockets pendSocket = new Sockets(port);
+				pendSocket.destID = mail.packet.srcLink;
+				pendSocket.destPort = mail.srcPort;
 				socketQueues[port].add(pendSocket);
+				//int packetKey = getPacketKey(mail);
+				packetList[mail.dstPort].add(mail);
 				//	activeSockets.get(getPacketKey(mail)).handlePacket(mail);
+				}
 			}
 			else{
-				packetList[mail.dstPort].add(p);
+				packetList[mail.dstPort].add(mail);
 				packetSignal[mail.dstPort].wakeAll();
 			}
 
@@ -118,14 +132,14 @@ public class TransportLayer  {
 			//Need to be kept somewhere on a type of list or something...
 		}
 	}
-	public int getPacketKey(TCPpackets p)
+	public String getPacketKey(TCPpackets p)
 	{
-		return p.dstPort + p.packet.dstLink  + p.srcPort + p.packet.srcLink;
+		return  p.srcPort + "." + p.packet.srcLink + "." + p.dstPort + "." + p.packet.dstLink ;
 	}
 	public void timeOut(){
 		while(true){
 			NetKernel.alarm.waitUntil(reTransmission);
-			for(Entry<Integer, Sockets> e: activeSockets.entrySet()){
+			for(Entry<String, Sockets> e: activeSockets.entrySet()){
 				e.getValue().timeOutEvent();
 			}
 		}
@@ -159,11 +173,13 @@ public class TransportLayer  {
 	 */
 	public TCPpackets receive(int port) {
 		Lib.assertTrue(port >= 0 && port < packetList.length);
+		//TCPpackets mail =null;
 		TCPpackets mail = (TCPpackets) packetList[port].removeFirst();
 		return mail;
 	}
 
 	public void send(TCPpackets mail) {
+		// System.out.println("sending mail: " + mail);
 		sendLock.acquire();
 		Machine.networkLink().send(mail.packet);
 		messageSent.P();
