@@ -86,6 +86,7 @@ public class NetKernel extends UserKernel {
                 readWrite_test.states = socketStates.ESTABLISHED;
                 byte[] bt = new byte["Hi There".length()];
                 String str = "Hi There";
+               
                 readWrite_test.write(str.getBytes(), 0, str.length());
                 System.out.println("++++Juan Read() testing++++");
                 
