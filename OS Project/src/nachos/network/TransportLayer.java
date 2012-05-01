@@ -96,6 +96,7 @@ public class TransportLayer  {
 			if(activeSockets.containsKey(getPacketKey(mail)) && !mail.syn){
 				Sockets sckt = activeSockets.get(getPacketKey(mail));
 				sckt.receivedPackets.add(mail);
+				sckt.handlePacket(mail);
 			}
 			//Imply a connection came in.
 			else if(mail.syn == true){
