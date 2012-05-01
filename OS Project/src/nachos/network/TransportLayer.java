@@ -22,7 +22,7 @@ public class TransportLayer  {
 	private SynchList[] packetList;// socketQueues;
 	//Socket queues for the port
 	LinkedList<Sockets>[] socketQueues;
-	
+
 	private Semaphore messageReceived;      // V'd when a message can be dequeued
 	private Semaphore messageSent;  // V'd when a message can be queue
 	private Lock sendLock;
@@ -46,7 +46,7 @@ public class TransportLayer  {
 		//This list will store all packets ready to be sent
 		messageQueue = new LinkedList<TCPpackets>();
 		activeSockets = new HashMap<Integer,Sockets>();
-		
+
 		//Setting up ports
 		packetList = new SynchList[TCPpackets.portLimit];
 		socketQueues = new LinkedList[TCPpackets.portLimit];
@@ -76,7 +76,7 @@ public class TransportLayer  {
 	/*
 	 * Recieves a packet and puts it onto the correct ports 
 	 */
-	
+
 	public void packetReceive(){
 		while(true){
 			messageReceived.P();
@@ -103,7 +103,7 @@ public class TransportLayer  {
 			else;
 			// atomically add message to the mailbox and wake a waiting thread		
 			//This is the first layer of the ports to hold the packets
-		    //packetList[mail.dstPort].add(mail);
+			//packetList[mail.dstPort].add(mail);
 			//freePorts[mail.dstPort] = true;
 			//Need to be kept somewhere on a type of list or something...
 		}
@@ -230,9 +230,9 @@ public class TransportLayer  {
 		//int port = sckt.hostPort;
 		//Should always assume first packet is a syn packet
 		//TCPpackets p = (TCPpackets) packetList[port].removeFirst();
-			sckt.states = socketStates.ESTABLISHED;
-			activeSockets.put(sckt.getKey(), sckt);
-			return true;
+		sckt.states = socketStates.ESTABLISHED;
+		activeSockets.put(sckt.getKey(), sckt);
+		return true;
 	}
 
 	//attempt to bind the socket to the selected port
@@ -240,7 +240,7 @@ public class TransportLayer  {
 		//states = socketStates.LISTENING;
 		return -1;
 	}
-	
+
 	public boolean closeConnection(int _destID, int _destPort, Sockets sckt){
 		sckt.destID = _destID;
 		sckt.destPort = _destPort;
@@ -249,15 +249,15 @@ public class TransportLayer  {
 			return true;
 		}
 		//I would like to Close now.
-		//if(sckt. some queueis Not Empty){
-		sckt.states = socketStates.CLOSEWAIT;
-		sckt.sendFIN();
-		//}
-		/*else{
+		if(sckt.sBuffer.isEmpty()){
+			sckt.states = socketStates.CLOSEWAIT;
+			sckt.sendFIN();
+		}
+		else{
 			sckt.sendSTP();
 			sckt.states = socketStates.STPSENT;
 			return false;
-		}*/
+		}
 		//I sent the FIN packet that I want to close, Now I am waiting for other socket to close
 		int count = 0;
 		while(sckt.states== socketStates.CLOSEWAIT && count < TransportLayer.maxRetry){
