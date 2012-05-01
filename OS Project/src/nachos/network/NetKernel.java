@@ -80,6 +80,7 @@ public class NetKernel extends UserKernel {
                 Sockets scktSnd = new Sockets(1);
                 
                 // juan -- testing read and write
+                System.out.println("++++Juan Write() / Read() test++++");
                 Sockets readWrite_test = new Sockets(1);
                 byte[] bt = new byte["Hi There".length()];
                 String str = "Hi There";
