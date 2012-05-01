@@ -5,6 +5,7 @@ import nachos.threads.*;
 import nachos.userprog.*;
 import nachos.vm.*;
 import nachos.network.*;
+import nachos.network.Sockets.socketStates;
 
 
 /**
@@ -80,12 +81,19 @@ public class NetKernel extends UserKernel {
                 Sockets scktSnd = new Sockets(1);
                 
                 // juan -- testing read and write
-                System.out.println("++++Juan Write() / Read() test++++");
+                System.out.println("++++Juan Write() testing++++");
                 Sockets readWrite_test = new Sockets(1);
+                readWrite_test.states = socketStates.ESTABLISHED;
                 byte[] bt = new byte["Hi There".length()];
                 String str = "Hi There";
                 readWrite_test.write(str.getBytes(), 0, str.length());
-
+                System.out.println("++++Juan Read() testing++++");
+                
+                readWrite_test.read(bt, 0,bt.length);
+                
+                System.out.println("++++END of Write() / Read() testing++++");
+                // juan -- END testing
+                
                 if(transport.createConnection(Machine.networkLink().getLinkAddress(), 2,scktSnd) == false){
                 		System.out.println("Unable to connect");
                         return;

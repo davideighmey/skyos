@@ -83,20 +83,37 @@ public class Sockets extends OpenFile {
 	{
 		System.out.println("----Read() being called----");
 		if(states == socketStates.CLOSED)
+		{	
+			System.out.println("--Socket was CLOSED--");
 			if(receivedPackets.isEmpty()) // make sure there are no packets that still need to be read
+			{
+				System.out.println("--recievedPackets list is empty--");
 				return -1;
+			}
+		}
 		if(receivedPackets.size() == 0) // if there is nothing to read then return 0
+		{
+			System.out.println("--Size of receivedPackets list is 0. Nothing to be read--");
 			return 0;
-		else if (length == 0)
-			return 0;
+		}
+
 		System.out.println("--There is something to be read--");
-		// actually do something
+		//NetKernel actually do something
 		// make a new packet with the first packet that is the first one on the received linked list
+		System.out.println("--Getting the next packet on the receivedPackets list--");
 		TCPpackets packet = receivedPackets.getFirst();
 
-		//int copyBytes = length;
-		int copyBytes = Math.min(length, packet.contents.length);
+		int copyBytes = length;
+		//int copyBytes = Math.min(length, packet.contents.length);
+		System.out.println("Bytes to copy are = " + copyBytes);
+		//System.out.println("What is in the packet--> " + packet.contents.toString());
+		if(copyBytes == 0)
+		{
+			return 0;
+		}
+
 		byte[] contents = packet.contents;
+		System.out.println("Copying...");
 		System.arraycopy(contents, 0, buf,0,copyBytes);
 		// have to remove the copied bytes from packet
 		// or completely remove packet from buffer
@@ -143,24 +160,35 @@ public class Sockets extends OpenFile {
 
 		//byte[] readyToWrite = new byte[numBlocks];
 
-		System.out.println("---Do we queue the blocks or what??---");
+		//System.out.println("---Do we queue the blocks or what??---");
 
-		if(states == socketStates.ESTABLISHED){
-			for(int i = 0; i < numBlocks; i++)
-			{
-				byte[] toWrite = new byte[length]; // what size
-				// copy bytes from the buf[] that is given to the toWrite[] that we made
-				System.arraycopy(buf, bytesWritten, toWrite, 0, toWrite.length);
-				bytesWritten = bytesWritten + toWrite.length; // update number of bytes written
-				length = length - toWrite.length; // decrease (update) how much we still have to write
+		//if(states == socketStates.ESTABLISHED){
+		for(int i = 0; i < numBlocks; i++)
+		{
+			byte[] toWrite = new byte[length]; // what size
+			// copy bytes from the buf[] that is given to the toWrite[] that we made
+			System.arraycopy(buf, bytesWritten, toWrite, 0, toWrite.length);
+			bytesWritten = bytesWritten + toWrite.length; // update number of bytes written
+			length = length - toWrite.length; // decrease (update) how much we still have to write
 
-				// still more stuff
+			// still more stuff
+			TCPpackets newPacket = null; 
+			try {
+				System.out.println("Previous size of receivedPackets = " + receivedPackets.size());
+				newPacket = new TCPpackets(destID,destPort,hostID,hostPort,toWrite,true,false,false,false,increaseCount());
+
+			} catch (MalformedPacketException e) {
+				// TODO Auto-generated catch block
+				//e.printStackTrace();
+
 			}
 		}
+		//}
 		// return how many bytes were written
-		System.out.println("--Bytes Written " + bytesWritten + "---");
+		System.out.println("--Bytes Written " + bytesWritten + "--");
 		return bytesWritten; // or length??
 	}
+
 
 	/*
 	 * 
