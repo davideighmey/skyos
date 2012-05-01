@@ -35,11 +35,9 @@ int main(int argc, const char* argv[]){
         bytesRead = read(socket, readBuff+readPos, 1) //read initally
         while( bytesRead > 0){
             readPos += bytesRead;  //move the reading postion
-            if (readBuff[readPos -1] == '\0') // char = null then print messages that other users are sending
-			{
+            if (readBuff[readPos -1] == '\0') {
 				printf("User.%s\n", readBuff);
 				readPos=0;
-				
 			} 
             bytesRead = read(socket,readBuff+readPos,1); //read
            
