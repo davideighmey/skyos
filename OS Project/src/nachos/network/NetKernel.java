@@ -34,7 +34,7 @@ public class NetKernel extends UserKernel {
          * assumes that the network is reliable (i.e. that the network's
          * reliability is 1.0).
          */
-        public void selfTest() {
+        public void selfTest2() {
                 //super.selfTest();
 
                 KThread serverThread = new KThread(new Runnable() {
@@ -55,7 +55,7 @@ public class NetKernel extends UserKernel {
                 if (local <= 1)
                         ping(1-local);
         }
-        public void selfTest2(){
+        public void selfTest(){
 
                  final KThread test2 = new KThread(new Runnable() {
                         public void run(){
