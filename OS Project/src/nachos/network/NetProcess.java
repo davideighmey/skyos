@@ -89,7 +89,7 @@ public class NetProcess extends UserProcess {
 	public int handleSyscall(int syscall, int a0, int a1, int a2, int a3) {
 		switch (syscall) {
 		case(syscallConnect): return connect(a0, a1); //a0 is host number, a1 is port number
-		case(syscallAccept): return accept(a1);
+		case(syscallAccept): return accept(a0);
 		default:
 			return super.handleSyscall(syscall, a0, a1, a2, a3);
 		}
