@@ -110,7 +110,7 @@ public class Sockets extends OpenFile {
 		System.out.println("--There is something to be read--");
 		//NetKernel actually do something
 		// make a new packet with the first packet that is the first one on the received linked list
-		System.out.println("There are " + receivedPackets.size() + " receivedPackets, getting next packet.");
+		System.out.println("There are " + receivedPackets.size() + " receivedPacket(s), getting next packet.");
 		//TCPpackets packet = receivedPackets.getFirst();
 		TCPpackets packet = receivedPackets.removeFirst();
 		System.out.println("New receivedPackets size = " + receivedPackets.size());
@@ -124,7 +124,8 @@ public class Sockets extends OpenFile {
 			return 0;
 		}
 
-		byte[] contents = packet.contents;
+		byte[] contents = "hello2_SomeStringLongerThan_copyBytes".getBytes(); // this does not if string is short
+		//byte[] contents = packet.contents; // this gives error null pointer exception
 		System.out.println("Copying...");
 		System.arraycopy(contents, 0, buf,0,copyBytes);
 		// have to remove the copied bytes from packet
@@ -135,12 +136,13 @@ public class Sockets extends OpenFile {
 		else
 		{
 			System.arraycopy(contents,  copyBytes, contents2, 0, contents2.length);
-			packet.contents = contents2;
+			packet.contents = contents2; // null pointer exception
 		}
 		System.out.println("++Read " + copyBytes + "++");
 		return copyBytes;
 		//return -1;
 	}
+	
 	void socketSleep(){
 		this.socketLock.acquire();
 		this.connectBlock.sleep();
@@ -168,6 +170,12 @@ public class Sockets extends OpenFile {
 			System.out.println("----sockets were closed----");
 			return -1;
 		}
+		else if(length == 0) // length of 0 nothing to write
+			{
+				System.out.println("---Length was 0, nothing to write---");
+				return 0;
+			}
+		
 		System.out.println("---There is something to be written---");
 		//check that status of this socket before continuing
 		int bytesWritten = 0;
@@ -199,6 +207,7 @@ public class Sockets extends OpenFile {
 				//e.printStackTrace();
 
 			}
+			//newPacket.contents = // set the new contents in the packet
 			receivedPackets.add(newPacket);
 			System.out.println("New size of receivedPackets = " + receivedPackets.size());
 		}
