@@ -103,7 +103,7 @@ public class Sockets extends OpenFile {
 		System.out.println("--There is something to be read--");
 		//NetKernel actually do something
 		// make a new packet with the first packet that is the first one on the received linked list
-		System.out.println("There are " + receivedPackets.size() + " receivedPackdets, getting next one.");
+		System.out.println("There are " + receivedPackets.size() + " receivedPackets, getting next packet.");
 		//TCPpackets packet = receivedPackets.getFirst();
 		TCPpackets packet = receivedPackets.removeFirst();
 		System.out.println("New receivedPackets size = " + receivedPackets.size());
@@ -116,7 +116,7 @@ public class Sockets extends OpenFile {
 		{
 			return 0;
 		}
-
+		
 		byte[] contents = packet.contents;
 		System.out.println("Copying...");
 		System.arraycopy(contents, 0, buf,0,copyBytes);
