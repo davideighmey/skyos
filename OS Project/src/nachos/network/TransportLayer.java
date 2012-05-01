@@ -241,7 +241,7 @@ public class TransportLayer  {
 		return -1;
 	}
 
-	public boolean closeConnection(int _destID, int _destPort, Sockets sckt){
+	/*public boolean closeConnection(int _destID, int _destPort, Sockets sckt){
 		sckt.destID = _destID;
 		sckt.destPort = _destPort;
 		//Check if socket already closed
@@ -250,8 +250,9 @@ public class TransportLayer  {
 		}
 		//I would like to Close now.
 		if(sckt.sBuffer.isEmpty()){
-			sckt.states = socketStates.CLOSEWAIT;
-			sckt.sendFIN();
+			//sckt.states = socketStates.CLOSEWAIT;
+			//sckt.sendFIN();
+			sckt.close();
 		}
 		else{
 			sckt.sendSTP();
@@ -270,6 +271,6 @@ public class TransportLayer  {
 		}
 
 		return false;
-	}
+	}*/
 
 }
