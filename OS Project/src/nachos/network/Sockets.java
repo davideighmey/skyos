@@ -6,8 +6,8 @@ import java.util.Queue;
 import nachos.machine.*;
 //Socket Descriptor: similar to a file descriptor, but linked to a socket instead of a file,
 //can be used in low level commands such as read() and write()
-import nachos.threads.Alarm;
-import nachos.threads.Lock;
+
+import nachos.threads.*;
 
 public class Sockets extends OpenFile {
 	public enum socketStates{CLOSED, SYNSENT, SYNRECEIVED, ESTABLISHED,
@@ -37,8 +37,10 @@ public class Sockets extends OpenFile {
 	//Congestion Window(cwnd) controls the number of packets a TCP flow may have in the network in a given time **Credit Count**
 	public int cwnd;
 	//need to make something to hold the message
+	//lock when using the socket
 	public Lock socketLock;
-
+	//make connect a blocking call
+	public Condition connectBlock; 
 	public Sockets(int _hostPort) {
 		//Connection info
 		this.hostID = Machine.networkLink().getLinkAddress();
@@ -64,6 +66,7 @@ public class Sockets extends OpenFile {
 
 		//setting up lock
 		socketLock = new Lock();
+		connectBlock = new Condition(socketLock);
 	}
 
 	public int increaseCount(){
@@ -130,6 +133,11 @@ public class Sockets extends OpenFile {
 		System.out.println("++Read " + copyBytes + "++");
 		return copyBytes;
 		//return -1;
+	}
+	void socketSleep(){
+		this.socketLock.acquire();
+		this.connectBlock.sleep();
+		this.socketLock.release();
 	}
 
 	/**
@@ -214,7 +222,10 @@ public class Sockets extends OpenFile {
 		}
 	}
 	public void send(TCPpackets pckt){
-		//if(states == socketStates.CLOSED)
+		socketLock.acquire();
+		unacknowledgedPackets.add(pckt);
+		NetKernel.transport.send(pckt);
+		socketLock.release();
 
 	}
 
@@ -230,7 +241,7 @@ public class Sockets extends OpenFile {
 				sendFINACK();
 			break;
 		case SYNSENT:
-			//check if it recieved the syn/ack packet
+			//check if it received the syn/ack packet
 			if(pckt.syn&&pckt.ack&&!pckt.stp&&!pckt.fin){
 				states = socketStates.ESTABLISHED;
 				//wake thread waiting in connect()
@@ -256,8 +267,11 @@ public class Sockets extends OpenFile {
 				sendSYNACK();
 			//if data
 			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin){
-				//queue data
-				sendACK();}
+				socketLock.acquire();
+				receivedPackets.add(pckt);
+				socketLock.release();
+				sendACK();
+				}
 			//if ack
 			if(!pckt.syn&&pckt.ack&&!pckt.stp&&!pckt.fin){
 				//shift send window
@@ -278,7 +292,9 @@ public class Sockets extends OpenFile {
 		case STPRCVD:
 			//if data
 			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin){
-				//queue data
+				socketLock.acquire();
+				receivedPackets.add(pckt);
+				socketLock.release();
 				sendACK();
 			}
 			//if fin
@@ -297,6 +313,14 @@ public class Sockets extends OpenFile {
 			}
 			//ack
 			if(!pckt.syn&&pckt.ack&&!pckt.stp&&!pckt.fin){
+				if(sBuffer.isEmpty()){
+					sendFIN();
+					states = states.CLOSEWAIT;
+				}
+				else{
+					cwnd--;
+					
+				}
 				//shift send window and send data
 				//if send queue is empty , send fin and goto closing
 			}
@@ -342,7 +366,7 @@ public class Sockets extends OpenFile {
 		try {
 			stp = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,false,true,false,increaseCount());
 			//NetKernel.transport.send(syn);
-			NetKernel.transport.send(stp);
+			send(stp);
 		} catch (MalformedPacketException e) {}
 
 	}
@@ -351,7 +375,7 @@ public class Sockets extends OpenFile {
 		try {
 			finack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,true,false,false,increaseCount());
 			//NetKernel.transport.send(syn);
-			NetKernel.transport.send(finack);
+			send(finack);
 		} catch (MalformedPacketException e) {}
 
 	}
@@ -360,7 +384,7 @@ public class Sockets extends OpenFile {
 		try {
 			synack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,true,false,false,increaseCount());
 			//NetKernel.transport.send(syn);
-			NetKernel.transport.send(synack);
+			send(synack);
 		} catch (MalformedPacketException e) {}
 
 	}
@@ -369,7 +393,7 @@ public class Sockets extends OpenFile {
 		try {
 			syn = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,false,false,false,increaseCount());
 			//NetKernel.transport.send(syn);
-			NetKernel.transport.send(syn);
+			send(syn);
 		} catch (MalformedPacketException e) {}
 
 	}
@@ -378,7 +402,7 @@ public class Sockets extends OpenFile {
 		try {
 			fin = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,false,false,true,increaseCount());
 			//NetKernel.transport.send(fin);
-			NetKernel.transport.send(fin);
+			send(fin);
 		} catch (MalformedPacketException e) {}
 
 	}
@@ -387,17 +411,11 @@ public class Sockets extends OpenFile {
 		try {
 			ack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,true,false,false,increaseCount());
 			//NetKernel.transport.send(ack);
-			NetKernel.transport.send(ack);
+			send(ack);
 		} catch (MalformedPacketException e) {}
 
 	}
-	public void sendPacket(TCPpackets p)
-	{
-		socketLock.acquire();
-		unacknowledgedPackets.add(p);
-		NetKernel.transport.send(p);
-		socketLock.release();
-	}
+
 	//This will uniquely id the socket....maybe
 	public int getKey(){
 		return destPort+destID+hostPort+hostID;
