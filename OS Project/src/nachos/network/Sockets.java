@@ -65,7 +65,7 @@ public class Sockets extends OpenFile {
 		//setting up lock
 		socketLock = new Lock();
 	}
-	
+
 	public int increaseCount(){
 		return packetID++;
 	}
@@ -93,7 +93,7 @@ public class Sockets extends OpenFile {
 		// actually do something
 		// make a new packet with the first packet that is the first one on the received linked list
 		TCPpackets packet = receivedPackets.getFirst();
-		
+
 		//int copyBytes = length;
 		int copyBytes = Math.min(length, packet.contents.length);
 		byte[] contents = packet.contents;
@@ -137,14 +137,14 @@ public class Sockets extends OpenFile {
 		System.out.println("---There is something to be written---");
 		//check that status of this socket before continuing
 		int bytesWritten = 0;
-		
+
 		// get how many blocks we are going to need to transfer
 		int numBlocks = (int)Math.ceil((float) length / (float)TCPpackets.maxContentsLength);
-		
+
 		//byte[] readyToWrite = new byte[numBlocks];
-		
+
 		System.out.println("---Do we queue the blocks or what??---");
-		
+
 		if(states == socketStates.ESTABLISHED){
 			for(int i = 0; i < numBlocks; i++)
 			{
@@ -153,7 +153,7 @@ public class Sockets extends OpenFile {
 				System.arraycopy(buf, bytesWritten, toWrite, 0, toWrite.length);
 				bytesWritten = bytesWritten + toWrite.length; // update number of bytes written
 				length = length - toWrite.length; // decrease (update) how much we still have to write
-				
+
 				// still more stuff
 			}
 		}
@@ -168,7 +168,7 @@ public class Sockets extends OpenFile {
 	public void sendWrite(LinkedList<Byte> writeMe){
 		byte[] array;
 		TCPpackets pckt;
-		
+
 		if(!writeMe.isEmpty() && states == socketStates.ESTABLISHED){
 			array = new byte[java.lang.Math.min(writeMe.size(), TCPpackets.maxContentsLength)];
 			for (int i = 0; i < array.length; i++) {
@@ -185,11 +185,18 @@ public class Sockets extends OpenFile {
 		//if(states == socketStates.CLOSED)
 
 	}
-	
+
 	public void handlePacket( TCPpackets pckt)
 	{
 		switch(states){
-		case CLOSED: //Do nothing
+		case CLOSED: 
+			//if syn, set state to syn received
+			if(pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin)
+				states = socketStates.SYNRECEIVED;
+			//if fin send finack
+			if(pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin)
+				sendFINACK();
+			break;
 		case SYNSENT:
 			//check if it recieved the syn/ack packet
 			if(pckt.syn&&pckt.ack&&!pckt.stp&&!pckt.fin){
@@ -207,9 +214,10 @@ public class Sockets extends OpenFile {
 				sendSYN();
 			//fin
 			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&pckt.fin)
-			if(pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin)
+				sendSYN();
 			break;
 		case SYNRECEIVED:
+			break;
 		case ESTABLISHED:
 			//if syn, send synack
 			if(pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin)
@@ -234,18 +242,84 @@ public class Sockets extends OpenFile {
 				sendFINACK();
 				states = socketStates.CLOSED;
 			}
+			break;
 		case STPRCVD:
+			//if data
+			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin){
+				//queue data
+				sendACK();
+			}
+			//if fin
+			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&pckt.fin){
+				sendFINACK();
+				states = socketStates.CLOSED;
+			}
+			break;
 		case STPSENT:
+			//if syn
+			if(pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin)
+				sendSYNACK();
+			//data
+			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin){
+				sendSTP();
+			}
+			//ack
+			if(!pckt.syn&&pckt.ack&&!pckt.stp&&!pckt.fin){
+				//shift send window and send data
+				//if send queue is empty , send fin and goto closing
+			}
+			//stp
+			if(!pckt.syn&&!pckt.ack&&pckt.stp&&!pckt.fin){
+				//clear send window
+				sendFIN();
+				states = socketStates.CLOSEWAIT;
+			}
+			//fin
+			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&pckt.fin){
+				sendFINACK();
+				states = socketStates.CLOSED;
+			}
+			break;
 		case CLOSEWAIT:
+			//syn
+			if(pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin){
+				sendSYNACK();
+			}
+			//data
+			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin){
+				sendFIN();
+			}
+			//stp
+			if(!pckt.syn&&!pckt.ack&&pckt.stp&&!pckt.fin){
+				sendFIN();
+			}
+			//fin
+			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&pckt.fin){
+				sendFINACK();
+				states = socketStates.CLOSED;
+			}
+			//fin/ack
+			if(!pckt.syn&&pckt.ack&&!pckt.stp&&pckt.fin){
+				states = socketStates.CLOSED;
+			}
 		}
-		
+
+	}
+	public void sendSTP(){
+		TCPpackets stp;
+		try {
+			stp = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,false,true,false,increaseCount());
+			//NetKernel.transport.send(syn);
+			NetKernel.transport.send(stp);
+		} catch (MalformedPacketException e) {}
+
 	}
 	public void sendFINACK(){
-		TCPpackets synack;
+		TCPpackets finack;
 		try {
-			synack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,true,false,false,increaseCount());
+			finack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,true,false,false,increaseCount());
 			//NetKernel.transport.send(syn);
-			NetKernel.transport.addMessage(synack);
+			NetKernel.transport.send(finack);
 		} catch (MalformedPacketException e) {}
 
 	}
@@ -254,7 +328,7 @@ public class Sockets extends OpenFile {
 		try {
 			synack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,true,false,false,increaseCount());
 			//NetKernel.transport.send(syn);
-			NetKernel.transport.addMessage(synack);
+			NetKernel.transport.send(synack);
 		} catch (MalformedPacketException e) {}
 
 	}
@@ -263,7 +337,7 @@ public class Sockets extends OpenFile {
 		try {
 			syn = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,false,false,false,increaseCount());
 			//NetKernel.transport.send(syn);
-			NetKernel.transport.addMessage(syn);
+			NetKernel.transport.send(syn);
 		} catch (MalformedPacketException e) {}
 
 	}
@@ -272,7 +346,7 @@ public class Sockets extends OpenFile {
 		try {
 			fin = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,false,false,true,increaseCount());
 			//NetKernel.transport.send(fin);
-			NetKernel.transport.addMessage(fin);
+			NetKernel.transport.send(fin);
 		} catch (MalformedPacketException e) {}
 
 	}
@@ -281,7 +355,7 @@ public class Sockets extends OpenFile {
 		try {
 			ack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,true,false,false,increaseCount());
 			//NetKernel.transport.send(ack);
-			NetKernel.transport.addMessage(ack);
+			NetKernel.transport.send(ack);
 		} catch (MalformedPacketException e) {}
 
 	}
@@ -289,7 +363,7 @@ public class Sockets extends OpenFile {
 	{
 		socketLock.acquire();
 		unacknowledgedPackets.add(p);
-		NetKernel.transport.addMessage(p);
+		NetKernel.transport.send(p);
 		socketLock.release();
 	}
 	//This will uniquely id the socket....maybe
@@ -297,6 +371,28 @@ public class Sockets extends OpenFile {
 		return destPort+destID+hostPort+hostID;
 
 	}
+	//closed event
+	public void close(){
+		switch(states){
+		case ESTABLISHED:
+			//if send queue is empty, send fin, go to closing
+			if(sBuffer.isEmpty()){
+				sendFIN();
+				states = socketStates.CLOSEWAIT;
+			}
+			else{
+				sendSTP();
+				states = socketStates.STPSENT;
+			}
+			//else send stp and goto stpsent
+			break;
+		case CLOSED:
+			sendFIN();
+			states = socketStates.CLOSEWAIT;
+			break;
+		}
+	}
+
 	public void timeOutEvent() {
 		// TODO Auto-generated method stub
 		//events to handle the different time outs.
@@ -307,7 +403,7 @@ public class Sockets extends OpenFile {
 			sendSYN();
 			break;
 		case ESTABLISHED:
-		//case FINWAIT1:
+			//case FINWAIT1:
 			socketLock.acquire();
 			for(TCPpackets p: unacknowledgedPackets)
 			{
