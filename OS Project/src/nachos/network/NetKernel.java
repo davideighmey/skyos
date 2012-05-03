@@ -102,7 +102,7 @@ public class NetKernel extends UserKernel {
 		//  Sockets scktRcv = new Sockets(1);
 		if(SockemBoppers != null && transport.acceptConnection(SockemBoppers))
 			System.out.println("Accept has worked");
-		System.out.print("Accept failed");
+		else System.out.print("Accept failed");
 	}
 
 	private void ping(int dstLink) {
