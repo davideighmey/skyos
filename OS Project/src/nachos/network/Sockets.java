@@ -411,7 +411,7 @@ public class Sockets extends OpenFile {
 		TCPpackets finack;
 		System.out.println("Sent FINAck");
 		try {
-			finack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,true,false,false,increaseCount());
+			finack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,true,false,true,increaseCount());
 			//NetKernel.transport.send(syn);
 			send(finack);
 		} catch (MalformedPacketException e) {}
