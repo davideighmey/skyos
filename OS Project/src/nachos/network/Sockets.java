@@ -317,7 +317,7 @@ public class Sockets extends OpenFile {
 				states = socketStates.STPRCVD;
 			}
 			//if fin
-			if((pckt.syn==false) && (pckt.ack==false) && (pckt.stp==false) && (pckt.fin==true)){
+			if((pckt.syn==false) && (pckt.ack==true) && (pckt.stp==false) && (pckt.fin==true)){
 				//clear send window
 				sendFINACK();
 				states = socketStates.CLOSED;
