@@ -93,8 +93,8 @@ public class TransportLayer  {
 			 * Check if the ID Hashmap list contains the current socket that the packet is trying to
 			 * be put on/ sent through. And make sure its not a syn packet.
 			 */
-			System.out.println("Packet Key: " + getPacketKey(mail));
-			System.out.println("Packet Flag(SYN: " + mail.syn + " ACK: " + mail.ack + " STP: " + mail.stp + " FIN: " +mail.fin+ ")");
+		//	System.out.println("Packet Key: " + getPacketKey(mail));
+			//System.out.println("Packet Flag(SYN: " + mail.syn + " ACK: " + mail.ack + " STP: " + mail.stp + " FIN: " +mail.fin+ ")");
 			if(activeSockets.containsKey(getPacketKey(mail)) && !mail.syn){
 				Sockets sckt = activeSockets.get(getPacketKey(mail));
 				//sckt.receivedPackets.add(mail);
