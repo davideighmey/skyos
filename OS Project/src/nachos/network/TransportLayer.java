@@ -95,7 +95,7 @@ public class TransportLayer  {
 			 */
 		//	System.out.println("Packet Key: " + getPacketKey(mail));
 			//System.out.println("Packet Flag(SYN: " + mail.syn + " ACK: " + mail.ack + " STP: " + mail.stp + " FIN: " +mail.fin+ ")");
-			if(activeSockets.containsKey(getPacketKey(mail)) && !mail.syn){
+			if(activeSockets.containsKey(getPacketKey(mail)) && mail.syn){
 				System.out.println("Packet Flag(SYN: " + mail.syn + " ACK: " + mail.ack + " STP: " + mail.stp + " FIN: " +mail.fin+ ")");
 				Sockets sckt = activeSockets.get(getPacketKey(mail));
 				//sckt.receivedPackets.add(mail);
@@ -266,7 +266,7 @@ public class TransportLayer  {
 
 		//Should always assume first packet is a syn packet
 		//TCPpackets p = (TCPpackets) packetList[port].removeFirst();
-		if(sckt.states== socketStates.STPRCVD){
+		if(sckt.states== socketStates.SYNRECEIVED){
 			sckt.states = socketStates.ESTABLISHED;
 			sckt.sendSYNACK();
 			activeSockets.put(sckt.getKey(), sckt);

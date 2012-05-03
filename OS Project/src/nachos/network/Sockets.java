@@ -257,8 +257,10 @@ public class Sockets extends OpenFile {
 		switch(states){
 		case CLOSED: 
 			//if syn, set state to syn received
-			if((pckt.syn==true) && (pckt.ack==false) && (pckt.stp==false) && (pckt.fin==false))
+			if((pckt.syn==true) && (pckt.ack==false) && (pckt.stp==false) && (pckt.fin==false)){
 				states = socketStates.SYNRECEIVED;
+				
+				}
 			//if fin send finack
 			if((pckt.syn==false) && (pckt.ack == false) && (pckt.stp==false) && (pckt.fin == true))
 				sendFINACK();

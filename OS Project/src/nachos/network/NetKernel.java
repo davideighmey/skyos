@@ -34,14 +34,14 @@ public class NetKernel extends UserKernel {
          * assumes that the network is reliable (i.e. that the network's
          * reliability is 1.0).
          */
-        public void selfTest() {
+        public void selfTest2() {
                 //super.selfTest();
 
                 KThread serverThread = new KThread(new Runnable() {
                         public void run() { pingServer(); }
                 });
 
-                serverThread.fork();
+                //serverThread.fork();
                 
                 System.out.println("Press any key to start the network test...");
                 console.readByte(true);
@@ -55,79 +55,61 @@ public class NetKernel extends UserKernel {
                 if (local <= 1)
                         ping(1-local);
         }
-        public void selfTest2(){
+        public void selfTest(){
 
-                 final KThread test2 = new KThread(new Runnable() {
+                 KThread test2 = new KThread(new Runnable() {
                         public void run(){
                                 socketTest2();
                         }
                 });
                 KThread test1 = new KThread(new Runnable() {
                         public void run(){
-                                socketTest(test2);
+                                socketTest();
                         }
                 });
                 
-                test2.fork();
                 test1.fork();
+                test2.fork();
                 
                 
 
                // KThread.yield();
 
         }
-        public void socketTest(KThread thr){
-                
-                Sockets scktSnd = new Sockets(1);
-                
-                // juan -- testing read and write
-                System.out.println("++++Juan Write() testing++++");
-                Sockets readWrite_test = new Sockets(1);
-                readWrite_test.states = socketStates.ESTABLISHED;
-                byte[] bt = new byte["Hi There".length()];
-                String str = "Hi There";
-               
-                readWrite_test.write(str.getBytes(), 0, str.length());
-                System.out.println("++++Juan Read() testing++++");
-                
-                readWrite_test.read(bt, 0,bt.length);
-                
-                System.out.println("++++END of Write() / Read() testing++++");
-                // juan -- END testing
-                
-                if(transport.createConnection(Machine.networkLink().getLinkAddress(), 2,scktSnd) == false){
-                		System.out.println("Unable to connect");
-                        return;
-                }
-                //byte[] bt = new byte["Hi There".length()];
-               // String str = "Hi There";
-//              System.out.println("Wrote "
-        //                      + sckt  Snd.write(str.getBytes(), 0, str.length())
-                //              + " bytes");
-                thr.join();
-                KThread.yield();
-                scktSnd.close();
+        public void socketTest(){
+        	 int srcLink = Machine.networkLink().getLinkAddress();
+             Sockets connectPlease = new Sockets(0);
+             //connectPlease.destID = dstLink;
+             //connectPlease.destPort = 1;
+             System.out.println("Attempting to connect!");
+             if(!transport.createConnection(srcLink, 1, connectPlease) ){
+     			System.out.println("Did not connect");
+     		}
+             System.out.println("Connected with info: DestID: " + connectPlease.destID + " at port: " + connectPlease.destPort );
+
+              
+                connectPlease.close();
         }
         private void socketTest2(){
-                Sockets scktRcv = new Sockets(2);
+        	System.out.println("Attempting to Accept");
+                Sockets scktRcv = new Sockets(1);
                 transport.acceptConnection(scktRcv);
-                byte[] bt = new byte["Hi There".length()];
-                KThread.yield();
-                timeout();
-                timeout();
-                System.out.println("read "
-                                + scktRcv.read(bt, 0, bt.length)
-                                + " bytes");
-                System.out.println(new String(bt));
+     
+                System.out.println("Accept");
         }
 
         private void ping(int dstLink) {
                 int srcLink = Machine.networkLink().getLinkAddress();
-
-                System.out.println("PING " + dstLink + " from " + srcLink);
+                Sockets connectPlease = new Sockets(0);
+                //connectPlease.destID = dstLink;
+                //connectPlease.destPort = 1;
+                if(!transport.createConnection(dstLink, 1, connectPlease) ){
+        			System.out.println("Did not connect");
+        		}
+                System.out.println("Connected with info: DestID: " + connectPlease.destID + " at port: " + connectPlease.destPort );
 
                 long startTime = Machine.timer().getTime();
-
+                
                 TCPpackets ping;
 
                 try {
@@ -143,10 +125,11 @@ public class NetKernel extends UserKernel {
                 Sockets pingSocket = new Sockets(0);
                 pingSocket.destID = dstLink;
                 pingSocket.destPort = 1;
+              //  pingSocket.sendSYN();
                 pingSocket.states = socketStates.SYNSENT;
                 transport.activeSockets.put(pingSocket.getKey(), pingSocket);
                System.out.println("Socket key: " + pingSocket.getKey());
-                transport.send(ping);
+               // transport.send(ping);
 
                 TCPpackets ack = transport.receive(1);
 
@@ -157,8 +140,14 @@ public class NetKernel extends UserKernel {
 
         private void pingServer() {
                 while (true) {
+                	int port = 1;
                         //TCPpackets ping = postOffice.receive(1);
-                        TCPpackets ping = transport.receive(1);
+                    //create socket at port 1
+               
+    			
+                	Sockets acceptPlease = new Sockets(port);
+                	transport.socketQueues[port].add(acceptPlease);
+                	TCPpackets ping = transport.receive(1);
                         TCPpackets ack;
 
                         try {
@@ -172,7 +161,7 @@ public class NetKernel extends UserKernel {
                                 continue;
                         }
 
-                        transport.send(ack);
+                       // transport.send(ack);
                 }       
         }
 
