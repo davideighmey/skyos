@@ -96,6 +96,7 @@ public class TransportLayer  {
 		//	System.out.println("Packet Key: " + getPacketKey(mail));
 			//System.out.println("Packet Flag(SYN: " + mail.syn + " ACK: " + mail.ack + " STP: " + mail.stp + " FIN: " +mail.fin+ ")");
 			if(activeSockets.containsKey(getPacketKey(mail)) && !mail.syn){
+				System.out.println("Packet Flag(SYN: " + mail.syn + " ACK: " + mail.ack + " STP: " + mail.stp + " FIN: " +mail.fin+ ")");
 				Sockets sckt = activeSockets.get(getPacketKey(mail));
 				//sckt.receivedPackets.add(mail);
 				sckt.handlePacket(mail);
@@ -241,6 +242,8 @@ public class TransportLayer  {
 		if(sckt.states == socketStates.CLOSED){
 			sckt.sendSYN();
 			sckt.states = socketStates.SYNSENT;
+			 System.out.println("Socket key: " + sckt.getKey());
+       
 			activeSockets.put(sckt.getKey(), sckt);
 			int count = 0;
 			/*while((sckt.states == socketStates.SYNSENT) && (count < TransportLayer.maxRetry)){
