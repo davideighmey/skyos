@@ -22,6 +22,7 @@ public class NetProcess extends UserProcess {
 	private static final int
 	syscallConnect = 11,
 	syscallAccept = 12;
+	 public int counter= -1;
 
 	private int putOntoFileDiscriptorTable(OpenFile file){
 		for(int i =0; i < descriptorTable.size(); i++){
@@ -37,19 +38,16 @@ public class NetProcess extends UserProcess {
 		if (destPort < 0 || destPort > TCPpackets.portLimit){
 			return -1;}
 	
-		int thisPort = NetKernel.transport.findUnusedPort();
-		if(thisPort == -1){
-			return -1;
-		}
+		int thisPort = (counter++)%TCPpackets.portLimit;
 		//attempt to create new socket on the port
 		Sockets socket = new Sockets(thisPort);
 		
 		//attempt to create a connection with the socket. 
 		//if successful, grab the socket descriptor and return it 
-		if(NetKernel.transport.createConnection(destID, destPort, socket) == false){
+		if(!NetKernel.transport.createConnection(destID, destPort, socket) ){
 			return -1;
 		}
-		
+		NetKernel.transport.activeSockets.put(socket.getKey(), socket);
 		return putOntoFileDiscriptorTable(socket);
 	}
 
@@ -61,8 +59,10 @@ public class NetProcess extends UserProcess {
 		Sockets SockemBoppers = NetKernel.transport.socketQueues[port].pollFirst();
 		if(SockemBoppers==null)
 			return -1;
-		NetKernel.transport.acceptConnection(SockemBoppers);
-
+		if(!NetKernel.transport.acceptConnection(SockemBoppers)){
+			return -1;
+		}
+		NetKernel.transport.activeSockets.put(SockemBoppers.getKey(), SockemBoppers);
 		//attempt to create new socket on the port
 		//attempt to accept the connection with teh socket
 		//if any errors returns -1

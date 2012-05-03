@@ -12,7 +12,7 @@ import nachos.userprog.UserKernel;
 
 public class TransportLayer  {
 	//Set timeout length for each retry 
-	public static int reTransmission = 20;
+	public static int reTransmission = 20000;
 	//Set max retry here
 	public static int maxRetry = 3;
 	//Keep a track of ports and sockets that has been used
@@ -114,6 +114,7 @@ public class TransportLayer  {
 				pendSocket.destID = mail.packet.srcLink;
 				pendSocket.destPort = mail.srcPort;
 				socketQueues[port].add(pendSocket);
+				activeSockets.put(pendSocket.getKey(), pendSocket);
 				//int packetKey = getPacketKey(mail);
 				packetList[mail.dstPort].add(mail);
 				//	activeSockets.get(getPacketKey(mail)).handlePacket(mail);
@@ -138,6 +139,7 @@ public class TransportLayer  {
 	}
 	public void timeOut(){
 		while(true){
+			//System.out.println("Trying to interrupt");
 			NetKernel.alarm.waitUntil(reTransmission);
 			for(Entry<String, Sockets> e: activeSockets.entrySet()){
 				e.getValue().timeOutEvent();
