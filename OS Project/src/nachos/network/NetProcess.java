@@ -22,7 +22,7 @@ public class NetProcess extends UserProcess {
 	private static final int
 	syscallConnect = 11,
 	syscallAccept = 12;
-	 public int counter= -1;
+	 public int counter= 0;
 
 	private int putOntoFileDiscriptorTable(OpenFile file){
 		for(int i =0; i < descriptorTable.size(); i++){
@@ -38,7 +38,8 @@ public class NetProcess extends UserProcess {
 		if (destPort < 0 || destPort > TCPpackets.portLimit){
 			return -1;}
 	
-		int thisPort = (counter++)%TCPpackets.portLimit;
+		int thisPort = (counter)%TCPpackets.portLimit;
+		counter++;
 		//attempt to create new socket on the port
 		Sockets socket = new Sockets(thisPort);
 		
