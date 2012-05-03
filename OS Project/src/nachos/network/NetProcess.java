@@ -3,6 +3,7 @@ package nachos.network;
 import java.io.FileDescriptor;
 
 import nachos.machine.*;
+import nachos.network.Sockets.socketStates;
 import nachos.threads.*;
 import nachos.userprog.*;
 import nachos.vm.*;
@@ -63,11 +64,9 @@ public class NetProcess extends UserProcess {
 		if(!NetKernel.transport.acceptConnection(SockemBoppers)){
 			return -1;
 		}
+		SockemBoppers.states = socketStates.SYNRECEIVED;
 		NetKernel.transport.activeSockets.put(SockemBoppers.getKey(), SockemBoppers);
-		//attempt to create new socket on the port
-		//attempt to accept the connection with teh socket
-		//if any errors returns -1
-		return putOntoFileDiscriptorTable(SockemBoppers); //Return -1 for now.
+		return putOntoFileDiscriptorTable(SockemBoppers); 
 
 		//if successful, grab the socket descriptor and return it
 	}
