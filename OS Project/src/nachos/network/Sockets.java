@@ -177,19 +177,47 @@ public class Sockets extends OpenFile {
 				System.out.println("---Length was 0, nothing to write---");
 				return 0;
 			}
-		
 		System.out.println("---There is something to be written---");
 		//check that status of this socket before continuing
-		int bytesWritten = 0;
-
+		TCPpackets packet = null;
 		// get how many blocks we are going to need to transfer
-		int numBlocks = (int)Math.ceil((float) length / (float)TCPpackets.maxContentsLength);
+		//int numBlocks = (int)Math.ceil((float) length / (float)TCPpackets.maxContentsLength);
+		int bytePos = offset;
+		int endPos = offset + length;
+		while(bytePos < endPos){
+			int amountSend = Math.min(Packet.maxContentsLength - 8, endPos - bytePos);
+			byte[] contents = new byte[amountSend + 8];		  
+			System.arraycopy(buf, bytePos, contents, 8, amountSend);
+			bytePos += amountSend;
+			setNum(contents);
+			try {
+				packet = new TCPpackets(destID,destPort,hostID,hostPort,contents,false,false,false,false,increaseCount());
+				send(packet);
+			} catch (MalformedPacketException e){
+				
+			}
+			       			
+		}
+		return length;
+	}
+	
+	
+	public int seq;
+	
+	public void setNum(byte[] recieved)
+	{
+		byte[] temp = new byte[4];
+		Lib.bytesFromInt(temp, 0, 4, seq++);
+		for (int i =0;i<4;i++)
+			recieved[4+i]=temp[i];
+	}
 
 		//byte[] readyToWrite = new byte[numBlocks];
 
 		//System.out.println("---Do we queue the blocks or what??---");
 
 		//if(states == socketStates.ESTABLISHED){
+		/*
 		for(int i = 0; i < numBlocks; i++)
 		{
 			byte[] toWrite = new byte[length]; // what size
@@ -218,7 +246,7 @@ public class Sockets extends OpenFile {
 		System.out.println("--Bytes Written " + bytesWritten + "--");
 		return bytesWritten; // or length??
 	}
-
+*/
 
 	/*
 	 * 
