@@ -40,9 +40,9 @@ public class Sockets extends OpenFile {
 	public int cwnd;
 	//need to make something to hold the message
 	//lock when using the socket
-	public Lock socketLock;
+	public Lock socketLock = new Lock();
 	//make connect a blocking call
-	public Condition connectBlock; 
+	public Condition connectBlock = new Condition(socketLock); 
 	public Sockets(int _hostPort) {
 		//Connection info
 		this.hostID = Machine.networkLink().getLinkAddress();
@@ -67,8 +67,7 @@ public class Sockets extends OpenFile {
 		states = socketStates.CLOSED;
 
 		//setting up lock
-		socketLock = new Lock();
-		connectBlock = new Condition(socketLock);
+		
 
 		//etc
 		highestSeqSeen = 0;
@@ -258,58 +257,60 @@ public class Sockets extends OpenFile {
 		switch(states){
 		case CLOSED: 
 			//if syn, set state to syn received
-			if(pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin)
+			if((pckt.syn==true) && (pckt.ack==false) && (pckt.stp==false) && (pckt.fin==false))
 				states = socketStates.SYNRECEIVED;
 			//if fin send finack
-			if(pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin)
+			if((pckt.syn==false) && (pckt.ack == false) && (pckt.stp==false) && (pckt.fin == true))
 				sendFINACK();
 			break;
 		case SYNSENT:
 			//check if it received the syn/ack packet
-			if(pckt.syn&&pckt.ack&&!pckt.stp&&!pckt.fin){
+			if((pckt.syn == true) && (pckt.ack ==true) && (pckt.stp == false) && (pckt.fin == false)){
 				states = socketStates.ESTABLISHED;
+				socketLock.acquire();
 				connectBlock.wakeAll();
+				socketLock.release();
 				//wake thread waiting in connect()
 			}
 			//if it is just a syn--simultaneous connection
-			if(pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin)
+			if((pckt.syn ==true) && (pckt.ack==false) && (pckt.stp==false) && (pckt.fin==false))
 				sendACK();
 			//if data send syn;
-			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin)
+			if((pckt.syn==false) && (pckt.ack == false) && (pckt.stp==false) && (pckt.fin==false))
 				sendSYN();
 			//stp
-			if(!pckt.syn&&!pckt.ack&&pckt.stp&&!pckt.fin)
+			if((pckt.syn==false) && (pckt.ack==false) && (pckt.stp==true) && (pckt.fin==false))
 				sendSYN();
 			//fin
-			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&pckt.fin)
+			if((pckt.syn==false) && (pckt.ack==false) && (pckt.stp==false) && (pckt.fin==true))
 				sendSYN();
 			break;
 		case SYNRECEIVED:
 			break;
 		case ESTABLISHED:
 			//if syn, send synack
-			if(pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin)
+			if((pckt.syn==true) && (pckt.ack==false) && (pckt.stp==false) && (pckt.fin==false))
 				sendSYNACK();
 			//if data
-			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&!pckt.fin){
+			if((pckt.syn==false) && (pckt.ack==false) && (pckt.stp==false) && (pckt.fin==false)){
 				socketLock.acquire();
 				receivedPackets.add(pckt);
 				socketLock.release();
 				sendACK();
 			}
 			//if ack
-			if(!pckt.syn&&pckt.ack&&!pckt.stp&&!pckt.fin){
+			if((pckt.syn==false) && (pckt.ack==true) && (pckt.stp==false) && (pckt.fin==false)){
 				//shift send window
 				//send data
 				sendData(pckt);
 			}
 			//if stp
-			if(!pckt.syn&&!pckt.ack&&pckt.stp&&!pckt.fin){
+			if((pckt.syn==false) && (pckt.ack==false) && (pckt.stp==true) && (pckt.fin==false)){
 				//clear send window
 				states = socketStates.STPRCVD;
 			}
 			//if fin
-			if(!pckt.syn&&!pckt.ack&&!pckt.stp&&pckt.fin){
+			if((pckt.syn==false) && (pckt.ack==false) && (pckt.stp==false) && (pckt.fin==true)){
 				//clear send window
 				sendFINACK();
 				states = socketStates.CLOSED;
@@ -515,8 +516,9 @@ public class Sockets extends OpenFile {
 		// TODO Auto-generated method stub
 		//events to handle the different time outs.
 		//one for syn, fin and during regular packets transferswitch(state)
+		socketLock.acquire();
 		connectBlock.wakeAll();
-		
+		socketLock.release();
 		switch(states){
 		case SYNSENT:
 			sendSYN();
