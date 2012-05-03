@@ -89,50 +89,42 @@ public class TransportLayer  {
 			catch (MalformedPacketException e) {
 				continue;
 			}
-			/*
-			 * Check if the ID Hashmap list contains the current socket that the packet is trying to
-			 * be put on/ sent through. And make sure its not a syn packet.
-			 */
-		//	System.out.println("Packet Key: " + getPacketKey(mail));
-			//System.out.println("Packet Flag(SYN: " + mail.syn + " ACK: " + mail.ack + " STP: " + mail.stp + " FIN: " +mail.fin+ ")");
-			if(activeSockets.containsKey(getPacketKey(mail)) && mail.syn){
-				System.out.println("Packet Flag(SYN: " + mail.syn + " ACK: " + mail.ack + " STP: " + mail.stp + " FIN: " +mail.fin+ ")");
+			//check if there is an active connection
+			if(activeSockets.containsKey(getPacketKey(mail)) ){
+				//	System.out.println("Packet Flag(SYN: " + mail.syn + " ACK: " + mail.ack + " STP: " + mail.stp + " FIN: " +mail.fin+ ")");
 				Sockets sckt = activeSockets.get(getPacketKey(mail));
 				//sckt.receivedPackets.add(mail);
 				sckt.handlePacket(mail);
 			}
-			//Imply a connection came in.
-			else if(mail.syn == true){
-				if(activeSockets.containsKey(getPacketKey(mail))){
-					Sockets sckt = activeSockets.get(getPacketKey(mail));
-					//sckt.receivedPackets.add(mail);
-					sckt.handlePacket(mail);
+			//check if there is a pending connection. i.e. a syn packet
+			else if((mail.syn==true) && (mail.ack==false) && (mail.stp==false) && (mail.fin==false)){
+				//time to queue the pending connection  
+				boolean checkIfPending = false;
+				//check if there is already a pending connection, 
+				//dont need to queue the pending connection if there is one on the list already
+				for(Sockets n:socketQueues[mail.dstPort])
+				{
+					if(n.destID == p.srcLink && 
+							n.destPort == mail.srcPort &&
+							n.hostID == Machine.networkLink().getLinkAddress() &&
+							n.hostPort == mail.dstPort){
+						checkIfPending = true;
+						break;
+					}
 				}
-				else{
-				//have to check if there was
-				int port = mail.dstPort;
-				Sockets pendSocket = new Sockets(port);
-				pendSocket.destID = mail.packet.srcLink;
-				pendSocket.destPort = mail.srcPort;
-				socketQueues[port].add(pendSocket);
-				activeSockets.put(pendSocket.getKey(), pendSocket);
-				//int packetKey = getPacketKey(mail);
-				packetList[mail.dstPort].add(mail);
-				//	activeSockets.get(getPacketKey(mail)).handlePacket(mail);
+				//create a passive listening socket that is waiting to be accepted
+				if(!checkIfPending){
+					int port = mail.dstPort;
+					Sockets pendSocket = new Sockets(mail.dstPort);
+					pendSocket.destID = mail.packet.srcLink;
+					pendSocket.destPort = mail.srcPort;
+					socketQueues[port].add(pendSocket);
+					
 				}
-			}
-			else{
-				packetList[mail.dstPort].add(mail);
-				packetSignal[mail.dstPort].wakeAll();
 			}
 
-			//put onto message queue if it is a syn packet
-			// atomically add message to the mailbox and wake a waiting thread		
-			//This is the first layer of the ports to hold the packets
-			//packetList[mail.dstPort].add(mail);
-			//freePorts[mail.dstPort] = true;
-			//Need to be kept somewhere on a type of list or something...
 		}
+
 	}
 	public String getPacketKey(TCPpackets p)
 	{
@@ -242,8 +234,8 @@ public class TransportLayer  {
 		if(sckt.states == socketStates.CLOSED){
 			sckt.sendSYN();
 			sckt.states = socketStates.SYNSENT;
-			 System.out.println("Socket key: " + sckt.getKey());
-       
+			System.out.println("Socket key: " + sckt.getKey());
+
 			activeSockets.put(sckt.getKey(), sckt);
 			int count = 0;
 			/*while((sckt.states == socketStates.SYNSENT) && (count < TransportLayer.maxRetry)){

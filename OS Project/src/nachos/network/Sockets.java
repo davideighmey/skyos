@@ -28,11 +28,14 @@ public class Sockets extends OpenFile {
 	public int packetID;
 	public int highestSeqSeen;
 	public int highestSeqSent;
-	public LinkedList<TCPpackets> receivedPackets;
+	public int currentRetries;
+
+	
+	//public LinkedList<TCPpackets> receivedPackets;
 	public LinkedList<TCPpackets> unacknowledgedPackets;
 	public LinkedList<Integer> receivedAcks;
 	public Queue<TCPpackets> sBuffer; // send buffer
-	public Queue<TCPpackets>  rBuffer; // receive buffer
+	public Queue<TCPpackets>  receivedPackets; // receive buffer
 	public socketStates states;
 	//The receiver advertised window(adwn) is the buffer size sent in each ACK
 	public final int adwn = 16;    
@@ -49,11 +52,11 @@ public class Sockets extends OpenFile {
 		this.hostPort = _hostPort;
 		destPort = -1;
 		destID = -1;
-
+		currentRetries = 0;
 
 		//Setting up buffer
 		sBuffer = new LinkedList<TCPpackets>() ;
-		rBuffer = new LinkedList<TCPpackets>();
+		//rBuffer = new LinkedList<TCPpackets>();
 
 		//Setting up List
 		receivedPackets = new LinkedList<TCPpackets>();
@@ -111,7 +114,7 @@ public class Sockets extends OpenFile {
 		// make a new packet with the first packet that is the first one on the received linked list
 		System.out.println("There are " + receivedPackets.size() + " receivedPacket(s), getting next packet.");
 		//TCPpackets packet = receivedPackets.getFirst();
-		TCPpackets packet = receivedPackets.removeFirst();
+		TCPpackets packet = receivedPackets.poll();
 		System.out.println("New receivedPackets size = " + receivedPackets.size());
 
 		int copyBytes = length;
@@ -480,10 +483,10 @@ public class Sockets extends OpenFile {
 		for (int i =0; i< receivedPackets.size(); i++)
 		{
 			//System.out.println("seqNo: " + Lib.bytesToInt(receivedPackets.get(i).contents, 4, 4) + "  to read:" + seqNoRead);
-			if (Lib.bytesToInt(receivedPackets.get(i).packet.contents, 4, 4)==highestSeqSeen)
+			if (Lib.bytesToInt(receivedPackets.peek().packet.contents, 4, 4)==highestSeqSeen)
 			{
 				highestSeqSeen++;
-				TCPpackets p = receivedPackets.remove(i);
+				TCPpackets p = receivedPackets.poll();
 				socketLock.release();
 				return p;
 			}
@@ -518,12 +521,16 @@ public class Sockets extends OpenFile {
 		// TODO Auto-generated method stub
 		//events to handle the different time outs.
 		//one for syn, fin and during regular packets transferswitch(state)
-		socketLock.acquire();
-		connectBlock.wakeAll();
-		socketLock.release();
+		//socketLock.acquire();
+		//connectBlock.wakeAll();
+		//socketLock.release();
 		switch(states){
 		case SYNSENT:
+			if(currentRetries<3){
+			System.out.println("Retrying " + (currentRetries+1) + " out of 3");
+			currentRetries++;
 			sendSYN();
+			}
 			break;
 		case ESTABLISHED:
 			//case FINWAIT1:
