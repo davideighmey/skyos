@@ -268,6 +268,7 @@ public class Sockets extends OpenFile {
 			//check if it received the syn/ack packet
 			if(pckt.syn&&pckt.ack&&!pckt.stp&&!pckt.fin){
 				states = socketStates.ESTABLISHED;
+				connectBlock.wakeAll();
 				//wake thread waiting in connect()
 			}
 			//if it is just a syn--simultaneous connection
@@ -514,7 +515,8 @@ public class Sockets extends OpenFile {
 		// TODO Auto-generated method stub
 		//events to handle the different time outs.
 		//one for syn, fin and during regular packets transferswitch(state)
-
+		connectBlock.wakeAll();
+		
 		switch(states){
 		case SYNSENT:
 			sendSYN();
