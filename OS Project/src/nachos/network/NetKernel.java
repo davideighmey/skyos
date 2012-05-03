@@ -86,7 +86,19 @@ public class NetKernel extends UserKernel {
 			System.out.println("Did not connect");
 		}
 		System.out.println("Connected with info: DestID: " + connectPlease.destID + " at port: " + connectPlease.destPort );
-
+		 // juan -- testing read and write
+        System.out.println("++++Juan Write() testing++++");
+		
+		byte[] bt = new byte["Hi There".length()];
+        String str = "Hi There";
+       
+        connectPlease.write(str.getBytes(), 0, str.length());
+        System.out.println("++++Juan Read() testing++++");
+        
+        connectPlease.read(bt, 0,bt.length);
+        
+        System.out.println("++++END of Write() / Read() testing++++");
+        // juan -- END testing
 
 		connectPlease.close();
 		System.out.println("Connection has been closed");
