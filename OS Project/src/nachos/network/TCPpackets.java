@@ -45,7 +45,7 @@ public class TCPpackets {
 		this.packetID = _packetID;
 		this.contents = _contents;
 
-		byte[] packetContents = new byte[headerLength + contents.length];
+		byte[] packetContents = new byte[(headerLength) + contents.length];
 		
 		packetContents[0] = (byte) dstPort;
 		packetContents[1] = (byte) srcPort;
@@ -53,14 +53,24 @@ public class TCPpackets {
 		packetContents[2] = 0;
 		packetContents[3] = 0;
 		//packets flags
-		if(syn)
-			packetContents[3] = (byte) (packetContents[2]^0x1);
-		if(ack)
-			packetContents[3] = (byte) (packetContents[2]^0x2);
-		if(stp)
-			packetContents[3] = (byte) (packetContents[2]^0x4);
-		if(fin)
-			packetContents[3] = (byte) (packetContents[2]^0x8);
+		//syn
+		if((syn == true) && (ack == false) && (stp == false) && (fin == false))
+			packetContents[3] = (byte)1;
+		//ack
+		if((syn == false) && (ack == true) && (stp == false) && (fin == false))
+			packetContents[3] = (byte) 2;
+		//stp
+		if((syn == false) && (ack == false) && (stp == true) && (fin == false))
+			packetContents[3] = (byte) 4;
+		//fin
+		if((syn == false) && (ack == false) && (stp == false) && (fin == true))
+			packetContents[3] = (byte) 8;
+		//finack
+		if((syn == false) && (ack == true) && (stp == false) && (fin == true))
+			packetContents[3] = (byte) 10;
+		//synack
+		if((syn == true) && (ack == true) && (stp == false) && (fin == false))
+			packetContents[3] = (byte) 3;
 		
 		//storing the packetID
 		packetContents[4] = (byte) ((packetID >> 24) & 0xFF);
@@ -68,7 +78,7 @@ public class TCPpackets {
 		packetContents[6] = (byte) ((packetID >> 8) & 0xFF);
 		packetContents[7] = (byte) (packetID & 0xFF);
 		
-		System.arraycopy(contents, 0, packetContents, headerLength,
+		System.arraycopy(contents, 0, packetContents, (headerLength),
 				contents.length);
 		
 		packet = new Packet(_dstLink, _srcLink, packetContents);
@@ -83,7 +93,7 @@ public class TCPpackets {
 		this.packet = packet;
 
 		// make sure we have a valid header
-		if (packet.contents.length < headerLength ||
+		if (packet.contents.length < (headerLength) ||
 				packet.contents[0] < 0 || packet.contents[0] >= portLimit ||
 				packet.contents[1] < 0 || packet.contents[1] >= portLimit||
 				packet.contents[3] < 0||packet.contents[4] < 0 ||packet.contents[4]> 16||
@@ -95,16 +105,57 @@ public class TCPpackets {
 		srcPort = packet.contents[1];
 		
 		//grab the flags
-		syn = ((packet.contents[3] & 0x1) == 0x1);
-		ack = ((packet.contents[3] & 0x2) == 0x2);
-		stp = ((packet.contents[3] & 0x3) == 0x3);
-		fin = ((packet.contents[3] & 0x4) == 0x4);
+		switch(packet.contents[3]){
+		case 0://data
+			syn = false;
+			ack = false;
+			stp = false;
+			fin = false;
+			break;
+		case 1://syn
+			syn = true;
+			ack = false;
+			stp = false;
+			fin = false;
+			break;
+		case 2://ack
+			syn = false;
+			ack = true;
+			stp = false;
+			fin = false;
+			break;
+		case 3://synack
+			syn = true;
+			ack = true;
+			stp = false;
+			fin = false;
+			break;
+		case 4://stp
+			syn = false;
+			ack = false;
+			stp = true;
+			fin = false;
+			break;
+		case 8://fin
+			syn = false;
+			ack = false;
+			stp = false;
+			fin = true;
+			break;
+		case 10://finack
+			syn = false;
+			ack = true;
+			stp = false;
+			fin = true;
+			break;
+		}
+		
 		
 		//grab the packet id
 		packetID = (packet.contents[4] << 24) + (packet.contents[5]<< 16) + (packet.contents[4] << 8) + (packet.contents[7]);
 
-		contents = new byte[packet.contents.length - headerLength];
-		System.arraycopy(packet.contents, headerLength, contents, 0,
+		contents = new byte[packet.contents.length - (headerLength)];
+		System.arraycopy(packet.contents, (headerLength), contents, 0,
 				contents.length);
 	}
 

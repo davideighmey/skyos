@@ -250,6 +250,7 @@ public class Sockets extends OpenFile {
 	public void send(TCPpackets pckt){
 		socketLock.acquire();
 		unacknowledgedPackets.add(pckt);
+		//NetKernel.transport.messageQueue.add(pckt);
 		NetKernel.transport.send(pckt);
 		socketLock.release();
 
@@ -257,6 +258,7 @@ public class Sockets extends OpenFile {
 
 	public void handlePacket( TCPpackets pckt)
 	{
+		System.out.println(getKey());
 		switch(states){
 		case CLOSED: 
 			//if syn, set state to syn received
