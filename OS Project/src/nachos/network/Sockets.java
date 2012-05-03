@@ -258,7 +258,7 @@ public class Sockets extends OpenFile {
 
 	public void handlePacket( TCPpackets pckt)
 	{
-		System.out.println(getKey());
+		//System.out.println(getKey());
 		switch(states){
 		case CLOSED: 
 			//if syn, set state to syn received
@@ -399,6 +399,7 @@ public class Sockets extends OpenFile {
 	}
 	public void sendSTP(){
 		TCPpackets stp;
+		System.out.println("Sent STP");
 		try {
 			stp = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,false,true,false,increaseCount());
 			//NetKernel.transport.send(syn);
@@ -408,6 +409,7 @@ public class Sockets extends OpenFile {
 	}
 	public void sendFINACK(){
 		TCPpackets finack;
+		System.out.println("Sent FINAck");
 		try {
 			finack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,true,false,false,increaseCount());
 			//NetKernel.transport.send(syn);
@@ -417,6 +419,7 @@ public class Sockets extends OpenFile {
 	}
 	public void sendSYNACK(){
 		TCPpackets synack;
+		System.out.println("Sent SYNAck");
 		try {
 			synack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,true,false,false,increaseCount());
 			//NetKernel.transport.send(syn);
@@ -426,6 +429,7 @@ public class Sockets extends OpenFile {
 	}
 	public void sendSYN(){
 		TCPpackets syn;
+		System.out.println("Sent SYN");
 		try {
 			syn = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],true,false,false,false,increaseCount());
 			//NetKernel.transport.send(syn);
@@ -435,6 +439,7 @@ public class Sockets extends OpenFile {
 	}
 	public void sendFIN(){
 		TCPpackets fin;
+		System.out.println("Sent FIN");
 		try {
 			fin = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,false,false,true,increaseCount());
 			//NetKernel.transport.send(fin);
@@ -444,6 +449,7 @@ public class Sockets extends OpenFile {
 	}
 	public void sendACK(){
 		TCPpackets ack;
+		System.out.println("Sent Ack");
 		try {
 			ack = new TCPpackets(destID,destPort,hostID,hostPort,new byte[0],false,true,false,false,increaseCount());
 			//NetKernel.transport.send(ack);
