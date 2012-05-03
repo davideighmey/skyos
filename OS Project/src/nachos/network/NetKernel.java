@@ -89,6 +89,7 @@ public class NetKernel extends UserKernel {
 
 
 		connectPlease.close();
+		System.out.println("Connection has been closed");
 	}
 	private void socketTest2(){
 		if (test==0){
