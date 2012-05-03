@@ -320,6 +320,8 @@ public class Sockets extends OpenFile {
 			if((pckt.syn==false) && (pckt.ack==false) && (pckt.stp==false) && (pckt.fin==true)){
 				//clear send window
 				sendFINACK();
+				if(NetKernel.transport.activeSockets.containsKey(getKey()))
+					NetKernel.transport.activeSockets.remove(getKey());
 				states = socketStates.CLOSED;
 			}
 			break;
@@ -334,6 +336,8 @@ public class Sockets extends OpenFile {
 			//if fin
 			if((pckt.syn == false) && (pckt.ack == false) && (pckt.stp == false) && (pckt.fin == true)){
 				sendFINACK();
+				if(NetKernel.transport.activeSockets.containsKey(getKey()))
+					NetKernel.transport.activeSockets.remove(getKey());
 				states = socketStates.CLOSED;
 			}
 			break;
@@ -369,6 +373,8 @@ public class Sockets extends OpenFile {
 			//fin
 			if((pckt.syn == false) && (pckt.ack == false)&& (pckt.stp == false) && (pckt.fin == true)){
 				sendFINACK();
+				if(NetKernel.transport.activeSockets.containsKey(getKey()))
+					NetKernel.transport.activeSockets.remove(getKey());
 				states = socketStates.CLOSED;
 			}
 			break;
@@ -388,10 +394,14 @@ public class Sockets extends OpenFile {
 			//fin
 			if((pckt.syn == false) && (pckt.ack == false) && (pckt.stp == false) && (pckt.fin == true)){
 				sendFINACK();
+				if(NetKernel.transport.activeSockets.containsKey(getKey()))
+					NetKernel.transport.activeSockets.remove(getKey());
 				states = socketStates.CLOSED;
 			}
 			//fin/ack
 			if( (pckt.syn == false) && (pckt.ack == true) && (pckt.stp == false) && (pckt.fin == true)){
+				if(NetKernel.transport.activeSockets.containsKey(getKey()))
+					NetKernel.transport.activeSockets.remove(getKey());
 				states = socketStates.CLOSED;
 			}
 		}
