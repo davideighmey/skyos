@@ -317,7 +317,7 @@ public class Sockets extends OpenFile {
 				states = socketStates.STPRCVD;
 			}
 			//if fin
-			if((pckt.syn==false) && (pckt.ack==true) && (pckt.stp==false) && (pckt.fin==true)){
+			if((pckt.syn==false) && (pckt.ack==false) && (pckt.stp==false) && (pckt.fin==true)){
 				//clear send window
 				sendFINACK();
 				states = socketStates.CLOSED;
@@ -325,28 +325,28 @@ public class Sockets extends OpenFile {
 			break;
 		case STPRCVD:
 			//if data
-			if((pckt.syn != true) && (pckt.ack != true) && (pckt.stp !=true)&& (pckt.fin != true)){
+			if((pckt.syn == false) && (pckt.ack == false) && (pckt.stp == false)&& (pckt.fin == false)){
 				socketLock.acquire();
 				receivedPackets.add(pckt);
 				socketLock.release();
 				sendACK();
 			}
 			//if fin
-			if((pckt.syn != true) && (pckt.ack != true) && (pckt.stp != true) && (pckt.fin == true)){
+			if((pckt.syn == false) && (pckt.ack == false) && (pckt.stp == false) && (pckt.fin == true)){
 				sendFINACK();
 				states = socketStates.CLOSED;
 			}
 			break;
 		case STPSENT:
 			//if syn
-			if( (pckt.syn == true) && (pckt.ack != true)&& (pckt.stp != true) && (pckt.fin != true))
+			if( (pckt.syn == true) && (pckt.ack == false) && (pckt.stp == false) && (pckt.fin == false))
 				sendSYNACK();
 			//data
-			if((pckt.syn != true)&& (pckt.ack !=true)&& (pckt.stp != true)&& (pckt.fin != true)){
+			if((pckt.syn == false)&& (pckt.ack == false) && (pckt.stp == false) && (pckt.fin == false)){
 				sendSTP();
 			}
 			//ack
-			if((pckt.syn != true)&& (pckt.ack == true)&& (pckt.stp != true)&& (pckt.fin != true)){
+			if((pckt.syn == false)&& (pckt.ack == true)&& (pckt.stp == false)&& (pckt.fin == false)){
 				//if send queue is empty , send fin and goto closing
 				if(sBuffer.isEmpty()){
 					sendFIN();
@@ -361,37 +361,37 @@ public class Sockets extends OpenFile {
 
 			}
 			//stp
-			if((pckt.syn != true)&& (pckt.ack != true)&& (pckt.stp == true)&& (pckt.fin !=true)){
+			if((pckt.syn == false)&& (pckt.ack == false)&& (pckt.stp == true)&& (pckt.fin == false)){
 				//clear send window
 				sendFIN();
 				states = socketStates.CLOSEWAIT;
 			}
 			//fin
-			if((pckt.syn != true)&& (pckt.ack != true)&& (pckt.stp != true) && (pckt.fin == true)){
+			if((pckt.syn == false) && (pckt.ack == false)&& (pckt.stp == false) && (pckt.fin == true)){
 				sendFINACK();
 				states = socketStates.CLOSED;
 			}
 			break;
 		case CLOSEWAIT:
 			//syn
-			if((pckt.syn == true) && (pckt.ack !=true) && (pckt.stp !=true) && (pckt.fin !=true)){
+			if((pckt.syn == true) && (pckt.ack == false) && (pckt.stp == false) && (pckt.fin == false)){
 				sendSYNACK();
 			}
 			//data
-			if((pckt.syn != true)&& (pckt.ack !=true)&& (pckt.stp != true) && (pckt.fin != true)){
+			if((pckt.syn == false)&& (pckt.ack == false)&& (pckt.stp == false) && (pckt.fin == false)){
 				sendFIN();
 			}
 			//stp
-			if((pckt.syn != true) && (pckt.ack != true) &&(pckt.stp == true)&& (pckt.fin !=true)){
+			if((pckt.syn == false) && (pckt.ack == false) &&(pckt.stp == true)&& (pckt.fin == false)){
 				sendFIN();
 			}
 			//fin
-			if((pckt.syn != true) && (pckt.ack != true) && (pckt.stp != true) && (pckt.fin == true)){
+			if((pckt.syn == false) && (pckt.ack == false) && (pckt.stp == false) && (pckt.fin == true)){
 				sendFINACK();
 				states = socketStates.CLOSED;
 			}
 			//fin/ack
-			if( (pckt.syn == true) && (pckt.ack == true) && (pckt.stp != true) && (pckt.fin != true)){
+			if( (pckt.syn == false) && (pckt.ack == true) && (pckt.stp == false) && (pckt.fin == true)){
 				states = socketStates.CLOSED;
 			}
 		}
