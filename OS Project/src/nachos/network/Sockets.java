@@ -96,59 +96,6 @@ public class Sockets extends OpenFile {
 	 * @param       length  the number of bytes to read.
 	 * @return      the actual number of bytes successfully read, or -1 on failure.
 	 */  
-	/*public int read(byte[] buf, int offset, int length)
-	{
-		System.out.println("----Read() being called----");
-		if(states == socketStates.CLOSED)
-		{	
-			System.out.println("--Socket was CLOSED--");
-			if(receivedPackets.isEmpty()) // make sure there are no packets that still need to be read
-			{
-				System.out.println("--recievedPackets list is empty--");
-				return -1;
-			}
-		}
-		if(receivedPackets.size() == 0) // if there is nothing to read then return 0
-		{
-			System.out.println("--Size of receivedPackets list is 0. Nothing to be read--");
-			return 0;
-		}
-
-		System.out.println("--There is something to be read--");
-		//NetKernel actually do something
-		// make a new packet with the first packet that is the first one on the received linked list
-		System.out.println("There are " + receivedPackets.size() + " receivedPacket(s), getting next packet.");
-		//TCPpackets packet = receivedPackets.getFirst();
-		TCPpackets packet = receivedPackets.poll();
-		System.out.println("New receivedPackets size = " + receivedPackets.size());
-
-		int copyBytes = length;
-		//int copyBytes = Math.min(length, packet.contents.length);
-		System.out.println("Bytes to copy are = " + copyBytes);
-		//System.out.println("What is in the packet--> " + packet.contents.toString());
-		if(copyBytes == 0)
-		{
-			return 0;
-		}
-
-		byte[] contents = "hello2_SomeStringLongerThan_copyBytes".getBytes(); // this does not if string is short
-		//byte[] contents = packet.contents; // this gives error null pointer exception
-		System.out.println("Copying...");
-		System.arraycopy(contents, 0, buf,0,copyBytes);
-		// have to remove the copied bytes from packet
-		// or completely remove packet from buffer
-		byte[] contents2 = new byte[contents.length - copyBytes];
-		if(contents2.length == 0)
-			receivedPackets.remove(packet);
-		else
-		{
-			System.arraycopy(contents,  copyBytes, contents2, 0, contents2.length);
-			packet.contents = contents2; // null pointer exception
-		}
-		System.out.println("++Read " + copyBytes + "++");
-		return copyBytes;
-		//return -1;
-	}*/
 
 	TCPpackets currentReadingPacket;
 	int currentReadingPacketOff;
@@ -253,45 +200,7 @@ public class Sockets extends OpenFile {
 			recieved[4+i]=temp[i];
 	}
 
-		//byte[] readyToWrite = new byte[numBlocks];
-
-		//System.out.println("---Do we queue the blocks or what??---");
-
-		//if(states == socketStates.ESTABLISHED){
-		/*
-		for(int i = 0; i < numBlocks; i++)
-		{
-			byte[] toWrite = new byte[length]; // what size
-			// copy bytes from the buf[] that is given to the toWrite[] that we made
-			System.arraycopy(buf, bytesWritten, toWrite, 0, toWrite.length);
-			bytesWritten = bytesWritten + toWrite.length; // update number of bytes written
-			length = length - toWrite.length; // decrease (update) how much we still have to write
-
-			// still more stuff
-			TCPpackets newPacket = null; 
-			try {
-				System.out.println("Previous size of receivedPackets = " + receivedPackets.size());
-				newPacket = new TCPpackets(destID,destPort,hostID,hostPort,toWrite,true,false,false,false,increaseCount());
-
-			} catch (MalformedPacketException e) {
-				// TODO Auto-generated catch block
-				//e.printStackTrace();
-
-			}
-			//newPacket.contents = // set the new contents in the packet
-			receivedPackets.add(newPacket);
-			System.out.println("New size of receivedPackets = " + receivedPackets.size());
-		}
-		//}
-		// return how many bytes were written
-		System.out.println("--Bytes Written " + bytesWritten + "--");
-		return bytesWritten; // or length??
-	}
-*/
-
-	/*
-	 * 
-	 */
+	
 	public void setPacketID(byte[] contents)
 	{
 		byte[] temp = new byte[4];
@@ -613,12 +522,7 @@ public class Sockets extends OpenFile {
 	}
 
 	public void timeOutEvent() {
-		// TODO Auto-generated method stub
-		//events to handle the different time outs.
-		//one for syn, fin and during regular packets transferswitch(state)
-		//socketLock.acquire();
-		//connectBlock.wakeAll();
-		//socketLock.release();
+	
 		switch(states){
 		case SYNSENT:
 			if(currentRetries<3){
