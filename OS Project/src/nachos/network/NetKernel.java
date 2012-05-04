@@ -56,6 +56,9 @@ public class NetKernel extends UserKernel {
 			ping(1-local);
 	}
 	public void selfTest(){
+		
+	}
+	public void selfTest3(){
 
 		KThread test2 = new KThread(new Runnable() {
 			public void run(){

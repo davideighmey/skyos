@@ -35,7 +35,7 @@ public class NetProcess extends UserProcess {
 		return -1;
 	}
 	
-	private int connect(int destID, int destPort){
+	private int handleConnect(int destID, int destPort){
 		if (destPort < 0 || destPort > TCPpackets.portLimit){
 			return -1;}
 	
@@ -53,7 +53,7 @@ public class NetProcess extends UserProcess {
 		return putOntoFileDiscriptorTable(socket);
 	}
 
-	private int accept(int port){
+	private int handleAccept(int port){
 		if (port < 0 || port > TCPpackets.portLimit){
 			return -1;
 		}
@@ -90,8 +90,8 @@ public class NetProcess extends UserProcess {
 	 */
 	public int handleSyscall(int syscall, int a0, int a1, int a2, int a3) {
 		switch (syscall) {
-		case(syscallConnect): return connect(a0, a1); //a0 is host number, a1 is port number
-		case(syscallAccept): return accept(a0);
+		case(syscallConnect): return handleConnect(a0, a1); //a0 is host number, a1 is port number
+		case(syscallAccept): return handleAccept(a0);
 		default:
 			return super.handleSyscall(syscall, a0, a1, a2, a3);
 		}
