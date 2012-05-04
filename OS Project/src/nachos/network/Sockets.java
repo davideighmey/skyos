@@ -312,7 +312,6 @@ public class Sockets extends OpenFile {
 		// Sliding window part
 		if(creditCount > 0)
 		{
-			socketLock.acquire();
 			if(unacknowledgedPackets.size() < adwn) // check to make sure that it is below 16 (sliding window size)
 				unacknowledgedPackets.add(pckt);
 
