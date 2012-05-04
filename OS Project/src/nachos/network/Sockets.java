@@ -225,7 +225,90 @@ public class Sockets extends OpenFile {
 
 		}
 	}
+
+
+	public int SeqNumForReceive(TCPpackets pckt){
+		int packetSEQ = 0;
+		if(receivedPackets.isEmpty()){
+			packetSEQ = highestSeqSeen;  //This should still be zero once converted to bytes, if first packet
+			highestSeqSeen++;
+			return packetSEQ;
+		}
+		else{
+			//Looking for a similar packet, i.e retransmitted packets.
+			for(int i = 0; i < receivedPackets.size(); i++){
+				TCPpackets dummy =(TCPpackets)((LinkedList)receivedPackets).get(i); // assumming that the packetID from handle calls is 0; So !equals.
+				if((pckt.ack == dummy.ack) &&
+						(pckt.fin == dummy.fin) &&
+						(pckt.stp == dummy.stp) &&
+						(pckt.syn == dummy.syn) &&
+						(pckt.contents == dummy.contents) &&
+						(pckt.dstPort == dummy.dstPort) &&
+						(pckt.packet == dummy.packet) &&
+						(pckt.srcPort == dummy.srcPort)
+						/*(pckt.packetID != dummy.packetID)*/){
+					packetSEQ = dummy.packetID;
+					return packetSEQ;
+				}
+			}
+		}
+		//Else if there are no packets that are the same, get the highest, Seq number of the packet in the list
+		for (int i =0; i < receivedPackets.size(); i++){
+			if (Lib.bytesToInt(receivedPackets.peek().packet.contents, 4, 4) == highestSeqSeen)
+			{
+				highestSeqSeen++;
+				packetSEQ = highestSeqSeen;
+			}
+		}
+
+		return packetSEQ;
+	}
+	//Send and receive SeqNum are different
+	public int SeqNumForSend(TCPpackets pckt){
+		int packetSEQ = 0;
+		if(unacknowledgedPackets.isEmpty()){
+			packetSEQ = highestSeqSent;  //This should still be zero once converted to bytes, if first packet
+			highestSeqSent++;
+			return packetSEQ;
+		}
+		else{
+			//Looking for a similar packet, i.e retransmitted packets.
+			for(int i = 0; i < unacknowledgedPackets.size(); i++){
+				TCPpackets dummy = unacknowledgedPackets.get(i); // assumming that the packetID from handle calls is 0; So !equals.
+				if((pckt.ack == dummy.ack) &&
+						(pckt.fin == dummy.fin) &&
+						(pckt.stp == dummy.stp) &&
+						(pckt.syn == dummy.syn) &&
+						(pckt.contents == dummy.contents) &&
+						(pckt.dstPort == dummy.dstPort) &&
+						(pckt.packet == dummy.packet) &&
+						(pckt.srcPort == dummy.srcPort)
+						/*(pckt.packetID != dummy.packetID)*/){
+					packetSEQ = dummy.packetID;
+					return packetSEQ;
+				}
+			}
+		}
+		//Else if there are no packets that are the same, get the highest, Seq number of the packet in the list
+		for (int i =0; i < unacknowledgedPackets.size(); i++){
+			if (Lib.bytesToInt(unacknowledgedPackets.peek().packet.contents, 4, 4) == highestSeqSent)
+			{
+				highestSeqSent++;
+				packetSEQ = highestSeqSent;
+			}
+		}
+		return packetSEQ; 
+	}
+
 	public void send(TCPpackets pckt){
+		/*
+		 * Shit forgot that the pckts being sent from the handlePackets, will never be the same within the packetPackets list.
+		 */
+		socketLock.acquire();
+		pckt.packetID = SeqNumForSend(pckt);
+		if(unacknowledgedPackets.contains(pckt) == false){
+			unacknowledgedPackets.add(pckt);
+		}
 		// Sliding window part
 		if(creditCount > 0)
 		{
