@@ -177,9 +177,13 @@ public class Sockets extends OpenFile {
 				setNum(contents);
 				try {
 					packet = new TCPpackets(destID,destPort,hostID,hostPort,contents,false,false,false,false,increaseCount());
-				} catch (MalformedPacketException e){}		       			
-				unacknowledgedPackets.add(packet);
-				send(packet);
+				} catch (MalformedPacketException e){}	
+				if(creditCount > 0)
+				{
+					unacknowledgedPackets.add(packet);
+					send(packet);
+				}
+				
 			}
 			return length;
 		case STPRCVD:
