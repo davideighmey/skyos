@@ -235,13 +235,7 @@ public class TransportLayer  {
 			sckt.sendSYN();
 			sckt.states = socketStates.SYNSENT;
 			System.out.println("Socket key: " + sckt.getKey());
-
 			activeSockets.put(sckt.getKey(), sckt);
-			int count = 0;
-			/*while((sckt.states == socketStates.SYNSENT) && (count < TransportLayer.maxRetry)){
-				NetKernel.alarm.waitUntil(reTransmission);
-				count++;
-			}*/
 			sckt.socketSleep();
 			sckt.states = socketStates.ESTABLISHED;
 			return true;

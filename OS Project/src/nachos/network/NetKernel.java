@@ -95,7 +95,7 @@ public class NetKernel extends UserKernel {
         connectPlease.write(str.getBytes(), 0, str.length());
         System.out.println("++++Juan Read() testing++++");
         
-        connectPlease.read(bt, 0,bt.length);
+       // connectPlease.read(bt, 0,bt.length);
         
         System.out.println("++++END of Write() / Read() testing++++");
         // juan -- END testing
