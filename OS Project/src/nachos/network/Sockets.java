@@ -598,15 +598,15 @@ public class Sockets extends OpenFile {
 		socketLock.acquire();
 		for (int i =0; i<unacknowledgedPackets.size(); i++)
 		{
-			//if(creditCount>0) // make sure there is we have sufficient credit count 
-			//{
+			if(creditCount < 16) // make sure there is we have sufficient credit count 
+			{
 				creditCount++; // increase creditCount because we are receiving an ack packet
 				//TCPpackets temp = unacknowledgedPackets.get(i);			
 				unacknowledgedPackets.remove(i);
 				//receivedAcks.add(seqNum);
-			//}
-			//else // creditCount == 0 so not enough room to send another packet
-			//	break;
+			}
+			else // creditCount == 0 so not enough room to send another packet
+				break;
 
 		}
 		socketLock.release();
