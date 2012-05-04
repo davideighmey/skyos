@@ -37,7 +37,6 @@ public class Sockets extends OpenFile {
 	public int creditCount = 16;
 	// advertised window has a fixed window size of 16 => use variable adwn
 
-	//public LinkedList<TCPpackets> receivedPackets;
 	public LinkedList<TCPpackets> unacknowledgedPackets;
 	public LinkedList<Integer> receivedAcks;
 	public Queue<TCPpackets> sBuffer; // send buffer
@@ -216,43 +215,33 @@ public class Sockets extends OpenFile {
 	 */    
 	public int write(byte[] buf, int offset, int length)  
 	{
-		System.out.println("----write() being called----");
-		if(states == socketStates.CLOSED) // if there is not a connection return -1 "error"
-		{
-			System.out.println("----sockets were closed----");
-			return -1;
-		}
-		else if(length == 0) // length of 0 nothing to write
-
-		{
-			System.out.println("---Length was 0, nothing to write---");
-			return 0;
-		}
-
-		System.out.println("---There is something to be written---");
-		//check that status of this socket before continuing
-		TCPpackets packet = null;
-		// get how many blocks we are going to need to transfer
-		//int numBlocks = (int)Math.ceil((float) length / (float)TCPpackets.maxContentsLength);
-		int bytePos = offset;
-		int endPos = offset + length;
-		while(bytePos < endPos){
-			int amountSend = Math.min(Packet.maxContentsLength - 8, endPos - bytePos);
-			byte[] contents = new byte[amountSend + 8];		  
-			System.arraycopy(buf, bytePos, contents, 8, amountSend);
-			bytePos += amountSend;
-			setNum(contents);
-			try {
-				packet = new TCPpackets(destID,destPort,hostID,hostPort,contents,false,false,false,false,increaseCount());
+		switch(states){
+		case CLOSED:
+			return-1;
+		case ESTABLISHED:
+			TCPpackets packet = null;
+			int bytePos = offset;
+			int endPos = offset + length;
+			while(bytePos < endPos){
+				int amountSend = Math.min(TCPpackets.maxContentsLength, endPos - bytePos);
+				byte[] contents = new byte[amountSend];		  
+				System.arraycopy(buf, bytePos, contents, 0, amountSend);
+				bytePos += amountSend;
+				setNum(contents);
+				try {
+					packet = new TCPpackets(destID,destPort,hostID,hostPort,contents,false,false,false,false,increaseCount());
+				} catch (MalformedPacketException e){}		       			
+				unacknowledgedPackets.add(packet);
 				send(packet);
-			} catch (MalformedPacketException e){
-				
 			}
-			       			
+			return length;
+		case STPRCVD:
+			return -1;
+
 		}
-		return length;
+		return 0;
 	}
-	
+
 	
 	public int seq;
 	
