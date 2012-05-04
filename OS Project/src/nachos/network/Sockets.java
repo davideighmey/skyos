@@ -182,11 +182,11 @@ public class Sockets extends OpenFile {
 		 while(currentReadingPacket != null && bytesRead < length)
          {
 			 	System.out.println("reading");
-                 int amountToRead = Math.min(currentReadingPacket.contents.length - currentReadingPacketOff, length);
-                 amountToRead = Math.min(amountToRead, buf.length - bytesRead);
-                 System.arraycopy(currentReadingPacket.contents, currentReadingPacketOff, buf, offset + bytesRead, amountToRead);
-                 bytesRead += amountToRead;
-                 currentReadingPacketOff += amountToRead;
+                 int amountRead = Math.min(currentReadingPacket.contents.length - currentReadingPacketOff, length);
+                 amountRead = Math.min(amountRead, buf.length - bytesRead);
+                 System.arraycopy(currentReadingPacket.contents, currentReadingPacketOff, buf, offset + bytesRead, amountRead);
+                 bytesRead += amountRead;
+                 currentReadingPacketOff += amountRead;
                  if(currentReadingPacketOff >= currentReadingPacket.contents.length){
                  	currentReadingPacket = getNextPacket();
                  	currentReadingPacketOff = 8;    
