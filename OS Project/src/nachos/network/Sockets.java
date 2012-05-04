@@ -97,7 +97,7 @@ public class Sockets extends OpenFile {
 	 * @param       length  the number of bytes to read.
 	 * @return      the actual number of bytes successfully read, or -1 on failure.
 	 */  
-	public int read(byte[] buf, int offset, int length)
+	/*public int read(byte[] buf, int offset, int length)
 	{
 		System.out.println("----Read() being called----");
 		if(states == socketStates.CLOSED)
@@ -149,8 +149,52 @@ public class Sockets extends OpenFile {
 		System.out.println("++Read " + copyBytes + "++");
 		return copyBytes;
 		//return -1;
-	}
+	}*/
 
+	TCPpackets currentReadingPacket;
+	int currentReadingPacketOff;
+
+	public int read(byte[] buf, int offset, int length)
+	{
+		System.out.println("----Read() being called----");
+		if(states == socketStates.CLOSED)
+		{	
+			System.out.println("--Socket was CLOSED--");
+			if(receivedPackets.isEmpty()) // make sure there are no packets that still need to be read
+			{
+				System.out.println("--recievedPackets list is empty--");
+				return -1;
+			}
+			//return -1;
+		}
+		if(receivedPackets.size() == 0) // if there is nothing to read then return 0
+		{
+			System.out.println("--Size of receivedPackets list is 0. Nothing to be read--");
+			return 0;
+		}
+		if(currentReadingPacket == null || currentReadingPacketOff >= currentReadingPacket.contents.length)
+        {
+                //currentReadingPacket = NetKernel.packetManager.getMessageOnPort(connection.localPort);
+            currentReadingPacket = getNextPacket();
+        	currentReadingPacketOff = 8;
+        }
+		int bytesRead = 0;
+		 while(currentReadingPacket != null && bytesRead < length)
+         {
+			 	System.out.println("reading");
+                 int amountToRead = Math.min(currentReadingPacket.contents.length - currentReadingPacketOff, length);
+                 amountToRead = Math.min(amountToRead, buf.length - bytesRead);
+                 System.arraycopy(currentReadingPacket.contents, currentReadingPacketOff, buf, offset + bytesRead, amountToRead);
+                 bytesRead += amountToRead;
+                 currentReadingPacketOff += amountToRead;
+                 if(currentReadingPacketOff >= currentReadingPacket.contents.length){
+                 	currentReadingPacket = getNextPacket();
+                 	currentReadingPacketOff = 8;    
+                 }
+         }
+		 	System.out.println("finished reading");
+     return bytesRead;
+  }
 	void socketSleep(){
 		this.socketLock.acquire();
 		this.connectBlock.sleep();
