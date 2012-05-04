@@ -36,6 +36,9 @@ public class Sockets extends OpenFile {
 	//creditCount must be greater than 0 before a packet can be sent
 	public int creditCount = 16;
 	// advertised window has a fixed window size of 16 => use variable adwn
+	
+	// keeps the packet ID of the last packet that was sent in case we have to stop
+	//public int lastPID = -1;
 
 	public LinkedList<TCPpackets> unacknowledgedPackets;
 	public LinkedList<Integer> receivedAcks;
@@ -180,10 +183,12 @@ public class Sockets extends OpenFile {
 				} catch (MalformedPacketException e){}	
 				if(creditCount > 0)
 				{
+					//lastPID = packet.packetID; // keep the packet ID of the last packet that was sent
 					unacknowledgedPackets.add(packet);
 					send(packet);
 				}
-				
+				else
+					return amountSend;
 			}
 			return length;
 		case STPRCVD:
@@ -593,15 +598,15 @@ public class Sockets extends OpenFile {
 		socketLock.acquire();
 		for (int i =0; i<unacknowledgedPackets.size(); i++)
 		{
-			if(creditCount>0) // make sure there is we have sufficient credit count 
-			{
-				creditCount--; // decreasing creditCount because we are sending a packet
+			//if(creditCount>0) // make sure there is we have sufficient credit count 
+			//{
+				creditCount++; // increase creditCount because we are receiving an ack packet
 				//TCPpackets temp = unacknowledgedPackets.get(i);			
 				unacknowledgedPackets.remove(i);
 				//receivedAcks.add(seqNum);
-			}
-			else // creditCount == 0 so not enough room to send another packet
-				break;
+			//}
+			//else // creditCount == 0 so not enough room to send another packet
+			//	break;
 
 		}
 		socketLock.release();
