@@ -119,28 +119,28 @@ public class Sockets extends OpenFile {
 			return 0;
 		}
 		if(currentReadingPacket == null || currentReadingPacketOff >= currentReadingPacket.contents.length)
-        {
-                //currentReadingPacket = NetKernel.packetManager.getMessageOnPort(connection.localPort);
-            currentReadingPacket = getNextPacket();
-        	currentReadingPacketOff = 8;
-        }
+		{
+			//currentReadingPacket = NetKernel.packetManager.getMessageOnPort(connection.localPort);
+			currentReadingPacket = getNextPacket();
+			currentReadingPacketOff = 8;
+		}
 		int bytesRead = 0;
-		 while(currentReadingPacket != null && bytesRead < length)
-         {
-			 	System.out.println("reading");
-                 int amountRead = Math.min(currentReadingPacket.contents.length - currentReadingPacketOff, length);
-                 amountRead = Math.min(amountRead, buf.length - bytesRead);
-                 System.arraycopy(currentReadingPacket.contents, currentReadingPacketOff, buf, offset + bytesRead, amountRead);
-                 bytesRead += amountRead;
-                 currentReadingPacketOff += amountRead;
-                 if(currentReadingPacketOff >= currentReadingPacket.contents.length){
-                 	currentReadingPacket = getNextPacket();
-                 	currentReadingPacketOff = 8;    
-                 }
-         }
-		 	System.out.println("finished reading");
-     return bytesRead;
-  }
+		while(currentReadingPacket != null && bytesRead < length)
+		{
+			System.out.println("reading");
+			int amountRead = Math.min(currentReadingPacket.contents.length - currentReadingPacketOff, length);
+			amountRead = Math.min(amountRead, buf.length - bytesRead);
+			System.arraycopy(currentReadingPacket.contents, currentReadingPacketOff, buf, offset + bytesRead, amountRead);
+			bytesRead += amountRead;
+			currentReadingPacketOff += amountRead;
+			if(currentReadingPacketOff >= currentReadingPacket.contents.length){
+				currentReadingPacket = getNextPacket();
+				currentReadingPacketOff = 8;    
+			}
+		}
+		System.out.println("finished reading");
+		return bytesRead;
+	}
 	void socketSleep(){
 		this.socketLock.acquire();
 		this.connectBlock.sleep();
@@ -189,9 +189,9 @@ public class Sockets extends OpenFile {
 		return 0;
 	}
 
-	
+
 	public int seq;
-	
+
 	public void setNum(byte[] recieved)
 	{
 		byte[] temp = new byte[4];
@@ -200,7 +200,7 @@ public class Sockets extends OpenFile {
 			recieved[4+i]=temp[i];
 	}
 
-	
+
 	public void setPacketID(byte[] contents)
 	{
 		byte[] temp = new byte[4];
@@ -522,7 +522,7 @@ public class Sockets extends OpenFile {
 	}
 
 	public void timeOutEvent() {
-	
+
 		switch(states){
 		case SYNSENT:
 			if(currentRetries<3){
