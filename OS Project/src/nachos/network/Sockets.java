@@ -30,7 +30,13 @@ public class Sockets extends OpenFile {
 	public int highestSeqSent;
 	public int currentRetries;
 
-	
+	// # of data packets that can be sent before and ack packet is received
+	// should decrease by one every time a packet is sent
+	// and increase by one every time a ack packet is received
+	//creditCount must be greater than 0 before a packet can be sent
+	public int creditCount = 16;
+	// advertised window has a fixed window size of 16 => use variable adwn
+
 	//public LinkedList<TCPpackets> receivedPackets;
 	public LinkedList<TCPpackets> unacknowledgedPackets;
 	public LinkedList<Integer> receivedAcks;
@@ -70,7 +76,7 @@ public class Sockets extends OpenFile {
 		states = socketStates.CLOSED;
 
 		//setting up lock
-		
+
 
 		//etc
 		highestSeqSeen = 0;
@@ -144,7 +150,7 @@ public class Sockets extends OpenFile {
 		return copyBytes;
 		//return -1;
 	}
-	
+
 	void socketSleep(){
 		this.socketLock.acquire();
 		this.connectBlock.sleep();
@@ -173,10 +179,12 @@ public class Sockets extends OpenFile {
 			return -1;
 		}
 		else if(length == 0) // length of 0 nothing to write
-			{
-				System.out.println("---Length was 0, nothing to write---");
-				return 0;
-			}
+
+		{
+			System.out.println("---Length was 0, nothing to write---");
+			return 0;
+		}
+
 		System.out.println("---There is something to be written---");
 		//check that status of this socket before continuing
 		TCPpackets packet = null;
@@ -276,11 +284,18 @@ public class Sockets extends OpenFile {
 		}
 	}
 	public void send(TCPpackets pckt){
-		socketLock.acquire();
-		unacknowledgedPackets.add(pckt);
-		//NetKernel.transport.messageQueue.add(pckt);
-		NetKernel.transport.send(pckt);
-		socketLock.release();
+		// Sliding window part
+		if(creditCount > 0)
+		{
+			socketLock.acquire();
+			if(unacknowledgedPackets.size() < adwn) // check to make sure that it is below 16 (sliding window size)
+				unacknowledgedPackets.add(pckt);
+
+			//NetKernel.transport.messageQueue.add(pckt);
+			NetKernel.transport.send(pckt);
+			socketLock.release();
+		}
+		// should not send packet until and ack packet is received and creditCount is increased
 
 	}
 
@@ -292,8 +307,8 @@ public class Sockets extends OpenFile {
 			//if syn, set state to syn received
 			if((pckt.syn==true) && (pckt.ack==false) && (pckt.stp==false) && (pckt.fin==false)){
 				states = socketStates.SYNRECEIVED;
-				
-				}
+
+			}
 			//if fin send finack
 			if((pckt.syn==false) && (pckt.ack == false) && (pckt.stp==false) && (pckt.fin == true))
 				sendFINACK();
@@ -335,18 +350,20 @@ public class Sockets extends OpenFile {
 			}
 			//if ack
 			if((pckt.syn==false) && (pckt.ack==true) && (pckt.stp==false) && (pckt.fin==false)){
-				//shift send window
+				//shift send window -- did it in sendData()
 				//send data
 				sendData(pckt);
 			}
 			//if stp
 			if((pckt.syn==false) && (pckt.ack==false) && (pckt.stp==true) && (pckt.fin==false)){
 				//clear send window
+				creditCount = 16; // reset back to 16
 				states = socketStates.STPRCVD;
 			}
 			//if fin
 			if((pckt.syn==false) && (pckt.ack==false) && (pckt.stp==false) && (pckt.fin==true)){
 				//clear send window
+				creditCount = 16; // reset back to 16
 				sendFINACK();
 				if(NetKernel.transport.activeSockets.containsKey(getKey()))
 					NetKernel.transport.activeSockets.remove(getKey());
@@ -544,21 +561,20 @@ public class Sockets extends OpenFile {
 
 	}
 	public void sendData(TCPpackets pckt){
-		int seqNum = Lib.bytesToInt(pckt.packet.contents, 4, 4);
+		//int seqNum = Lib.bytesToInt(pckt.packet.contents, 4, 4);
 		socketLock.acquire();
 		for (int i =0; i<unacknowledgedPackets.size(); i++)
 		{
-			TCPpackets temp = unacknowledgedPackets.get(i);
-			if (seqNum==Lib.bytesToInt(temp.contents, 4, 4) &&
-					temp.packet.dstLink == pckt.packet.srcLink &&
-					temp.packet.srcLink == pckt.packet.dstLink &&
-					temp.packet.contents[0] == pckt.packet.contents[1] &&
-					temp.packet.contents[1] == pckt.packet.contents[0])
+			if(creditCount>0) // make sure there is we have sufficient credit count 
 			{
+				creditCount--; // decreasing creditCount because we are sending a packet
+				//TCPpackets temp = unacknowledgedPackets.get(i);			
 				unacknowledgedPackets.remove(i);
-				receivedAcks.add(seqNum);
+				//receivedAcks.add(seqNum);
+			}
+			else // creditCount == 0 so not enough room to send another packet
 				break;
-			}			
+
 		}
 		socketLock.release();
 	}
@@ -573,9 +589,9 @@ public class Sockets extends OpenFile {
 		switch(states){
 		case SYNSENT:
 			if(currentRetries<3){
-			System.out.println("Retrying " + (currentRetries+1) + " out of 3");
-			currentRetries++;
-			sendSYN();
+				System.out.println("Retrying " + (currentRetries+1) + " out of 3");
+				currentRetries++;
+				sendSYN();
 			}
 			break;
 		case ESTABLISHED:
@@ -596,6 +612,3 @@ public class Sockets extends OpenFile {
 	}
 
 }
-
-
-
