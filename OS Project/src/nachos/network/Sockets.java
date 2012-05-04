@@ -61,7 +61,7 @@ public class Sockets extends OpenFile {
 		destPort = -1;
 		destID = -1;
 		currentRetries = 0;
-
+		
 		//Setting up buffer
 		sBuffer = new LinkedList<TCPpackets>() ;
 		//rBuffer = new LinkedList<TCPpackets>();
@@ -235,42 +235,21 @@ public class Sockets extends OpenFile {
 		}
 	}
 
-
-	public int SeqNumForReceive(TCPpackets pckt){
-		int packetSEQ = 0;
-		if(receivedPackets.isEmpty()){
-			packetSEQ = highestSeqSeen;  //This should still be zero once converted to bytes, if first packet
+	/**
+	 * Return false to drop the packet if it was not the correct packet in the sequence, or a duplicate one. 
+	 * @param pckt
+	 * @return true, if it was added to the list, else false if it was dropped because of duplicate or non-seq.
+	 */
+	public void SeqNumForReceive(TCPpackets pckt){
+		if(pckt.packetID == highestSeqSeen) {
+			receivedPackets.add(pckt);
 			highestSeqSeen++;
-			return packetSEQ;
 		}
-		else{
-			//Looking for a similar packet, i.e retransmitted packets.
-			for(int i = 0; i < receivedPackets.size(); i++){
-				TCPpackets dummy =(TCPpackets)((LinkedList)receivedPackets).get(i); // assumming that the packetID from handle calls is 0; So !equals.
-				if((pckt.ack == dummy.ack) &&
-						(pckt.fin == dummy.fin) &&
-						(pckt.stp == dummy.stp) &&
-						(pckt.syn == dummy.syn) &&
-						(pckt.contents == dummy.contents) &&
-						(pckt.dstPort == dummy.dstPort) &&
-						(pckt.packet == dummy.packet) &&
-						(pckt.srcPort == dummy.srcPort)
-						/*(pckt.packetID != dummy.packetID)*/){
-					packetSEQ = dummy.packetID;
-					return packetSEQ;
-				}
-			}
+		else;
+		//Looking for a similar packet, i.e retransmitted packets. if true, just drop it
+		/*(receivedPackets.contains(pckt) == true){
 		}
-		//Else if there are no packets that are the same, get the highest, Seq number of the packet in the list
-		for (int i =0; i < receivedPackets.size(); i++){
-			if (Lib.bytesToInt(receivedPackets.peek().packet.contents, 4, 4) == highestSeqSeen)
-			{
-				highestSeqSeen++;
-				packetSEQ = highestSeqSeen;
-			}
-		}
-
-		return packetSEQ;
+		*/
 	}
 	//Send and receive SeqNum are different
 	public int SeqNumForSend(TCPpackets pckt){
@@ -377,7 +356,8 @@ public class Sockets extends OpenFile {
 			//if data
 			if((pckt.syn==false) && (pckt.ack==false) && (pckt.stp==false) && (pckt.fin==false)){
 				socketLock.acquire();
-				receivedPackets.add(pckt);
+				//receivedPackets.add(pckt);
+				SeqNumForReceive(pckt);
 				socketLock.release();
 				sendACK();
 			}
@@ -407,7 +387,8 @@ public class Sockets extends OpenFile {
 			//if data
 			if((pckt.syn == false) && (pckt.ack == false) && (pckt.stp == false)&& (pckt.fin == false)){
 				socketLock.acquire();
-				receivedPackets.add(pckt);
+			//	receivedPackets.add(pckt);
+				SeqNumForReceive(pckt);
 				socketLock.release();
 				sendACK();
 			}
