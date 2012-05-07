@@ -252,13 +252,13 @@ public class TransportLayer  {
 
 		//Should always assume first packet is a syn packet
 		//TCPpackets p = (TCPpackets) packetList[port].removeFirst();
-		if(sckt.states== socketStates.SYNRECEIVED){
+		//if(sckt.states== socketStates.SYNRECEIVED){
 			sckt.states = socketStates.ESTABLISHED;
 			sckt.sendSYNACK();
 			activeSockets.put(sckt.getKey(), sckt);
 			return true;
-		}
-		return false;
+		//}
+		//return false;
 
 
 	}
