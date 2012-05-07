@@ -1,6 +1,6 @@
 package nachos.network;
 
-import java.io.FileDescriptor;
+//import java.io.FileDescriptor;
 
 import nachos.machine.*;
 import nachos.network.Sockets.socketStates;
@@ -23,25 +23,25 @@ public class NetProcess extends UserProcess {
 	private static final int
 	syscallConnect = 11,
 	syscallAccept = 12;
-	 public int counter= 0;
+	public int counter= 0;
 
-	private int putOntoFileDiscriptorTable(OpenFile file){
-		for(int i =0; i < descriptorTable.size(); i++){
-			if(descriptorTable.get(i) == null){
-				descriptorTable.add(file);
-				return i;
-			}
+	private int putOntoFileDiscriptorTable(){
+		for (int i=0;i<fileTable.length;i++)
+		{
+			if (fileTable[i]==null) return i;
 		}
 		return -1;
 	}
 	
 	private int handleConnect(int destID, int destPort){
+		
 		if (destPort < 0 || destPort > TCPpackets.portLimit){
 			return -1;}
-	
+		int fileDescript = this.putOntoFileDiscriptorTable();
+		if(fileDescript == -1){
+			return -1; }
+		
 		int thisPort = (counter)%TCPpackets.portLimit;
-		counter++;
-		//attempt to create new socket on the port
 		Sockets socket = new Sockets(thisPort);
 		
 		//attempt to create a connection with the socket. 
@@ -50,14 +50,32 @@ public class NetProcess extends UserProcess {
 			return -1;
 		}
 		NetKernel.transport.activeSockets.put(socket.getKey(), socket);
-		return putOntoFileDiscriptorTable(socket);
+		this.fileTable[fileDescript]=socket;
+		return fileDescript;
 	}
 
 	private int handleAccept(int port){
 		if (port < 0 || port > TCPpackets.portLimit){
 			return -1;
 		}
-		//Use the first passive socket
+		int fileDescript = this.putOntoFileDiscriptorTable();
+		if(fileDescript == -1){
+			return -1; }
+		
+		int thisPort = (counter)%TCPpackets.portLimit;		
+		//attempt to create a connection with the socket. 
+		//if successful, grab the socket descriptor and return it 
+		Sockets SockemBoppers = NetKernel.transport.socketQueues[port].pollFirst();
+		if(SockemBoppers==null)
+			return -1;
+		if(!NetKernel.transport.acceptConnection(SockemBoppers)){
+			return -1;
+		}
+		SockemBoppers.states = socketStates.SYNRECEIVED;
+		NetKernel.transport.activeSockets.put(SockemBoppers.getKey(), SockemBoppers);
+		//return putOntoFileDiscriptorTable(SockemBoppers); 
+		return fileDescript;
+		/*//Use the first passive socket
 		Sockets SockemBoppers = NetKernel.transport.socketQueues[port].pollFirst();
 		if(SockemBoppers==null)
 			return -1;
@@ -68,7 +86,7 @@ public class NetProcess extends UserProcess {
 		NetKernel.transport.activeSockets.put(SockemBoppers.getKey(), SockemBoppers);
 		return putOntoFileDiscriptorTable(SockemBoppers); 
 
-		//if successful, grab the socket descriptor and return it
+		*///if successful, grab the socket descriptor and return it
 	}
 
 	/**
