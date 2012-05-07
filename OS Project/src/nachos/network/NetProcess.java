@@ -2,6 +2,8 @@ package nachos.network;
 
 //import java.io.FileDescriptor;
 
+import java.util.LinkedList;
+
 import nachos.machine.*;
 import nachos.network.Sockets.socketStates;
 import nachos.threads.*;
@@ -32,7 +34,7 @@ public class NetProcess extends UserProcess {
 		}
 		return -1;
 	}
-	
+	//LinkedList<Connection>  connections = new LinkedList<Connection>();
 	private int handleConnect(int destID, int destPort){
 		
 		if (destPort < 0 || destPort > TCPpackets.portLimit){
@@ -40,15 +42,15 @@ public class NetProcess extends UserProcess {
 		int fileDescript = this.putOntoFileDiscriptorTable();
 		if(fileDescript == -1){
 			return -1; }
-		
+
 		int thisPort = (counter)%TCPpackets.portLimit;
 		Sockets socket = new Sockets(thisPort);
-		
 		//attempt to create a connection with the socket. 
 		//if successful, grab the socket descriptor and return it 
 		if(!NetKernel.transport.createConnection(destID, destPort, socket) ){
 			return -1;
 		}
+		
 		NetKernel.transport.activeSockets.put(socket.getKey(), socket);
 		this.fileTable[fileDescript]=socket;
 		return fileDescript;
@@ -71,7 +73,8 @@ public class NetProcess extends UserProcess {
 		if(!NetKernel.transport.acceptConnection(SockemBoppers)){
 			return -1;
 		}
-		SockemBoppers.states = socketStates.SYNRECEIVED;
+		NetKernel.transport.acceptConnection(SockemBoppers);
+		//SockemBoppers.states = socketStates.SYNRECEIVED;
 		NetKernel.transport.activeSockets.put(SockemBoppers.getKey(), SockemBoppers);
 		//return putOntoFileDiscriptorTable(SockemBoppers); 
 		return fileDescript;
